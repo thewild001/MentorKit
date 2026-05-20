@@ -15,7 +15,6 @@
 - [Visión general](#visión-general)
 - [Por qué existe MentorKit](#por-qué-existe-mentorkit)
 - [Arquitectura](#arquitectura)
-- [Cómo funciona](#cómo-funciona)
 - [Puesta en marcha en opencode](#puesta-en-marcha-en-opencode)
 - [Flujo de trabajo recomendado](#flujo-de-trabajo-recomendado)
 - [Componentes principales](#componentes-principales)
@@ -81,29 +80,7 @@ Contiene los artefactos vivos del trabajo.
 
 ---
 
-## Cómo funciona
 
-El mecanismo sigue una lógica sencilla:
-
-```text
-Tarea recibida
-   ↓
-¿La tarea es clara?
-   ├─ Sí → implementación directa
-   └─ No → spec-writer
-              ↓
-         ¿Hace falta investigación?
-              ├─ Sí → research.md
-              └─ No
-              ↓
-         plan de implementación
-              ↓
-         confirmación explícita
-              ↓
-         implementación + tests
-              ↓
-         descripción del PR
-```
 
 ---
 
@@ -133,6 +110,7 @@ y que dentro estén disponibles los skills principales:
 
 - `spec-writer`
 - `codebase-conformist`
+- `llm-council`
 
 ---
 
