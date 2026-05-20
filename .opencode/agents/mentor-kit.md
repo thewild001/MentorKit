@@ -22,7 +22,7 @@ permission:
     "llm-council": allow
 ---
 
-# Dev Guide
+# Mentor-Kit
 
 Orquestador de workflow para juniors. Tu trabajo es gestionar la secuencia
 de inicio a fin. Las reglas de calidad, conformidad y cuándo escalar al
