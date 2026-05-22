@@ -54,7 +54,22 @@ Continúa sin ella — pero los Phase -1 Gates del Paso 2.5 operarán en modo re
 
 ## Paso 0 — Task Intake
 
-Identifica el tipo de tarea:
+**Verificación silenciosa de spec existente:**
+
+```
+Glob(".specify/specs/*/spec.md")
+```
+
+Si existe → lee el estado (READY / CLARIFICATION_NEEDED):
+- `READY` → salta directamente al Paso 1. Sin intake adicional.
+- `CLARIFICATION_NEEDED` → invoca `spec-writer` solo para los gaps marcados.
+  No re-especifiques lo que el PRD ya definió.
+
+Si no existe → intake normal. Sin mencionar PRDs ni specs.
+
+---
+
+Identifica el tipo de tarea cuando no hay spec previa:
 
 ### A) Feature con requisitos claros → continúa al Paso 1
 El usuario describe con precisión qué construir. Pregunta solo:

@@ -1,284 +1,188 @@
-# MentorKit
+# MentorKit — Mecanismo Agentico de Desarrollo
 
-> **An Agentic Mentor for Legacy Code**
->
-> Un sistema de acompañamiento para trabajar con **opencode** de forma clara, consistente y altamente alineada con la base de código existente.
-
-![Status](https://img.shields.io/badge/status-active-success)
-![OpenCode](https://img.shields.io/badge/opencode-compatible-blue)
-![Documentation](https://img.shields.io/badge/docs-ready-informational)
+**Versión:** 2.0
+**Compatibilidad:** OpenCode
+**Orientado a:** Desarrollo y mantenimiento de sistemas legacy con soporte a desarrolladores junior
 
 ---
 
-## Tabla de contenidos
+## Descripción
 
-- [Visión general](#visión-general)
-- [Por qué existe MentorKit](#por-qué-existe-mentorkit)
-- [Arquitectura](#arquitectura)
-- [Puesta en marcha en opencode](#puesta-en-marcha-en-opencode)
-- [Flujo de trabajo recomendado](#flujo-de-trabajo-recomendado)
-- [Componentes principales](#componentes-principales)
-- [Buenas prácticas](#buenas-prácticas)
-- [Estructura de carpetas](#estructura-de-carpetas)
-- [Instalación rápida](#instalación-rápida)
-- [Contribución](#contribución)
-- [Licencia](#licencia)
+MentorKit es un mecanismo agentico de desarrollo diseñado para resolver el problema
+del conocimiento implícito en sistemas legacy. Actúa como mentor computacional para
+desarrolladores junior, extrayendo las convenciones arquitectónicas no documentadas
+de una base de código existente y gobernando el proceso de desarrollo mediante un
+workflow estructurado con gates de validación explícitos.
 
----
+Esta versión (2.0) integra cuatro principios de diseño:
 
-## Visión general
+**1. Conformidad primero**
+El código generado debe ser indistinguible del código existente del proyecto.
+Las convenciones del codebase tienen precedencia sobre las buenas prácticas generales.
 
-**MentorKit** ayuda a organizar el trabajo con opencode separando claramente:
+**2. Especificación antes de implementación**
+Para features complejas, los requisitos se formalizan antes de tocar el codebase —
+ya sea desde un PRD del equipo de análisis (opcional) o mediante clarificación
+estructurada con spec-writer.
 
-- la **configuración del agente**,
-- la **especificación del trabajo**,
-- la **investigación técnica**,
-- y la **implementación alineada al codebase**.
+**3. Decisiones de alto riesgo escaladas al council**
+Las ambigüedades arquitectónicas, conflictos de patrones y planes de alto impacto
+son evaluados por un panel de 5 advisors independientes antes de comprometer
+cualquier dirección.
 
-El objetivo es reducir ambigüedad, evitar decisiones improvisadas y mantener la coherencia del proyecto incluso cuando el sistema crece.
-
----
-
-## Por qué existe MentorKit
-
-En muchos proyectos legacy, el problema no es solo escribir código.  
-El verdadero reto es:
-
-- entender el contexto,
-- respetar la arquitectura existente,
-- evitar cambios innecesarios,
-- y documentar correctamente cada decisión.
-
-MentorKit propone un flujo de trabajo que prioriza:
-
-1. **claridad antes que velocidad**,
-2. **conformidad antes que innovación**,
-3. **trazabilidad antes que improvisación**.
+**4. Flexibilidad sin fricción**
+El mecanismo opera igual con o sin PRDs adjuntos, con o sin spec formal,
+en cualquier lenguaje y framework.
 
 ---
 
-## Arquitectura
+## Estructura
 
-MentorKit separa el repositorio en dos capas funcionales:
-
-### `.opencode/`
-Contiene la configuración estable del agente.
-
-- Define el comportamiento esperado.
-- Describe reglas, límites y preferencias.
-- Suele cambiar poco.
-
-### `.specify/`
-Contiene los artefactos vivos del trabajo.
-
-- specs,
-- research,
-- descripciones de PR,
-- decisiones documentadas.
-
-> Esta carpeta evoluciona con cada feature o corrección.
-
----
-
-
-
----
-
-## Puesta en marcha en opencode
-
-### 1. Copia la configuración al proyecto destino
-
-Desde la raíz del repositorio de MentorKit:
-
-```bash
-cp -r .opencode/ tu-proyecto/.opencode/
 ```
-
-Si prefieres hacerlo manualmente, conserva exactamente la misma estructura de carpetas.
-
----
-
-### 2. Abre el proyecto en opencode
-
-Verifica que el proyecto destino contenga:
-
-```text
+# Lo que se instala en el proyecto:
 .opencode/
-```
+├── skills/
+│   ├── codebase-conformist/    # Skill principal — gobierna todo el ciclo
+│   │   └── SKILL.md
+│   ├── spec-writer/            # Clarificación de requisitos (opcional)
+│   │   └── SKILL.md
+│   ├── prd-reader/             # Parseo de PRDs adjuntos (opcional)
+│   │   └── SKILL.md
+│   └── llm-council/            # Panel multi-advisor para decisiones complejas
+│       └── SKILL.md
+└── agents/
+    └── dev-guide.md            # Agente orquestador — lleva la plantilla embebida
 
-y que dentro estén disponibles los skills principales:
-
-- `spec-writer`
-- `codebase-conformist`
-- `llm-council`
-
----
-
-### 3. Ejecuta la primera sesión
-
-En la primera sesión, MentorKit inicializa la memoria del proyecto.
-
-#### Resultado esperado
-
-Se crea:
-
-```text
-.opencode/memory/constitution.md
-```
-
-Este archivo define los principios, límites y preferencias del proyecto.
-
----
-
-### 4. Trabaja según el tipo de tarea
-
-#### Caso A — Tarea simple o bug fix claro
-- Se resuelve directamente.
-- No requiere spec formal.
-- Se mantiene el cambio mínimo necesario.
-
-#### Caso B — Feature compleja o ambigua
-- Se activa `spec-writer`.
-- Se documenta la intención.
-- Se marca cualquier ambigüedad con claridad.
-- Si hace falta, se agrega investigación.
-
----
-
-## Flujo de trabajo recomendado
-
-### Para tareas simples
-1. Identificar el archivo involucrado.
-2. Entender el comportamiento esperado.
-3. Aplicar el cambio quirúrgico.
-4. Ejecutar tests si corresponden.
-5. Documentar si el cambio lo requiere.
-
-### Para features complejas
-1. Clarificar requisitos.
-2. Generar una spec.
-3. Investigar el contexto técnico si aplica.
-4. Construir un plan de implementación.
-5. Solicitar confirmación explícita.
-6. Implementar.
-7. Redactar el PR.
-
----
-
-## Componentes principales
-
-### `dev-guide init`
-Inicializa la base constitucional del proyecto.
-
-**Propósito:**
-- crear `constitution.md`,
-- fijar principios de trabajo,
-- dar contexto estable al agente.
-
----
-
-### `spec-writer`
-Convierte descripciones ambiguas en una especificación estructurada.
-
-**Cuándo usarlo:**
-- hay múltiples actores,
-- la lógica de negocio no es trivial,
-- el cambio cruza varios módulos,
-- existen reglas condicionales,
-- faltan detalles importantes.
-
-**Salida esperada:**
-- `spec.md`
-- criterios de aceptación
-- supuestos documentados
-- marcadores de clarificación cuando haga falta
-
----
-
-### `codebase-conformist`
-Gestiona la integración del cambio respetando el estilo y patrón del proyecto.
-
-**Qué analiza:**
-- naming,
-- estructura,
-- patrón dominante,
-- archivos de alto impacto,
-- riesgos de cambio,
-- cobertura de tests.
-
-**Regla central:**
-> La nueva implementación debe encajar de forma natural en el codebase.
-
----
-
-## Buenas prácticas
-
-### Haz esto
-- Mantén `.opencode/` para la configuración del agente.
-- Usa `.specify/` para trabajo vivo y trazabilidad.
-- Especifica antes de implementar cuando exista ambigüedad.
-- Investiga cuando el contexto técnico no sea evidente.
-- Respeta el estilo del repositorio.
-
-### Evita esto
-- asumir comportamiento no documentado,
-- introducir patrones nuevos sin justificación,
-- refactorizar fuera del scope,
-- modificar archivos compartidos sin revisar impacto,
-- cambiar firmas públicas sin analizar sus consumidores.
-
----
-
-## Estructura de carpetas
-
-```text
-tu-proyecto/
-├── .opencode/
-│   ├── agents/
-│   ├── skills/
-│   │   ├── spec-writer/
-│   │   │   └── SKILL.md
-│   │   └── codebase-conformist/
-│   │       └── SKILL.md
-│   └── memory/
-│       └── constitution.md
-│
-└── .specify/
-    └── specs/
-        └── [NNN]-[slug]/
-            ├── spec.md
-            ├── research.md
-            └── pr-description.md
+# Lo que el agente genera durante el uso (no se instala):
+.specify/
+├── memory/
+│   └── constitution.md         # Creado en sesión 1 — plantilla embebida en dev-guide
+└── specs/
+    └── [NNN]-[feature-slug]/
+        ├── spec.md             # Requisitos formalizados
+        ├── ui-prototypes/      # Imágenes extraídas del PRD (si aplica)
+        ├── research.md         # Investigación técnica (si aplica)
+        └── pr-description.md  # Descripción del PR al cerrar el ciclo
 ```
 
 ---
 
-## Instalación rápida
+## Componentes
+
+### dev-guide (Agente primario)
+Punto de entrada del desarrollador junior. Orquesta la secuencia completa:
+inicializa la constitution en la primera sesión, detecta PRDs adjuntos de forma
+silenciosa y condicional, carga codebase-conformist y gestiona la confirmation gate
+y el tracking de progreso con TodoWrite.
+
+### codebase-conformist (Skill principal)
+Gobierna el ciclo completo de desarrollo en 5 pasos: constitution → intake →
+fingerprinting → plan con Phase -1 Gates → implementación → git → PR description.
+Decide cuándo invocar spec-writer, prd-reader y llm-council. Extrae el conocimiento
+implícito del codebase mediante un protocolo de fingerprinting de 5 dimensiones y
+lo codifica como restricciones de generación.
+
+### spec-writer (Skill opcional)
+Se activa para features complejas o ambiguas sin PRD disponible. Produce un spec.md
+con marcadores explícitos `[NEEDS CLARIFICATION]` en lugar de asumir comportamientos
+no especificados. No se invoca para bugs ni features con requisitos claros.
+
+### prd-reader (Skill opcional)
+Se activa cuando el equipo de análisis adjunta un PRD formal (odt, docx, pdf, doc).
+Extrae el contenido estructurado (flujos, validaciones, conceptos, requisitos especiales)
+y los prototipos de UI embebidos, y los traduce al formato spec.md. Cuando el PRD está
+completo, reemplaza a spec-writer eliminando el paso de clarificación.
+
+### llm-council (Skill de escalación)
+Panel de 5 advisors independientes (Contrarian, First Principles, Expansionist,
+Outsider, Executor) con peer review anónimo y síntesis por chairman. Se activa en
+4 puntos específicos: conflicto de patrones en fingerprinting, plan de alto riesgo
+antes de la confirmation gate, patrón nuevo sin precedente durante implementación,
+y diagnóstico de síntoma en modo exploración.
+
+### constitution.md (Memoria persistente del proyecto)
+Documento creado en la primera sesión que codifica los principios inmutables del
+proyecto: stack aprobado, patrones arquitectónicos establecidos, zonas sensibles,
+restricciones de seguridad y convenciones de naming. Persiste entre sesiones y
+resuelve el problema de continuidad de contexto.
+
+---
+
+## Ciclo completo
+
+```
+Sesión inicia
+     │
+     ├── ¿Existe constitution? ──NO──► Crear constitution.md
+     │
+     ├── ¿Hay PRD adjunto? ──SÍ──► prd-reader → spec.md
+     │         │
+     │         NO
+     │
+     ▼
+codebase-conformist
+     │
+     ├── Paso -1: Leer constitution
+     │
+     ├── Paso 0:  ¿Existe spec.md? ──SÍ──► Consumir spec (saltando intake)
+     │                │
+     │               NO
+     │                ├── Feature clara    → Paso 1
+     │                ├── Feature compleja → spec-writer → Paso 1
+     │                ├── Bug             → Paso 1
+     │                └── Síntoma vago    → llm-council (P4) → Paso 1
+     │
+     ├── Paso 1:  Fingerprinting
+     │                └── [Conflicto patrones] → llm-council (P1)
+     │
+     ├── Paso 1.5: Research phase (features complejas)
+     │
+     ├── Paso 2:  Plan de implementación con markers [P]
+     │                └── [Alto riesgo / Gate fallido] → llm-council (P2)
+     │
+     ├── Paso 2.5: Phase -1 Constitutional Gates
+     │
+     ├── ⛔ CONFIRMATION GATE — esperar "go"
+     │
+     ├── Paso 3:  Implementación (TodoWrite tracking)
+     │                └── [Patrón nuevo] → llm-council (P3)
+     │
+     ├── Paso 4:  Git commits atómicos
+     │
+     └── Paso 5:  PR description
+```
+
+---
+
+## Instalación
 
 ```bash
-cp -r .opencode/ tu-proyecto/.opencode/
+# 1. Copiar estructura al proyecto
+cp -r .opencode/ tu-proyecto/
+
+# 2. Verificar el model ID en tu instalación
+opencode models | grep sonnet
+# Actualizar model: en dev-guide.md si es necesario
+
+# 3. Primera sesión — el agente crea automáticamente:
+#    .specify/memory/constitution.md
+#    Completar el stack y los patrones del proyecto en ese archivo
+
+# 4. Para usar PRDs:
+#    Adjuntar el archivo directamente en el chat al inicio de la sesión
 ```
 
-Luego:
+---
 
-1. abre el proyecto en **opencode**,
-2. ejecuta la inicialización de la primera sesión,
-3. verifica la creación de `constitution.md`,
-4. comienza a trabajar con el flujo de specs cuando sea necesario.
+## Activación del agente
+
+En OpenCode, seleccionar el agente `dev-guide` con Tab antes de iniciar la sesión.
 
 ---
 
-## Contribución
+## Créditos metodológicos
 
-Si amplías MentorKit, intenta preservar estos principios:
-
-- claridad antes que velocidad,
-- conformidad antes que innovación,
-- documentación antes que suposiciones,
-- trazabilidad antes que improvisación.
-
----
-
-## Licencia
-
-Define la licencia según las políticas del repositorio o el criterio del proyecto.
+- **Codebase fingerprinting y conformity-first:** diseño propio orientado a legacy systems
+- **LLM Council:** adaptado de la metodología de Andrej Karpathy
+- **Spec-driven development:** inspirado en github/spec-kit
+- **Scaffolding para juniors:** basado en la teoría de Zona de Desarrollo Próximo (Vygotsky)
