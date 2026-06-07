@@ -1,0 +1,18 @@
+# Python venv y artefactos de MentorKit (machine-specific, NO commitear)
+.opencode/.mentorkit/venv/
+.opencode/.mentorkit/python-path.txt
+
+# Cache de skills (generado en runtime por el agente)
+.atl/
+
+# Python bytecode y cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Artefactos locales de CI (simulaciones, debugging)
+verify.json

@@ -1,0 +1,18 @@
+# Top-level dependencies for MentorKit skills
+# Edit THIS file for soft constraints. Regenerate requirements.lock after changes:
+#   uv pip compile requirements.in --generate-hashes -o requirements.lock
+#
+# Why two files:
+#   - .in:  loose constraints (what we want)
+#   - .lock: exact versions + SHA256 hashes (what we install)
+# The lock file is the guarantee: same Python, same deps, same hashes across machines.
+
+# uv itself: shipped inside the venv for self-contained re-installs
+uv>=0.11,<0.12
+
+# Document extraction (PDF, ODT, DOCX)
+markitdown>=0.1
+striprtf>=0.0.10
+
+# Codebase graph (god nodes, rationale nodes, Leiden clustering)
+graphifyy>=0.1

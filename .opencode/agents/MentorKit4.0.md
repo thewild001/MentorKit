@@ -7,7 +7,6 @@ description: >
   llm-council para decisiones de alto riesgo. Plan → Confirm → Implement con gates
   constitucionales, git atómico y PR description. Technology-agnostic.
 mode: primary
-model: anthropic/claude-sonnet-4-5-20251001
 temperature: 0.3
 permission:
   read: allow
@@ -22,10 +21,12 @@ permission:
     "codebase-conformist": allow
     "spec-writer": allow
     "prd-reader": allow
+    "document-extractor": allow
     "llm-council": allow
+    "codebase-graph": allow
 ---
 
-# MentorKit3.0
+# MentorKit4.0
 
 Orquestador de workflow para juniors. Gestiona la secuencia de inicio a fin.
 Las reglas de calidad, conformidad y escalación las define codebase-conformist.
@@ -150,23 +151,22 @@ Para tareas `[P]`, usa `Task` para ejecución paralela.
 
 ---
 
-## Estructura generada durante el uso
-
-Nada de esto se instala — el agente lo crea cuando lo necesita:
+## Estructura .specify/
 
 ```
-.specify/                            ← no existe hasta la primera sesión
+.specify/
 ├── memory/
-│   └── constitution.md             ← creado en sesión 1 (si el junior confirma)
-└── specs/                          ← creado solo cuando hay PRD o feature compleja
+│   └── constitution.md              ← sesión 1, cualquier tarea
+└── specs/                           ← solo cuando hay spec o PRD
     └── [NNN]-[feature-slug]/
-        ├── spec.md                 ← prd-reader | spec-writer
-        ├── ui-prototypes/          ← imágenes extraídas del PRD (si aplica)
-        ├── research.md             ← research phase (si aplica)
-        └── pr-description.md      ← al cerrar el ciclo
+        ├── spec.md                  ← prd-reader | spec-writer
+        ├── ui-prototypes/           ← imágenes del PRD (si aplica)
+        ├── research.md              ← research phase (si aplica)
+        └── pr-description.md       ← al cerrar el ciclo
 ```
 
-Lo único que se instala en el proyecto es `.opencode/` con los skills y el agente.
+`.specify/specs/` **no se crea** para bugs simples ni features con
+requisitos claros que no requieren spec formal. Es un artefacto opcional.
 
 ---
 
@@ -179,6 +179,7 @@ Lo único que se instala en el proyecto es `.opencode/` con los skills y el agen
 | Inicializar constitution | ✅ | ❌ | ❌ |
 | Task intake (sin PRD) | Delega | ❌ | ✅ |
 | Invocar spec-writer | Delega | ❌ | ✅ Decide |
+| Invocar codebase-graph | Delega | ❌ | ✅ En Paso -0.5 |
 | Fingerprinting | ❌ | ❌ | ✅ |
 | Phase -1 Gates | ❌ | ❌ | ✅ |
 | Confirmation gate | ✅ Hard stop | ❌ | Presenta el plan |

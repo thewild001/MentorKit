@@ -52,6 +52,25 @@ Continúa sin ella — pero los Phase -1 Gates del Paso 2.5 operarán en modo re
 
 ---
 
+## Paso -0.5 — Graph Context (codebase-graph)
+
+Antes del Fingerprinting, carga el grafo de conocimiento:
+
+```
+skill({ name: "codebase-graph" })
+```
+
+Si el Graph Context está disponible, úsalo en los pasos siguientes:
+
+- **God nodes** — archivos con más conexiones: léelos primero en el Fingerprinting
+- **Rationale nodes** — conocimiento implícito ya extraído (#WHY, #HACK, #IMPORTANT)
+- **Comunidades Leiden** — módulos naturales del proyecto (separación real de responsabilidades)
+- **Conexiones sorprendentes** — acoplamiento oculto: inclúyelas en el Impact Gate
+
+Si no está disponible, continúa. El Fingerprinting manual cubre el mismo terreno.
+
+---
+
 ## Paso 0 — Task Intake
 
 **Verificación silenciosa de spec existente:**
@@ -108,24 +127,36 @@ Antes de escribir **una sola línea**, ejecuta este protocolo.
 
 ### 1.1 Archivos a leer (en orden)
 
-1. **Punto de entrada** — el archivo más cercano a donde vivirá el código nuevo.
-2. **Módulos relacionados** — callers, utilities, tipos/interfaces relevantes.
-3. **Plantilla de oro** — una feature similar ya implementada, leída de principio a fin.
-4. **Configuración** — manifests de dependencias, linter, compilador.
+**Con Graph Context disponible:**
+1. **God nodes del grafo** — los más conectados: contienen los patrones dominantes
+2. **Punto de entrada** — el archivo más cercano a donde vivirá el código nuevo
+3. **Plantilla de oro** — la feature análoga más similar según el grafo
+4. **Configuración** — manifests de dependencias, linter, compilador
+
+**Sin Graph Context (Fingerprinting manual):**
+1. **Punto de entrada** — el archivo más cercano a donde vivirá el código nuevo
+2. **Módulos relacionados** — callers, utilities, tipos/interfaces relevantes
+3. **Plantilla de oro** — una feature similar ya implementada, leída de principio a fin
+4. **Configuración** — manifests de dependencias, linter, compilador
 
 ### 1.2 Análisis de impacto en callers
 
-Para cualquier archivo que el plan modificará:
+**Con Graph Context:** los god nodes ya son zonas de alto impacto confirmadas.
+Las conexiones sorprendentes ya son acoplamiento oculto identificado.
+Usa `Grep` solo para verificar o completar lo que el grafo no cubre.
+
+**En todos los casos:**
 
 ```
 Usa Grep para encontrar todos los imports/usos del archivo.
 ¿Cuántos módulos distintos lo referencian?
 ```
 
-Si ≥5 módulos → marca el archivo como **zona de alto impacto**.
-Si el archivo tiene patrones críticos (auth, DB transactions, logging) → marca como **zona sensible**.
+Si ≥5 módulos → **zona de alto impacto**.
+Si aparece en los god nodes del grafo → **zona de alto impacto confirmada por grafo**.
+Si aparece en conexiones sorprendentes → **zona sensible: revisar blast radius**.
 
-Documentar en el plan: *"Archivo X referenciado por N módulos."*
+Documentar en el plan: *"Archivo X — N módulos [god node / conexión sorprendente]."*
 
 ### 1.3 Checklist de extracción de estilo
 

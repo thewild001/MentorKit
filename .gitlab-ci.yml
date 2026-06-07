@@ -1,0 +1,353 @@
+# CI para mentorkit.
+#
+# Filosofía: la imagen no incluye Python. El installer debe traer todo desde
+# cero. Si el installer falla, las garantías están rotas. Si pasa, sabemos
+# que cualquiera puede reproducir el entorno.
+#
+# Garantías verificadas (4 jobs en stage verify, corren en paralelo):
+#   verify-install:
+#     1. Python 3.12.13 exacto
+#     2. 53 paquetes pinneados con SHA256
+#     3. uv autocontenido en el venv
+#     4. mentorkit-verify.sh PASS (markitdown, striprtf, graphify, uv)
+#   verify-platform-coverage:
+#     5. Lock generado con --universal (cubre linux/macos/windows)
+#   verify-archive-spec:
+#     6. archive-spec operacional + specs in-progress archivables
+#        (dry-run) + integridad del system-spec
+#   verify-spec-history:
+#     7. Archives de specs commiteados (working tree en .specify/ limpio)
+#
+# Auto-heal: si la cache se restaura con un venv roto (symlinks rotos entre
+# máquinas), `install --fix` lo detecta y recrea. CI nunca queda inutilizable.
+
+stages:
+  - verify
+
+variables:
+  GIT_DEPTH: "1"  # shallow clone (ahorra tiempo en repos grandes)
+  DEBIAN_FRONTEND: noninteractive
+
+default:
+  # Base: Ubuntu 22.04 (jammy) en vez de Debian bookworm.
+  #
+  # Razón: el runner corporativo de UCI bloquea por DNS los hosts públicos
+  # (deb.debian.org, archive.ubuntu.com, etc.). UCI solo expone un mirror
+  # interno en http://ubuntu.uci.cu — no hay mirror de Debian. Por eso
+  # el CI corre sobre Ubuntu y se redirige apt al mirror corporativo.
+  image: ubuntu:22.04
+  before_script:
+    # UCI DNS bloquea archive.ubuntu.com. Apuntar apt al mirror interno.
+    - sed -i 's|http://archive.ubuntu.com/ubuntu|http://ubuntu.uci.cu/ubuntu|g' /etc/apt/sources.list
+    - apt-get update -qq
+    - apt-get install -yqq --no-install-recommends
+        ca-certificates
+        curl
+        bash
+        jq
+        git
+        python3
+    - rm -f /etc/apt/apt.conf.d/docker-clean  # preservar cache apt en la imagen
+
+# Cache: el venv (~334MB) se reutiliza entre runs. La key se invalida cuando
+# el lock file cambia (nuevas versiones = nueva install obligatoria).
+cache:
+  key:
+    files:
+      - .opencode/requirements.lock
+  paths:
+    - .opencode/.mentorkit/
+
+verify-install:
+  stage: verify
+  script:
+    - |
+      # Sin -e: queremos que el diagnóstico corra aunque verify falle.
+      # Con pipefail: capturamos fallos en pipes correctamente.
+      set -uo pipefail
+
+      echo "═══ 1) Install (auto-heal si cache corrupta) ═══"
+      bash .opencode/install-mentorkit.sh --fix
+
+      echo
+      echo "═══ 2) Verify (capturando JSON) ═══"
+      # Capturamos stdout al archivo, dejamos stderr visible en el log.
+      bash .opencode/mentorkit-verify.sh --json > verify.json
+      VERIFY_EXIT=$?
+
+      cat verify.json
+      echo
+
+      echo "═══ 3) Assert: las 4 garantías se cumplen ═══"
+      if [ ! -s verify.json ]; then
+        echo "❌ verify no produjo JSON (exit=$VERIFY_EXIT)"
+        exit ${VERIFY_EXIT:-1}
+      fi
+
+      if ! jq -e '.python_ok and .all_deps_ok' verify.json > /dev/null; then
+        echo "❌ GARANTÍA VIOLADA — diagnóstico:"
+        jq '{
+          python, target, python_ok, all_deps_ok,
+          broken: (.deps | to_entries
+                   | map(select(.value.ok == false))
+                   | map({key, error: .value.error}))
+        }' verify.json
+        exit 1
+      fi
+
+      echo "✅ Las 4 garantías se cumplen:"
+      jq -c '{
+        python,
+        target,
+        deps: (.deps | map_values(.version))
+      }' verify.json
+  artifacts:
+    paths:
+      - verify.json
+    expire_in: 1 week
+    when: always  # guardar el JSON incluso si falla, para debugging
+
+# Verifica que el lock file tiene cobertura cross-platform. Esto NO prueba
+# la instalación real en otros OS (eso requiere runners macOS/Windows que
+# no tenemos) — prueba que el lock fue generado correctamente para que
+# funcione cross-platform.
+#
+# Si alguien regenera el lock sin --universal por error, este job falla
+# antes de que el lock roto llegue a un dev de macOS/Windows.
+verify-platform-coverage:
+  stage: verify
+  needs: []  # independiente de verify-install, corre en paralelo
+  script:
+    - |
+      set -uo pipefail
+
+      LOCK=.opencode/requirements.lock
+
+      # 1) El lock DEBE haber sido generado con --universal
+      echo "═══ 1) Lock generation flag ═══"
+      if ! head -3 "$LOCK" | grep -q -- "--universal"; then
+        echo "❌ Lock no generado con --universal — los devs en macOS/Windows"
+        echo "   no podrán instalar (los wheels para esas plataformas no están en el lock)."
+        echo "   Regenerar con:"
+        echo "     uv pip compile .opencode/requirements.in \\"
+        echo "         --universal \\"
+        echo "         --python-version 3.12 \\"
+        echo "         --generate-hashes \\"
+        echo "         -o $LOCK"
+        exit 1
+      fi
+      echo "  ✓ Lock generado con --universal"
+
+      # 2) Paquetes con C extensions deben tener cobertura amplia
+      #    (>= 20 hashes = cubre manylinux + musllinux + macosx + win)
+      echo
+      echo "═══ 2) Hash coverage por paquete con C extensions ═══"
+      python3 - <<'PY'
+      import re, sys
+      from pathlib import Path
+
+      lock = Path('.opencode/requirements.lock').read_text()
+
+      # Parse: package==version line, followed by --hash= lines
+      # Allow the version line to have an optional marker (e.g., ; sys_platform == 'win32')
+      pkg_re = re.compile(
+          r'^([a-zA-Z0-9_-]+)==([\d.]+[a-z0-9.]*)'
+          r'(?:\s*;\s*[^\\]+)?'  # optional marker
+          r'\s*\\?\n'
+          r'((?:\s+--hash=sha256:[a-f0-9]{64}\s*\\?\n?)+)',
+          re.MULTILINE
+      )
+
+      # Paquetes conocidos con C extensions — necesitan cobertura amplia
+      C_EXT = {'numpy', 'scipy', 'cryptography', 'pillow', 'lxml',
+               'grpcio', 'grpcio-tools', 'pandas', 'pydantic-core',
+               'psycopg', 'psycopg2-binary', 'onnxruntime'}
+
+      # Mínimo de hashes por paquete. Universal lock típico:
+      # - 30-100 para numpy/scipy (todas las variantes manylinux + musllinux)
+      # - 5-15 para pure-python (cada release genera 1-2 hashes)
+      # Usamos 20 como umbral conservador: si un paquete con C extensions
+      # tiene <20, probablemente NO sea universal.
+      MIN_HASHES = 20
+
+      failures = []
+      stats = []
+      for m in pkg_re.finditer(lock):
+          name, ver, block = m.group(1), m.group(2), m.group(3)
+          count = block.count('sha256:')
+          stats.append((name, ver, count))
+          # Pure-Python packages: skip the threshold check
+          if name.lower() not in C_EXT:
+              continue
+          if count < MIN_HASHES:
+              failures.append(
+                  f"  - {name}=={ver}: {count} hashes (< {MIN_HASHES}, "
+                  f"puede no cubrir todas las plataformas)"
+              )
+
+      # Report
+      for name, ver, count in stats:
+          flag = "  C" if name.lower() in C_EXT else "  P"
+          print(f"  {flag}  {name}=={ver}: {count:3d} hashes")
+
+      if failures:
+          print()
+          print(f"❌ {len(failures)} paquete(s) con cobertura insuficiente:")
+          for f in failures:
+              print(f)
+          sys.exit(1)
+
+      print()
+      print(f"✓ Todos los paquetes con C extensions tienen ≥{MIN_HASHES} hashes")
+      PY
+
+      # 3) Sanity: el lock debe ser parseable y contener paquetes
+      echo
+      echo "═══ 3) Lock parseable y no vacío ═══"
+      PKG_COUNT=$(grep -cE "^[a-zA-Z]" "$LOCK" || true)
+      if [ "${PKG_COUNT:-0}" -lt 4 ]; then
+        echo "❌ Lock file tiene solo $PKG_COUNT paquetes (esperado ≥ 4)"
+        exit 1
+      fi
+      echo "  ✓ Lock contiene $PKG_COUNT paquetes"
+  artifacts:
+    paths:
+      - coverage-report.txt
+    expire_in: 1 week
+    when: always
+
+# Verifica que mentorkit-archive-spec.sh es operacional y que los specs
+# in-progress pueden archivarse. No requiere venv (el script usa solo
+# stdlib de Python).
+#
+# Si el desarrollador dejó un spec sin archivar en una rama feature, este
+# job corre --dry-run sobre él y falla si el script no puede procesarlo.
+# Esto evita que un spec malformado llegue a main.
+verify-archive-spec:
+  stage: verify
+  needs: []  # independiente, corre en paralelo con los otros
+  script:
+    - |
+      set -uo pipefail
+      SCRIPT=.opencode/mentorkit-archive-spec.sh
+
+      echo "═══ 1) El script existe y es ejecutable ═══"
+      [ -f "$SCRIPT" ] || { echo "❌ Falta $SCRIPT"; exit 1; }
+      [ -x "$SCRIPT" ] || { echo "❌ $SCRIPT no es ejecutable"; exit 1; }
+      echo "  ✓ Script presente y ejecutable"
+
+      echo
+      echo "═══ 2) --help funciona y sale 0 ═══"
+      bash "$SCRIPT" --help > /dev/null || { echo "❌ --help falla"; exit 1; }
+      echo "  ✓ --help responde"
+
+      echo
+      echo "═══ 3) Sin args → exit 1 ═══"
+      if bash "$SCRIPT" > /dev/null 2>&1; then
+        echo "❌ Debería fallar con exit 1 sin args"
+        exit 1
+      fi
+      echo "  ✓ Rechaza uso sin args"
+
+      echo
+      echo "═══ 4) Flag inválida → exit 1 ═══"
+      if bash "$SCRIPT" --no-such-flag > /dev/null 2>&1; then
+        echo "❌ Aceptó flag inválida"
+        exit 1
+      fi
+      echo "  ✓ Rechaza flags inválidas"
+
+      echo
+      echo "═══ 5) Si hay specs in-progress, dry-run sobre cada uno ═══"
+      # shellcheck disable=SC2010
+      SPECS=$(ls .specify/specs/[0-9]*-*/spec.md 2>/dev/null || true)
+      if [ -n "$SPECS" ]; then
+        echo "  Specs in-progress encontrados:"
+        echo "$SPECS" | sed 's/^/    /'
+        for spec in $SPECS; do
+          echo
+          echo "  → Dry-run de: $spec"
+          if ! bash "$SCRIPT" --dry-run "$spec" 2>&1; then
+            echo "❌ Dry-run falló para $spec — el spec no es archivable"
+            echo "   Revisar formato: ## Status, ## Dominio, ## ADDED/MODIFIED/REMOVED Requirements"
+            exit 1
+          fi
+        done
+        echo
+        echo "  ✓ Todos los specs in-progress son archivables (dry-run)"
+      else
+        echo "  No hay specs in-progress — nada que validar"
+      fi
+
+      echo
+      echo "═══ 6) Si system-spec.md existe, validar estructura ═══"
+      if [ -f .specify/system-spec.md ]; then
+        if ! head -1 .specify/system-spec.md | grep -q "^# System Spec$"; then
+          echo "❌ system-spec.md no empieza con '# System Spec'"
+          echo "   Header actual: $(head -1 .specify/system-spec.md)"
+          exit 1
+        fi
+        if ! grep -q "^\*\*Specs mergeados\*\*:" .specify/system-spec.md; then
+          echo "❌ system-spec.md sin metadata '**Specs mergeados**'"
+          exit 1
+        fi
+        N_DOMAINS=$(grep -c "^## Dominio:" .specify/system-spec.md || true)
+        echo "  ✓ system-spec.md válido ($N_DOMAINS dominio(s))"
+      else
+        echo "  No hay system-spec.md aún (se generará con el primer archive)"
+      fi
+
+      echo
+      echo "✅ mentorkit-archive-spec.sh es operacional"
+
+# Verifica que los archives de specs se commitean — el working tree no debe
+# mostrar archives pendientes. Si un dev archivó un spec sin `COMMIT=1`, los
+# cambios quedan en el working tree y este job lo detecta.
+#
+# Garantía #7: las archives de specs llegan a git, no se quedan en disco.
+verify-spec-history:
+  stage: verify
+  needs: []  # independiente, corre en paralelo
+  script:
+    - |
+      set -uo pipefail
+
+      echo "═══ Working tree en .specify/ debe estar limpio ═══"
+      # Solo miramos .specify/ — los cambios fuera de ese dir no son
+      # responsabilidad de este job (pueden ser fixes no relacionados).
+      PENDING=$(git status --porcelain --untracked-files=all .specify/ 2>/dev/null || true)
+
+      if [ -n "$PENDING" ]; then
+        echo "❌ Hay archives de specs sin commitear:"
+        echo "$PENDING" | sed 's/^/   /'
+        echo
+        echo "Esto rompe el historial de requirements en git (sin autor ni fecha)."
+        echo "Soluciones:"
+        echo "  1) Si archivaste sin querer: restaura el working tree con"
+        echo "     git restore .specify/specs/archive/ y borra los specs no commiteados."
+        echo "  2) Si fue intencional: commitea el archive con"
+        echo "     make archive-spec COMMIT=1 SPEC=<path>"
+        echo "     (o usa --commit / --force-dirty si el tree tiene cambios no relacionados)."
+        exit 1
+      fi
+
+      echo "  ✓ Working tree en .specify/ limpio (todo commiteado)"
+
+      echo
+      echo "═══ Si system-spec.md está tracked, el commit más reciente debe tocarlo ═══"
+      if [ -f .specify/system-spec.md ] && git ls-files --error-unmatch .specify/system-spec.md >/dev/null 2>&1; then
+        # System-spec está tracked: el HEAD debe incluir un cambio en él o en archive/
+        if ! git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -qE "(\.specify/system-spec\.md|\.specify/specs/archive/)"; then
+          echo "⚠  system-spec.md está tracked pero el último commit no lo toca."
+          echo "   Esto puede ser intencional (fix sin cambios de spec) o un descuido."
+          echo "   Continúa, pero verifica que el historial refleja los changes."
+        else
+          LAST_TOUCHED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -E "(\.specify/system-spec\.md|\.specify/specs/archive/)" | head -1)
+          echo "  ✓ Último commit toca: $LAST_TOUCHED"
+        fi
+      else
+        echo "  system-spec.md aún no está tracked (se trackeará con el primer archive con COMMIT=1)"
+      fi
+
+      echo
+      echo "✅ Historial de specs sincronizado con git"

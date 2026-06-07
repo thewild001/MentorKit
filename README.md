@@ -1,188 +1,345 @@
-# MentorKit — Mecanismo Agentico de Desarrollo
+# mentorkit
 
-**Versión:** 2.0
-**Compatibilidad:** OpenCode
-**Orientado a:** Desarrollo y mantenimiento de sistemas legacy con soporte a desarrolladores junior
+> Orquestador de workflow para juniors. Constitution → Spec → Fingerprinting → Plan → Confirm → Implement → PR.
 
----
-
-## Descripción
-
-MentorKit es un mecanismo agentico de desarrollo diseñado para resolver el problema
-del conocimiento implícito en sistemas legacy. Actúa como mentor computacional para
-desarrolladores junior, extrayendo las convenciones arquitectónicas no documentadas
-de una base de código existente y gobernando el proceso de desarrollo mediante un
-workflow estructurado con gates de validación explícitos.
-
-Esta versión (2.0) integra cuatro principios de diseño:
-
-**1. Conformidad primero**
-El código generado debe ser indistinguible del código existente del proyecto.
-Las convenciones del codebase tienen precedencia sobre las buenas prácticas generales.
-
-**2. Especificación antes de implementación**
-Para features complejas, los requisitos se formalizan antes de tocar el codebase —
-ya sea desde un PRD del equipo de análisis (opcional) o mediante clarificación
-estructurada con spec-writer.
-
-**3. Decisiones de alto riesgo escaladas al council**
-Las ambigüedades arquitectónicas, conflictos de patrones y planes de alto impacto
-son evaluados por un panel de 5 advisors independientes antes de comprometer
-cualquier dirección.
-
-**4. Flexibilidad sin fricción**
-El mecanismo opera igual con o sin PRDs adjuntos, con o sin spec formal,
-en cualquier lenguaje y framework.
+**Plataforma:** Linux · macOS · Windows (vía WSL2) · **Python:** 3.12.13 (pin exacto) · **Deps:** 53 con lock con SHA256
 
 ---
 
-## Estructura
+## 🚀 Instalación rápida (en tu proyecto)
 
-```
-# Lo que se instala en el proyecto:
-.opencode/
-├── skills/
-│   ├── codebase-conformist/    # Skill principal — gobierna todo el ciclo
-│   │   └── SKILL.md
-│   ├── spec-writer/            # Clarificación de requisitos (opcional)
-│   │   └── SKILL.md
-│   ├── prd-reader/             # Parseo de PRDs adjuntos (opcional)
-│   │   └── SKILL.md
-│   └── llm-council/            # Panel multi-advisor para decisiones complejas
-│       └── SKILL.md
-└── agents/
-    └── dev-guide.md            # Agente orquestador — lleva la plantilla embebida
-
-# Lo que el agente genera durante el uso (no se instala):
-.specify/
-├── memory/
-│   └── constitution.md         # Creado en sesión 1 — plantilla embebida en dev-guide
-└── specs/
-    └── [NNN]-[feature-slug]/
-        ├── spec.md             # Requisitos formalizados
-        ├── ui-prototypes/      # Imágenes extraídas del PRD (si aplica)
-        ├── research.md         # Investigación técnica (si aplica)
-        └── pr-description.md  # Descripción del PR al cerrar el ciclo
-```
-
----
-
-## Componentes
-
-### dev-guide (Agente primario)
-Punto de entrada del desarrollador junior. Orquesta la secuencia completa:
-inicializa la constitution en la primera sesión, detecta PRDs adjuntos de forma
-silenciosa y condicional, carga codebase-conformist y gestiona la confirmation gate
-y el tracking de progreso con TodoWrite.
-
-### codebase-conformist (Skill principal)
-Gobierna el ciclo completo de desarrollo en 5 pasos: constitution → intake →
-fingerprinting → plan con Phase -1 Gates → implementación → git → PR description.
-Decide cuándo invocar spec-writer, prd-reader y llm-council. Extrae el conocimiento
-implícito del codebase mediante un protocolo de fingerprinting de 5 dimensiones y
-lo codifica como restricciones de generación.
-
-### spec-writer (Skill opcional)
-Se activa para features complejas o ambiguas sin PRD disponible. Produce un spec.md
-con marcadores explícitos `[NEEDS CLARIFICATION]` en lugar de asumir comportamientos
-no especificados. No se invoca para bugs ni features con requisitos claros.
-
-### prd-reader (Skill opcional)
-Se activa cuando el equipo de análisis adjunta un PRD formal (odt, docx, pdf, doc).
-Extrae el contenido estructurado (flujos, validaciones, conceptos, requisitos especiales)
-y los prototipos de UI embebidos, y los traduce al formato spec.md. Cuando el PRD está
-completo, reemplaza a spec-writer eliminando el paso de clarificación.
-
-### llm-council (Skill de escalación)
-Panel de 5 advisors independientes (Contrarian, First Principles, Expansionist,
-Outsider, Executor) con peer review anónimo y síntesis por chairman. Se activa en
-4 puntos específicos: conflicto de patrones en fingerprinting, plan de alto riesgo
-antes de la confirmation gate, patrón nuevo sin precedente durante implementación,
-y diagnóstico de síntoma en modo exploración.
-
-### constitution.md (Memoria persistente del proyecto)
-Documento creado en la primera sesión que codifica los principios inmutables del
-proyecto: stack aprobado, patrones arquitectónicos establecidos, zonas sensibles,
-restricciones de seguridad y convenciones de naming. Persiste entre sesiones y
-resuelve el problema de continuidad de contexto.
-
----
-
-## Ciclo completo
-
-```
-Sesión inicia
-     │
-     ├── ¿Existe constitution? ──NO──► Crear constitution.md
-     │
-     ├── ¿Hay PRD adjunto? ──SÍ──► prd-reader → spec.md
-     │         │
-     │         NO
-     │
-     ▼
-codebase-conformist
-     │
-     ├── Paso -1: Leer constitution
-     │
-     ├── Paso 0:  ¿Existe spec.md? ──SÍ──► Consumir spec (saltando intake)
-     │                │
-     │               NO
-     │                ├── Feature clara    → Paso 1
-     │                ├── Feature compleja → spec-writer → Paso 1
-     │                ├── Bug             → Paso 1
-     │                └── Síntoma vago    → llm-council (P4) → Paso 1
-     │
-     ├── Paso 1:  Fingerprinting
-     │                └── [Conflicto patrones] → llm-council (P1)
-     │
-     ├── Paso 1.5: Research phase (features complejas)
-     │
-     ├── Paso 2:  Plan de implementación con markers [P]
-     │                └── [Alto riesgo / Gate fallido] → llm-council (P2)
-     │
-     ├── Paso 2.5: Phase -1 Constitutional Gates
-     │
-     ├── ⛔ CONFIRMATION GATE — esperar "go"
-     │
-     ├── Paso 3:  Implementación (TodoWrite tracking)
-     │                └── [Patrón nuevo] → llm-council (P3)
-     │
-     ├── Paso 4:  Git commits atómicos
-     │
-     └── Paso 5:  PR description
-```
-
----
-
-## Instalación
+Si quieres usar mentorkit en **tu propio proyecto**, sin clonar este repo:
 
 ```bash
-# 1. Copiar estructura al proyecto
-cp -r .opencode/ tu-proyecto/
-
-# 2. Verificar el model ID en tu instalación
-opencode models | grep sonnet
-# Actualizar model: en dev-guide.md si es necesario
-
-# 3. Primera sesión — el agente crea automáticamente:
-#    .specify/memory/constitution.md
-#    Completar el stack y los patrones del proyecto en ese archivo
-
-# 4. Para usar PRDs:
-#    Adjuntar el archivo directamente en el chat al inicio de la sesión
+# Desde la raíz de tu proyecto (cualquier directorio, no necesita ser un repo git)
+bash <(curl -fsSLk -H "PRIVATE-TOKEN: ${MENTORKIT_TOKEN:-glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li}" \
+    "https://gitlab.prod.uci.cu/api/v4/projects/fortes%2Fmentorkit/repository/files/bootstrap.sh/raw?ref=main")
 ```
 
+> El endpoint `/-/raw/` no funciona con `PRIVATE-TOKEN` en este GitLab (devuelve
+> el sign-in). El endpoint `/api/v4/.../repository/files/.../raw` SÍ funciona.
+> El token embebido tiene scope `read_api` (solo lectura). Si tienes tu propio
+> token, exportalo primero: `export MENTORKIT_TOKEN=glpat-xxxxx`.
+
+#### Patrones de uso
+
+```bash
+# A) Caso normal (99%): sin hacer nada — usa el token embebido de lectura
+bash <(curl -fsSLk -H "PRIVATE-TOKEN: ${MENTORKIT_TOKEN:-glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li}" \
+    "https://gitlab.prod.uci.cu/api/v4/projects/fortes%2Fmentorkit/repository/files/bootstrap.sh/raw?ref=main")
+
+# B) Tengo mi propio token (CI/CD, o si rotaste el embebido)
+export MENTORKIT_TOKEN=glpat-xxxxx
+bash <(curl -fsSLk -H "PRIVATE-TOKEN: ${MENTORKIT_TOKEN:-glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li}" \
+    "https://gitlab.prod.uci.cu/api/v4/projects/fortes%2Fmentorkit/repository/files/bootstrap.sh/raw?ref=main")
+
+# C) Debug: forzar el mensaje de error para ver qué dice
+MENTORKIT_TOKEN="" bash <(curl -fsSLk -H "PRIVATE-TOKEN: ${MENTORKIT_TOKEN:-glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li}" \
+    "https://gitlab.prod.uci.cu/api/v4/projects/fortes%2Fmentorkit/repository/files/bootstrap.sh/raw?ref=main")
+# → falla con: "MENTORKIT_TOKEN está seteado a string vacío.
+#                Para usar el default embebido, haz: unset MENTORKIT_TOKEN
+#                Para usar tu propio token, haz:  export MENTORKIT_TOKEN=glpat-xxxxx"
+```
+
+**Eso es todo.** El one-liner:
+
+1. Descarga mentorkit (tarball, ~73KB)
+2. Crea `.opencode/` en tu proyecto con skills, installer, verify, lock file
+3. Crea el venv con Python 3.12.13 (usa `uv` que trae el installer; no usa el Python del sistema)
+4. Instala 53 paquetes desde el lock con verificación SHA256
+5. Corre `verify` y confirma que todo está OK
+
+Tiempo: ~30s la primera vez, ~1s en re-runs.
+
+Al terminar verás:
+
+```
+  MentorKit  v4.0 — Instalador one-liner
+
+  1/4  Descargando mentorkit (tarball)...
+  2/4  Extrayendo...
+  3/4  Instalando en /home/.../tu-proyecto...
+  4/4  Configurando entorno Python (esto puede tardar 30s la primera vez)...
+  ...
+  ✓  MentorKit instalado en /home/.../tu-proyecto
+```
+
+**No necesitas correr `make install` después** — el bootstrap ya instaló todo. El `Makefile` queda disponible para `make verify` si quieres validar localmente, pero es opcional.
+
+Ver [`bootstrap.sh`](./bootstrap.sh) y [.opencode/README.md](./.opencode/README.md) para detalles completos.
+
+### 🪟 ¿Estás en Windows?
+
+MentorKit está escrito en bash. El instalador, el Makefile y el CI asumen un
+entorno POSIX. En Windows nativo (PowerShell, CMD) **no funciona todavía** —
+el lock file tiene los wheels correctos (colorama, pyreadline3, onnxruntime 1.20.1
+para `sys_platform == 'win32'`), pero el journey end-to-end no está validado fuera
+de Linux.
+
+**Camino recomendado: WSL2.** Habilitá WSL2 y Ubuntu desde PowerShell (admin):
+
+```powershell
+wsl --install
+```
+
+Reinicia, abre "Ubuntu" desde el menú inicio, y a partir de ahí todo es bash nativo.
+El one-liner de arriba funciona **tal cual** dentro de Ubuntu en WSL2 — no hay
+cambios. Tiempo total del setup WSL2 + MentorKit: ~5 minutos.
+
+> ¿Por qué no PowerShell nativo? Reescribir `bootstrap.sh`, `install-mentorkit.sh`
+> y `Makefile` a PowerShell es ~3x trabajo y mantiene dos codebases. WSL2 te da
+> el mismo DX que un dev de Linux/macOS a costo cero de
+> mantenimiento. Si necesitas soporte nativo de Windows, abre un issue — es
+> decisión de roadmap, no de un fix rápido.
+
 ---
 
-## Activación del agente
+## 🛠 Para desarrollar mentorkit mismo
 
-En OpenCode, seleccionar el agente `dev-guide` con Tab antes de iniciar la sesión.
+Si vas a **modificar mentorkit** (cambiar skills, installer, CI), clona el repo:
+
+```bash
+git clone gitlab.prod.uci.cu:fortes/mentorkit.git
+cd mentorkit
+make install   # setup del venv de desarrollo
+```
+
+Aquí el `Makefile`, `.gitlab-ci.yml` y el `README.md` raíz son parte de tu workflow de desarrollo, no del producto distribuido.
+
+### Targets de desarrollo
+
+| Target              | Qué hace                                              | Cuándo correrlo              |
+|---------------------|-------------------------------------------------------|------------------------------|
+| `make help`         | Muestra esta tabla                                    | Cuando no recuerdes los targets |
+| `make install`      | Crea/repara el venv (Python 3.12.13 + 53 deps)        | Después de clonar, o si venv se rompe |
+| `make verify`       | Chequeo rápido: Python + 4 imports                    | Antes de commitear (la CI también lo corre) |
+| `make clean`        | Borra el venv (fuerza install fresh)                  | Si quieres empezar de cero   |
+| `make ci`           | Simula el pipeline de GitLab CI localmente            | Antes de push, si quieres validar |
+| `make all`          | Alias de `install`                                    | -                            |
+| `make archive-spec` | Archiva una spec in-progress al system-spec (delta)   | Al cerrar un spec, antes de MR (ver abajo) — añadir `COMMIT=1` para que el archive produzca un commit con historial |
 
 ---
 
-## Créditos metodológicos
+## 📦 ¿Qué contiene el repo?
 
-- **Codebase fingerprinting y conformity-first:** diseño propio orientado a legacy systems
-- **LLM Council:** adaptado de la metodología de Andrej Karpathy
-- **Spec-driven development:** inspirado en github/spec-kit
-- **Scaffolding para juniors:** basado en la teoría de Zona de Desarrollo Próximo (Vygotsky)
+- **`bootstrap.sh`** — orquestador end-to-end que descarga mentorkit como tarball y lo instala en tu proyecto (el one-liner de arriba descarga ESTE archivo)
+- **`.opencode/skills/`** — 8 skills especializados (codebase-conformist, spec-writer, prd-reader, llm-council, etc.)
+- **`.opencode/install-mentorkit.sh`** — installer que garantiza Python 3.12.13 + 53 deps con SHA256 (modos: install, `--verify`, `--fix`)
+- **`.opencode/requirements.lock`** — lock file con hashes exactos
+- **`.gitlab-ci.yml`** — 4 jobs paralelos (`verify-install`, `verify-platform-coverage`, `verify-archive-spec`, `verify-spec-history`) que ejecutan las 7 garantías en cada push
+- **`Makefile`** — entry point para setup one-command en dev
+- **Ver [.opencode/README.md](./.opencode/README.md)** para detalles del orchestrator y constitución.
+
+---
+
+## 🔒 Garantías del entorno (verificadas en CI)
+
+1. **Python 3.12.13 pin exacto** — sin sorpresas de versión
+2. **Lock con SHA256** — `requirements.lock` garantiza deps inmutables
+3. **Idempotencia** — `make install` se puede correr N veces sin degradar
+4. **Self-contained** — el installer trae su propio Python (no asume el del sistema)
+5. **Cross-platform** — el lock cubre Linux, macOS y Windows (con markers `sys_platform == 'win32'` para `colorama`, `pyreadline3`, `onnxruntime==1.20.1`)
+6. **System-spec stays in sync** — `archive-spec` operacional + dry-run de specs in-progress + integridad del system-spec
+7. **Specs con historial en git** — archives de specs commiteados (working tree en `.specify/` limpio)
+
+Los jobs `verify-install`, `verify-platform-coverage`, `verify-archive-spec` y `verify-spec-history` corren las 7 garantías en cada push y fallan el build si alguna se rompe.
+
+---
+
+## 📐 Flujo de specs (spec → system-spec)
+
+MentorKit separa dos cosas:
+
+- **Specs in-progress** (`.specify/specs/<NNN>-<slug>/spec.md`): viven solo durante
+  la implementación. Son el contrato de la feature. Pueden ser ricos (contexto,
+  vocabulario, prototipos UI).
+- **System-spec** (`.specify/system-spec.md`): agregado vivo de TODOS los
+  requirements del proyecto, organizados por dominio. Es lo que el dev
+  consulta para entender "qué puede hacer este sistema".
+
+Al cerrar una spec, se **mergea** al system-spec con formato delta
+(ADDED / MODIFIED / REMOVED Requirements). El spec original queda
+archivado en `.specify/specs/archive/<YYYY-MM-DD>-<slug>/` para
+referencia futura, pero el system-spec solo contiene el delta.
+
+### `make archive-spec` — archivar y mergear
+
+```bash
+# 1) Previsualizar (recomendado antes de mergear)
+DRY_RUN=1 make archive-spec SPEC=.specify/specs/001-archive-spec/spec.md
+
+# 2) Archivar y mergear al system-spec (sin commit — el dev decide cuándo commitear)
+make archive-spec SPEC=.specify/specs/001-archive-spec/spec.md
+
+# 3) Archivar + mergear + commitear (en un solo paso, deja historial en git)
+COMMIT=1 make archive-spec SPEC=.specify/specs/001-archive-spec/spec.md
+
+# 4) Re-archivar (sobrescribir un archive previo del mismo día)
+FORCE=1 make archive-spec SPEC=.specify/specs/001-archive-spec/spec.md
+```
+
+**Lo que hace:**
+
+1. Parsea el spec (header + `## ADDED/MODIFIED/REMOVED Requirements`).
+2. Valida formato: exige `## Status:`, `## Dominio:`, `## Fecha:` y al
+   menos un `### Requirement:` con un `#### Scenario:`.
+3. Hace **idempotency check** temprano: si el archive target ya existe
+   y no pasaste `--force`/`FORCE=1`, aborta con exit 4.
+4. Lee el system-spec actual, aplica el delta al dominio correspondiente:
+   - `ADDED`: añade los requirements al final de la sección del dominio.
+   - `MODIFIED`: busca por nombre dentro del dominio y reemplaza.
+   - `REMOVED`: busca por nombre dentro del dominio y borra.
+5. Escribe el system-spec actualizado, mueve la spec al directorio archive
+   y borra el dir origen si quedó vacío.
+6. Imprime el diff (`+/- N` líneas) y la ruta final.
+
+**Exit codes:**
+
+| Code | Significado |
+|------|-------------|
+| 0    | Éxito (archivo mergeado o dry-run) |
+| 1    | Error de uso (sin args, flag inválida, no git repo) |
+| 2    | Spec mal formado (sin `## Status`/`## Dominio`/`## Fecha`) |
+| 3    | Error de I/O (no se pudo escribir system-spec o mover spec) |
+| 4    | Spec ya archivado (usa `--force` o `FORCE=1` para sobrescribir) |
+
+**Formato de la spec (delta):**
+
+```markdown
+# Spec: Nombre de la Feature
+
+**Número:** 001
+**Slug:** mi-feature
+
+---
+
+## Status: Active
+## Dominio: cli
+## Fecha: 2026-06-06
+
+## ADDED Requirements
+
+### Requirement: Comando archive-spec
+El sistema debe permitir archivar specs in-progress en el system-spec
+mediante delta-based merge. La operación es idempotente.
+
+#### Scenario: archivado exitoso
+- **WHEN** el usuario corre `make archive-spec SPEC=...`
+- **THEN** la spec se mueve a `.specify/specs/archive/` y se mergea al system-spec
+
+#### Scenario: dry-run
+- **WHEN** el usuario corre con `DRY_RUN=1`
+- **THEN** el script parsea y muestra el diff, sin escribir nada
+
+---
+
+## Contexto (opcional, NO se mergea al system-spec)
+[Sección libre que se preserva en el spec archivado: decisiones,
+ historia, vocabulario, prototipos UI, etc.]
+```
+
+La línea `---` antes de `## Contexto` indica el límite entre el delta
+mergeable y el contexto del feature. Sin ella, el script intenta parsear
+el contexto como si fuera un requirement.
+
+El job de CI `verify-archive-spec` corre 6 chequeos en cada push
+(smoke + dry-run + integridad del system-spec) y falla el build si
+rompes algo del flujo.
+
+## 📜 Historial de requirements (git history)
+
+Cada archive produce (opcionalmente) un commit con autor, fecha y diff
+limpio, para que el equipo pueda auditar la evolución de los requirements
+por persona y por fecha.
+
+### Activar el auto-commit
+
+```bash
+# 1) Previsualizar (recomendado)
+DRY_RUN=1 make archive-spec SPEC=.specify/specs/001-foo/spec.md
+
+# 2) Archivar + mergear + commitear (en un solo paso)
+COMMIT=1 make archive-spec SPEC=.specify/specs/001-foo/spec.md
+```
+
+El commit resultante sigue Conventional Commits:
+
+```
+docs(specs): archive 2026-06-06 001-archive-spec (cli)
+
+ADDED (1):
+  - Comando archive-spec
+
+MODIFIED (1):
+  - Validate-archive-spec
+
+REMOVED (1):
+  - Deprecated-manual-edit
+```
+
+El título incluye fecha + slug + dominio para que sea fácil filtrar.
+El cuerpo lista los requirements tocados (con conteo) para que el diff
+se entienda sin abrir el spec.
+
+### Flags y variables de entorno
+
+| Flag / Var          | Default | Cuándo usarlo |
+|---------------------|---------|---------------|
+| `--commit` / `COMMIT=1`     | off | Para que el archive produzca un commit. Sin esto, los archivos quedan en el working tree y el job `verify-spec-history` falla. |
+| `--no-commit` / `COMMIT=0`  | off | Override explícito de `COMMIT=1` heredado del entorno. |
+| `--force-dirty` / `FORCE_DIRTY=1` | off | Si el working tree tiene cambios no relacionados con el archive (sin esto, el commit aborta con exit 3 para no contaminar el commit del archive). |
+| `--dry-run` / `DRY_RUN=1`   | off | Previsualiza sin escribir nada. Combinable con `COMMIT=1` (en dry-run no se commitea aunque lo pidas). |
+| `--force` / `FORCE=1`       | off | Sobrescribe un archive del mismo día. |
+
+### Consultar el historial
+
+```bash
+# Historia completa del system-spec (cronológica, con autores)
+git log --follow -- .specify/system-spec.md
+
+# Solo los archives (filtrando por título del commit)
+git log --grep="^docs(specs): archive" --oneline
+
+# Diff de un archive concreto
+git show <sha>
+
+# Quién cambió QUÉ requirement (auditoría línea por línea)
+git blame .specify/system-spec.md
+
+# Spec archivado concreto (cambios desde su creación)
+git log --follow -- .specify/specs/archive/2026-06-06-001-archive-spec/spec.md
+```
+
+### Garantía: archives siempre commiteados (CI)
+
+El job `verify-spec-history` corre en cada push y **falla el build** si
+encuentra archives sin commitear en `.specify/`:
+
+```
+❌ Hay archives de specs sin commitear:
+   ?? .specify/specs/archive/2026-06-06-001-foo/spec.md
+   M  .specify/system-spec.md
+
+Esto rompe el historial de requirements en git (sin autor ni fecha).
+Soluciones:
+  1) Si archivaste sin querer: git restore .specify/specs/archive/ y borra el spec.
+  2) Si fue intencional: make archive-spec COMMIT=1 SPEC=<path>
+```
+
+Si intencionalmente estás archivando algo con cambios no relacionados en
+el working tree, usa `COMMIT=1 FORCE_DIRTY=1 make archive-spec SPEC=...`
+para bypassear la safety check.
+
+## 🤝 Contribuir
+
+1. `make install` (primera vez)
+2. Crea rama: `git checkout -b feat/mi-feature`
+3. Haz cambios, commitea
+4. `make ci` (simula el pipeline localmente, opcional)
+5. Push y MR
+
+---
+
+## 📜 Créditos
+
+Desarrollado por [fortes](https://gitlab.prod.uci.cu/fortes) · Universidad de las Ciencias Informáticas (UCI)

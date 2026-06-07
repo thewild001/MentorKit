@@ -6,12 +6,13 @@ description: >
   [NEEDS CLARIFICATION] en lugar de asumir. Para features nuevas o moderadamente
   complejas en legacy systems donde la falta de claridad en requisitos es más costosa
   que tomarse el tiempo de especificar. Actívalo desde codebase-conformist cuando la
-  tarea involucre lógica de negocio no trivial, múltiples actores, o impacto en más
-  de un módulo.
+  tarea involucre lógica de negocio no trivial, múltiples actores, o impacto en más de
+  un módulo.
 compatibility: opencode
 metadata:
-  version: "1.0"
+  version: "1.1"
   inspired-by: github/spec-kit
+  format: delta-based
 ---
 
 # Spec Writer
@@ -23,6 +24,12 @@ estructurada y sin ambigüedades antes de que el equipo toque el codebase.
 `[NEEDS CLARIFICATION: pregunta específica]`. Un junior implementando sobre
 suposiciones incorrectas en un legacy system es más costoso que 10 minutos
 de clarificación.
+
+**Principio de output (v1.1):** La spec que produces se mergea automáticamente
+al system-spec.md del proyecto mediante `make archive-spec SPEC=<path>`.
+Por eso el formato es **delta-based**: cada spec describe SOLO lo que
+cambia (ADDED / MODIFIED / REMOVED Requirements), no el sistema completo.
+El contexto detallado vive en este spec archivado, no en el system-spec.
 
 ---
 
@@ -36,6 +43,14 @@ Read(".specify/memory/constitution.md")
 
 Si no existe, omite este paso. La spec se producirá sin restricciones constitucionales
 pero el dev-guide debe inicializarla antes de la primera implementación.
+
+Si el proyecto ya tiene un `system-spec.md` (`.specify/system-spec.md`),
+léelo para entender qué requirements ya están definidos en cada dominio
+— esto evita duplicar o contradecir lo existente:
+
+```
+Read(".specify/system-spec.md")
+```
 
 ---
 
@@ -74,9 +89,13 @@ bombardeo de preguntas simultáneas.
 Para cada dimensión: si la respuesta es clara, documéntala. Si es ambigua o
 no fue mencionada, produce un marcador `[NEEDS CLARIFICATION]`.
 
+**Importante:** los marcadores `[NEEDS CLARIFICATION]` se resuelven en este
+diálogo, NO se guardan en el archivo final. El spec archivado debe estar
+libre de ambigüedades.
+
 ---
 
-## Paso 3 — Producir la Spec
+## Paso 3 — Producir la Spec (formato delta)
 
 Genera la spec como archivo markdown y guárdala con `Write`:
 
@@ -87,89 +106,92 @@ Ruta: .specify/specs/[NNN]-[feature-slug]/spec.md
 Donde `NNN` es el siguiente número disponible en `.specify/specs/`. Usa `Glob`
 para determinarlo.
 
-### Formato de la spec:
+### Formato de la spec (delta-based):
 
 ```markdown
 # Spec: [Nombre de la Feature]
 
 **Número:** [NNN]
-**Fecha:** [YYYY-MM-DD]
-**Estado:** [DRAFT | CLARIFICATION_NEEDED | READY]
+**Slug:** [kebab-case-slug]
 
 ---
 
-## Contexto
+## Status: Active
+## Dominio: [nombre-del-dominio]
+## Fecha: [YYYY-MM-DD]
 
-[Por qué se necesita esta feature. Qué problema resuelve. Qué pasa si no se hace.]
+## ADDED Requirements
 
----
+### Requirement: [nombre-corto-y-descriptivo]
+[Cuerpo del requirement — 1-3 párrafos describiendo el comportamiento
+nuevo. Sin secciones internas; los scenarios van abajo.]
 
-## Comportamiento Esperado
+#### Scenario: [nombre-del-escenario-feliz]
+- **WHEN** [condición disparadora]
+- **THEN** [resultado esperado]
 
-### Flujo principal
-[Descripción paso a paso del happy path]
+#### Scenario: [nombre-del-escenario-de-error]
+- **WHEN** [condición que rompe]
+- **THEN** [resultado graceful esperado]
 
-### Flujos alternativos
-[Cada variación relevante]
+### Requirement: [otro-requirement-nuevo]
+[Cuerpo.]
 
-### Manejo de errores
-[Qué debe pasar en cada caso de error conocido]
-[NEEDS CLARIFICATION: ¿Qué ocurre cuando X?] ← si no fue especificado
+#### Scenario: [escenario]
+- **WHEN** ...
+- **THEN** ...
 
----
+## MODIFIED Requirements
 
-## Actores y Permisos
+### Requirement: [nombre-de-requirement-existente]
+[Nuevo cuerpo. Reemplaza al anterior en el system-spec.]
 
-| Actor | Puede | No puede |
-|-------|-------|----------|
-| [rol] | [acción] | [restricción] |
+#### Scenario: [escenario-actualizado]
+- **WHEN** [condición, posiblemente diferente del original]
+- **THEN** [resultado nuevo]
 
-[NEEDS CLARIFICATION: ¿El rol Y tiene acceso a esta función?] ← si aplica
+## REMOVED Requirements
 
----
-
-## Datos
-
-### Entrada
-[Campos, tipos, validaciones conocidas]
-[NEEDS CLARIFICATION: ¿El campo Z es obligatorio?] ← si aplica
-
-### Salida
-[Estructura de respuesta esperada]
-
-### Estado que cambia
-[Qué tablas/entidades se modifican]
+### Requirement: [nombre-de-requirement-a-remover]
+[Deprecated: [razón concreta de remoción.]]
 
 ---
 
-## Integraciones
+## Contexto (opcional, no se mergea al system-spec)
 
-[Módulos del codebase involucrados — inferir del contexto si es posible]
-[Servicios externos — [NEEDS CLARIFICATION] si no se mencionaron]
-
----
-
-## Criterios de Aceptación
-
-- [ ] [Condición verificable 1]
-- [ ] [Condición verificable 2]
-- [ ] [NEEDS CLARIFICATION: ¿Cómo se valida X?]
-
----
-
-## Suposiciones Documentadas
-
-[Lista de decisiones tomadas ante la ausencia de información explícita.
-Estas son aceptadas hasta que el equipo las invalide.]
-
----
-
-## Marcadores de Clarificación Pendientes
-
-[Lista consolidada de todos los [NEEDS CLARIFICATION] del documento.
-El estado es CLARIFICATION_NEEDED si hay alguno sin resolver.
-El estado es READY cuando todos están resueltos o se tomó una decisión documentada.]
+[Por qué se necesita esta feature. Qué problema resuelve. Historia
+relevante. Esta sección queda en el spec archivado para referencia
+futura, pero NO aparece en el system-spec.]
 ```
+
+### Reglas del formato:
+
+- **`## Dominio`** es OBLIGATORIO. Es el bucket donde el requirement vive
+  en el system-spec. Si la feature cruza varios dominios, crea una spec
+  por cada dominio (o usa dominios existentes).
+- **`## Fecha`** es OBLIGATORIO en formato `YYYY-MM-DD`. Determina el
+  prefijo del directorio archive (`<fecha>-<slug>`).
+- **`### Requirement:`** el nombre debe ser estable (no cambiarlo entre
+  MODIFIED) — es el identificador que el script usa para encontrar y
+  reemplazar el requirement previo.
+- **`#### Scenario:`** usa verbos en imperativo ("disparar", "validar")
+  o sustantivos descriptivos ("espejo alcanzable", "instalación rápida").
+  Mantén el patrón `**WHEN** ... **THEN** ... **AND** ...`.
+- **`## ADDED`**, **`## MODIFIED`**, **`## REMOVED`** pueden omitirse
+  si la spec solo añade (es lo más común). Si solo modifica o solo
+  remueve, usa solo esa sección.
+- La sección **`## Contexto`** al final (después de un `---`) NO se
+  mergea al system-spec. Úsala para preservar historia/decisiones
+  sin contaminar el system-spec.
+
+### Cómo elegir `## Dominio`:
+
+- Si `system-spec.md` ya tiene dominios, usa uno existente o agrega uno
+  nuevo solo si la feature no encaja en ninguno.
+- Ejemplos de dominios típicos: `ci`, `install`, `cli`, `ux`,
+  `performance`, `docs`, `security`.
+- Un dominio = un área del proyecto con concerns coherentes. NO es
+  lo mismo que una feature puntual.
 
 ---
 
@@ -177,11 +199,13 @@ El estado es READY cuando todos están resueltos o se tomó una decisión docume
 
 Antes de entregar la spec, verifica internamente:
 
-- [ ] ¿Cada requisito es verificable? (evitar "el sistema debe ser rápido")
-- [ ] ¿Los criterios de aceptación son binarios? (pasa / no pasa)
-- [ ] ¿Las ambigüedades están marcadas, no asumidas?
-- [ ] ¿El estado es READY o CLARIFICATION_NEEDED según los marcadores?
-- [ ] ¿Se documentaron todas las suposiciones tomadas?
+- [ ] ¿El archivo NO contiene `[NEEDS CLARIFICATION]` (todos resueltos en chat)?
+- [ ] ¿`## Status:`, `## Dominio:`, `## Fecha:` están presentes y bien formados?
+- [ ] ¿Cada `### Requirement:` tiene al menos un `#### Scenario:`?
+- [ ] ¿Los scenarios siguen el patrón `**WHEN**/**THEN**/**AND**`?
+- [ ] ¿Los requirements MODIFIED tienen un nombre idéntico a uno existente en el dominio?
+- [ ] ¿Los requirements REMOVED tienen razón concreta (no "ya no se usa" — por qué)?
+- [ ] ¿La sección `## Contexto` está al final, después de un `---`?
 
 ---
 
@@ -191,20 +215,27 @@ Al completar, reporta a codebase-conformist:
 
 ```
 Spec generada: .specify/specs/[NNN]-[slug]/spec.md
-Estado: [READY | CLARIFICATION_NEEDED]
-Clarificaciones pendientes: [N]
+Dominio: [nombre]
+ADDED: [N]   MODIFIED: [N]   REMOVED: [N]
+Formato: delta (listo para 'make archive-spec')
+
 Resumen: [2-3 oraciones describiendo la feature tal como fue especificada]
 ```
 
-Si el estado es `CLARIFICATION_NEEDED`, codebase-conformist debe resolver los
-marcadores con el usuario ANTES de proceder al fingerprinting.
+Si el estado es `CLARIFICATION_NEEDED` (algún [NEEDS CLARIFICATION] sigue
+sin resolver en el diálogo), codebase-conformist debe resolverlo con el
+usuario ANTES de proceder al fingerprinting. No se debe archivar una
+spec con ambigüedades.
 
 ---
 
 ## Anti-Patrones
 
-- ❌ Asumir comportamiento no especificado para "no interrumpir el flujo"
-- ❌ Producir specs tan largas que nadie las lee
-- ❌ Marcar como clarificación cosas que son inferibles del contexto
-- ❌ Omitir criterios de aceptación ("se verá cuando esté implementado")
-- ❌ Copiar terminología técnica del codebase cuando la spec debería hablar de negocio
+- ❌ Dejar `[NEEDS CLARIFICATION]` en el archivo (se resuelven en chat)
+- ❌ Producir specs con el formato detallado antiguo (Contexto/Comportamiento/Actores)
+  — el script archive-spec no las parsea
+- ❌ Usar dominios nuevos sin justificación (preferir reusar dominios existentes)
+- ❌ Renombrar requirements entre MODIFIED — el nombre es el ID
+- ❌ MODIFIED con cuerpo idéntico al existente (eso es un no-op, omitirlo)
+- ❌ Mezclar concerns de múltiples dominios en una sola spec (dividir)
+- ❌ Omitir `## Fecha` (el script no puede archivar sin ella)
