@@ -41,7 +41,7 @@ fi
 TMP=$(mktemp -d)
 trap "rm -rf $TMP" EXIT
 
-echo -e "\n  ${CYAN}MentorKit${RESET}  ${DIM}v4.0 — Instalador one-liner${RESET}\n"
+echo -e "\n  ${CYAN}MentorKit${RESET}  ${DIM}v5.0 — Instalador one-liner${RESET}\n"
 
 # ─── 1) Descargar tarball ────────────────────────────────────────────────
 TARBALL_URL="${GITHUB_CODELOAD_HOST}/${REPO}/tar.gz/refs/heads/${BRANCH}"
@@ -114,5 +114,5 @@ echo "  ${DIM}Próximos pasos (todos opcionales):${RESET}"
 echo "     make verify    # confirmar que el venv está OK"
 echo "     make ci        # simular el pipeline de GitLab localmente"
 echo ""
-echo "  ${DIM}Para usar mentorkit:${RESET} abre OpenCode en este proyecto y selecciona el agente MentorKit4.0"
+echo "  ${DIM}Para usar mentorkit:${RESET} abre OpenCode en este proyecto y selecciona el agente MentorKit5.0"
 echo ""
