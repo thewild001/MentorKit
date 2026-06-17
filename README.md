@@ -34,7 +34,7 @@ Tiempo: ~30s la primera vez, ~1s en re-runs.
 Al terminar verás:
 
 ```
-  MentorKit  v4.0 — Instalador one-liner
+  MentorKit  v5.0 — Instalador one-liner
 
   1/4  Descargando mentorkit (tarball)...
   2/4  Extrayendo...
