@@ -1,6 +1,6 @@
 # MentorKit — Mecanismo Agentico de Desarrollo
 
-**Versión:** 4.0
+**Versión:** 5.0
 **Compatibilidad:** OpenCode
 **Orientado a:** Desarrollo y mantenimiento de sistemas legacy con soporte a desarrolladores junior
 
@@ -14,7 +14,7 @@ desarrolladores junior, extrayendo las convenciones arquitectónicas no document
 de una base de código existente y gobernando el proceso de desarrollo mediante un
 workflow estructurado con gates de validación explícitos.
 
-Esta versión (4.0) integra cuatro principios de diseño:
+Esta versión (5.0) integra cuatro principios de diseño:
 
 **1. Conformidad primero**
 El código generado debe ser indistinguible del código existente del proyecto.
@@ -64,7 +64,7 @@ en cualquier lenguaje y framework.
 
 # Lo que se genera durante el install (gitignored):
 .opencode/.mentorkit/
-├── venv/                        # Python 3.12.x + 53 paquetes
+├── venv/                        # Python 3.12.13 + 60 paquetes
 └── python-path.txt              # Ruta absoluta del Python del venv
 
 # Lo que el agente genera durante el uso (no se instala):
@@ -81,14 +81,14 @@ en cualquier lenguaje y framework.
 
 A nivel raíz del repo:
 ```
-.gitlab-ci.yml                   # CI: verifica las 4 garantías en cada push
+.gitlab-ci.yml                   # CI: 4 jobs paralelos verifican las 7 garantías en cada push
 ```
 
 ---
 
 ## Componentes
 
-### MentorKit4.0 (Agente primario)
+### MentorKit5.0 (Agente primario)
 Punto de entrada del desarrollador. Orquesta la secuencia completa:
 inicializa la constitution en la primera sesión, detecta PRDs adjuntos de forma
 silenciosa y condicional, carga codebase-conformist y gestiona la confirmation gate
@@ -233,21 +233,27 @@ bash install-mentorkit.sh --help    # ayuda
 `--verify` y `--fix` son útiles en CI, pre-commit, y para diagnosticar
 entornos rotos sin tocar nada hasta confirmar.
 
-### Las 4 garantías
+### Las 7 garantías
 
-Después del install, el entorno está **garantizado** en 4 dimensiones:
+Después del install, el entorno está **garantizado** en 7 dimensiones:
 
-| # | Garantía | Cómo verificarla |
+| # | Garantía | Job CI |
 |---|---|---|
-| 1 | **Python 3.12.13** exacto (LTS Ubuntu 24.04 / Debian 12 / RHEL 9) | `python -V` en el venv da `3.12.13` |
-| 2 | **53 paquetes pinneados** con SHA256 (versiones exactas) | `cat .opencode/requirements.lock` |
-| 3 | **uv autocontenido** dentro del venv (re-installs no necesitan red) | `.opencode/.mentorkit/venv/bin/uv --version` |
-| 4 | **Verificación PASS** post-install (import test) | `bash .opencode/mentorkit-verify.sh` exit 0 |
+| 1 | Python 3.12.13 pin exacto | `verify-install` |
+| 2 | Lock con SHA256 (60 paquetes, `--universal`) | `verify-platform-coverage` |
+| 3 | uv autocontenido en el venv | `verify-install` |
+| 4 | `mentorkit-verify.sh` PASS (4 imports) | `verify-install` |
+| 5 | Lock cross-platform (linux/macos/windows) | `verify-platform-coverage` |
+| 6 | System-spec stays in sync | `verify-archive-spec` |
+| 7 | Specs con historial en git | `verify-spec-history` |
+
+Para los detalles de implementación de cada check, ver `.gitlab-ci.yml`.
 
 Para regenerar el lock (después de editar `requirements.in`):
 
 ```bash
 uv pip compile .opencode/requirements.in \
+    --universal \
     --python-version 3.12 \
     --generate-hashes \
     -o .opencode/requirements.lock
@@ -292,16 +298,18 @@ bash tu-proyecto/.opencode/mentorkit-verify.sh
 
 ## Continuous Integration
 
-El repo incluye `.gitlab-ci.yml` en la raíz. Define un solo job `verify-install`
-que ejecuta las 4 garantías en cada push.
+El repo incluye `.gitlab-ci.yml` en la raíz. Define 4 jobs paralelos en
+stage `verify` que ejecutan las 7 garantías en cada push (jobs sin
+`needs:`, corren independientes y se cachean a sí mismos).
 
-**Imagen:** `debian:bookworm-slim` (sin Python preinstalado). El installer debe
+**Imagen:** `ubuntu:22.04` (sin Python preinstalado). El installer debe
 traer todo desde cero. Si esto pasa, sabemos que cualquiera puede clonar el
 repo en una máquina limpia y reproducir el entorno.
 
 **Filosofía:** "probado en mi máquina" no es una garantía. El CI es la única
-forma de mantener las 4 garantías en el tiempo — un PR futuro no podrá romper
-el lock o degradar Python sin que CI lo detecte.
+forma de mantener las 7 garantías en el tiempo — un PR futuro no podrá romper
+el lock, degradar Python, dejar specs sin archivar, o tener un lock no
+universal sin que CI lo detecte.
 
 **Flujo del job:**
 
