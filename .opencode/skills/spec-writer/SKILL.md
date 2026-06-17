@@ -37,19 +37,19 @@ El contexto detallado vive en este spec archivado, no en el system-spec.
 
 Antes de producir la spec, lee la constitution del proyecto:
 
-```
-Read(".specify/memory/constitution.md")
+```python
+constitution = Read("openspec/memory/constitution.md")
 ```
 
 Si no existe, omite este paso. La spec se producirá sin restricciones constitucionales
 pero el dev-guide debe inicializarla antes de la primera implementación.
 
-Si el proyecto ya tiene un `system-spec.md` (`.specify/system-spec.md`),
+Si el proyecto ya tiene un `system-spec.md` (`openspec/system-spec.md`),
 léelo para entender qué requirements ya están definidos en cada dominio
 — esto evita duplicar o contradecir lo existente:
 
-```
-Read(".specify/system-spec.md")
+```python
+system_spec = Read("openspec/system-spec.md")
 ```
 
 ---
@@ -99,12 +99,12 @@ libre de ambigüedades.
 
 Genera la spec como archivo markdown y guárdala con `Write`:
 
-```
-Ruta: .specify/specs/[NNN]-[feature-slug]/spec.md
+```python
+Write(f"openspec/specs/{nnn}-{slug}/spec.md", content)
 ```
 
-Donde `NNN` es el siguiente número disponible en `.specify/specs/`. Usa `Glob`
-para determinarlo.
+Donde `NNN` es el siguiente número disponible en `openspec/specs/`. Usa `Glob`
+para determinarlo en `openspec/specs/`.
 
 ### Formato de la spec (delta-based):
 
@@ -214,7 +214,7 @@ Antes de entregar la spec, verifica internamente:
 Al completar, reporta a codebase-conformist:
 
 ```
-Spec generada: .specify/specs/[NNN]-[slug]/spec.md
+Spec generada: openspec/specs/[NNN]-[slug]/spec.md
 Dominio: [nombre]
 ADDED: [N]   MODIFIED: [N]   REMOVED: [N]
 Formato: delta (listo para 'make archive-spec')

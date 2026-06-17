@@ -6,7 +6,7 @@ description: >
   (sin dependencias del SO, compatible Linux y Windows). prd-reader es lógica
   pura: mapea el contenido extraído a la estructura de spec.md (formato delta),
   identifica gaps con [NEEDS CLARIFICATION] y produce los artefactos en
-  .specify/specs/. Invocado opcionalmente desde MentorKit cuando el usuario
+  openspec/changes/. Invocado opcionalmente desde MentorKit cuando el usuario
   adjunta un PRD formal.
 compatibility: opencode
 metadata:
@@ -25,7 +25,7 @@ No contiene lógica de extracción de archivos — eso lo hace `document-extract
 ```
 document-extractor  ← extrae texto e imágenes del archivo (sin deps del SO)
 prd-reader          ← mapea el contenido extraído a spec.md (lógica pura)
-archive-spec        ← mergea la spec en .specify/system-spec.md (delta-based)
+archive-spec        ← mergea la spec en openspec/system-spec.md (delta-based)
 ```
 
 **Principio de output (v2.1):** La spec que produces se mergea al
@@ -45,7 +45,7 @@ skill({ name: "document-extractor" })
 
 Invoca `extract_document(prd_path, output_dir)` con:
 - `prd_path`: ruta del archivo PRD adjunto
-- `output_dir`: `.specify/specs/[NNN]-[slug]/`
+- `output_dir`: `openspec/changes/[NNN]-[slug]/`
 
 Si el resultado contiene `error` → reporta al junior y detente.
 Si hay `warnings` → menciónalos pero continúa.
@@ -55,15 +55,16 @@ Si hay `warnings` → menciónalos pero continúa.
 ## Paso 2 — Leer la constitution y el system-spec
 
 ```python
-Read(".specify/memory/constitution.md")
-Read(".specify/system-spec.md")  # si existe
+constitution = Read("openspec/memory/constitution.md")
+
+system_spec = Read("openspec/system-spec.md")
 ```
 
 El vocabulario de dominio de la constitution tiene precedencia sobre
 términos ambiguos del PRD. Si hay conflicto, usa el término de la constitution
 y anótalo como suposición documentada.
 
-Si `system-spec.md` existe, identifica los **dominios ya establecidos**
+Si `system-spec.md` existe (desde cualquiera de los dos paths), identifica los **dominios ya establecidos**
 para que el `## Dominio` de la spec use uno existente si encaja.
 NO crees un dominio nuevo si el requirement cabe en uno existente.
 
@@ -136,14 +137,16 @@ en el delta. Los prototipos son metadata del feature, no requirements.
 
 ## Paso 6 — Producir spec.md (formato delta + contexto rico)
 
-Determina el número con `Glob(".specify/specs/*/spec.md")` y escribe:
+Determina el número con `Glob` en `openspec/specs/` y escribe en openspec/changes/:
 
 ```python
 from glob import glob
-existing = glob(".specify/specs/*/spec.md")
+existing = glob("openspec/specs/*/spec.md")
 nnn = str(len(existing) + 1).zfill(3)
-spec_path = f".specify/specs/{nnn}-{slug}/spec.md"
+spec_path = f"openspec/changes/{nnn}-{slug}/spec.md"
 ```
+
+Escribe el contenido en `spec_path`:
 
 ### Formato (delta arriba + contexto rico abajo)
 
@@ -190,7 +193,7 @@ botones. NO parafrasees.]
 
 ## Contexto (NO se mergea al system-spec)
 
-> Esta sección se preserva en el spec archivado (`.specify/specs/archive/.../spec.md`)
+> Esta sección se preserva en el spec archivado (`openspec/specs/archive/.../spec.md`)
 > para referencia futura del equipo. NO aparece en el system-spec.
 
 ### Vocabulario de Dominio
@@ -258,16 +261,16 @@ botones. NO parafrasees.]
 ## Paso 7 — Retornar control
 
 ```
-PRD procesado: [nombre-archivo]
-Extracción:   document-extractor ([método: Python puro | markitdown])
-Spec:         .specify/specs/[NNN]-[slug]/spec.md
-Dominio:      [nombre]
-ADDED:        [N]   MODIFIED: [N]   REMOVED: [N]
-Prototipos:   [N imágenes en ui-prototypes/]
-Gaps:         [resueltos en chat | N pendientes]
-Formato:      delta (listo para 'make archive-spec')
+PRD procesado:     [nombre-archivo]
+Extracción:        document-extractor ([método: Python puro | markitdown])
+Spec:              openspec/changes/[NNN]-[slug]/spec.md
+Dominio:           [nombre]
+ADDED:             [N]   MODIFIED: [N]   REMOVED: [N]
+Prototipos:        [N imágenes en ui-prototypes/]
+Gaps:              [resueltos en chat | N pendientes]
+Formato:           delta (listo para 'make archive-spec')
 
-Resumen:      [2-3 oraciones describiendo la feature]
+Resumen:           [2-3 oraciones describiendo la feature]
 ```
 
 Si quedaron gaps sin resolver → codebase-conformist los trabaja con

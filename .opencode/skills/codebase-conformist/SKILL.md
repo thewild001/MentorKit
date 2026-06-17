@@ -37,15 +37,15 @@ Constitution → Intake → [Spec?] → Fingerprinting → [Research?] → [Conf
 
 **Siempre, antes de cualquier otra cosa:**
 
-```
-Read(".specify/memory/constitution.md")
+```python
+constitution = Read("openspec/memory/constitution.md")
 ```
 
 La constitution contiene los principios inmutables del proyecto: tech stack aprobado,
 patrones arquitectónicos establecidos, estándares de testing, restricciones de seguridad
 y cualquier decisión técnica que el equipo haya codificado como invariante.
 
-**Si no existe:**
+**Si no existe en openspec/:**
 Notifica al junior: *"No encontré una constitution del proyecto. Te recomiendo
 crearla antes de la primera implementación. Puedo generarte una plantilla."*
 Continúa sin ella — pero los Phase -1 Gates del Paso 2.5 operarán en modo reducido.
@@ -75,8 +75,8 @@ Si no está disponible, continúa. El Fingerprinting manual cubre el mismo terre
 
 **Verificación silenciosa de spec existente:**
 
-```
-Glob(".specify/specs/*/spec.md")
+```python
+existing = Glob("openspec/specs/*/spec.md")
 ```
 
 Si existe → lee el estado (READY / CLARIFICATION_NEEDED):
@@ -219,9 +219,9 @@ Pregunta concreta: [lo que necesita saber el plan]
 Responde en máximo 200 palabras con hallazgos accionables.
 ```
 
-Integra los resultados en el plan. Guarda el research en:
+Integra los resultados en el plan. Guarda el research en openspec/:
 ```
-Write(".specify/specs/[NNN]-[slug]/research.md")
+Write("openspec/specs/[NNN]-[slug]/research.md")
 ```
 
 ---
@@ -234,7 +234,7 @@ Con fingerprinting y research completados, presenta el plan como tabla.
 
 ```
 ## Plan: [Nombre de la Feature]
-Spec: `.specify/specs/[NNN]-[slug]/spec.md` (si existe)
+Spec: `openspec/specs/[NNN]-[slug]/spec.md` (si existe)
 Complejidad: [Simple / Moderado / Complejo]
 Plantilla de oro: `[ruta]`
 Zonas de alto impacto: [archivos con ≥5 callers, si aplica]
@@ -401,7 +401,8 @@ sin necesidad de leer todo el código:
 - [ ] Tests de integración: [si aplica]
 ```
 
-Guarda también en: `.specify/specs/[NNN]-[slug]/pr-description.md`
+Guarda en openspec/:
+- `openspec/specs/[NNN]-[slug]/pr-description.md`
 
 ---
 

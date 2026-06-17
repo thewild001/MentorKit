@@ -7,7 +7,7 @@
 # Garantías verificadas (4 jobs en stage verify, corren en paralelo):
 #   verify-install:
 #     1. Python 3.12.13 exacto
-#     2. 53 paquetes pinneados con SHA256
+#     2. 60 paquetes pinneados con SHA256
 #     3. uv autocontenido en el venv
 #     4. mentorkit-verify.sh PASS (markitdown, striprtf, graphify, uv)
 #   verify-platform-coverage:
@@ -16,7 +16,7 @@
 #     6. archive-spec operacional + specs in-progress archivables
 #        (dry-run) + integridad del system-spec
 #   verify-spec-history:
-#     7. Archives de specs commiteados (working tree en .specify/ limpio)
+#     7. Archives de specs commiteados (working tree en openspec/ limpio)
 #
 # Auto-heal: si la cache se restaura con un venv roto (symlinks rotos entre
 # máquinas), `install --fix` lo detecta y recrea. CI nunca queda inutilizable.
@@ -260,7 +260,7 @@ verify-archive-spec:
       echo
       echo "═══ 5) Si hay specs in-progress, dry-run sobre cada uno ═══"
       # shellcheck disable=SC2010
-      SPECS=$(ls .specify/specs/[0-9]*-*/spec.md 2>/dev/null || true)
+      SPECS=$(ls openspec/specs/[0-9]*-*/spec.md 2>/dev/null || true)
       if [ -n "$SPECS" ]; then
         echo "  Specs in-progress encontrados:"
         echo "$SPECS" | sed 's/^/    /'
@@ -281,17 +281,17 @@ verify-archive-spec:
 
       echo
       echo "═══ 6) Si system-spec.md existe, validar estructura ═══"
-      if [ -f .specify/system-spec.md ]; then
-        if ! head -1 .specify/system-spec.md | grep -q "^# System Spec$"; then
+      if [ -f openspec/system-spec.md ]; then
+        if ! head -1 openspec/system-spec.md | grep -q "^# System Spec$"; then
           echo "❌ system-spec.md no empieza con '# System Spec'"
-          echo "   Header actual: $(head -1 .specify/system-spec.md)"
+          echo "   Header actual: $(head -1 openspec/system-spec.md)"
           exit 1
         fi
-        if ! grep -q "^\*\*Specs mergeados\*\*:" .specify/system-spec.md; then
+        if ! grep -q "^\*\*Specs mergeados\*\*:" openspec/system-spec.md; then
           echo "❌ system-spec.md sin metadata '**Specs mergeados**'"
           exit 1
         fi
-        N_DOMAINS=$(grep -c "^## Dominio:" .specify/system-spec.md || true)
+        N_DOMAINS=$(grep -c "^## Dominio:" openspec/system-spec.md || true)
         echo "  ✓ system-spec.md válido ($N_DOMAINS dominio(s))"
       else
         echo "  No hay system-spec.md aún (se generará con el primer archive)"
@@ -312,10 +312,10 @@ verify-spec-history:
     - |
       set -uo pipefail
 
-      echo "═══ Working tree en .specify/ debe estar limpio ═══"
-      # Solo miramos .specify/ — los cambios fuera de ese dir no son
+      echo "═══ Working tree en openspec/ debe estar limpio ═══"
+      # Solo miramos openspec/ — los cambios fuera de ese dir no son
       # responsabilidad de este job (pueden ser fixes no relacionados).
-      PENDING=$(git status --porcelain --untracked-files=all .specify/ 2>/dev/null || true)
+      PENDING=$(git status --porcelain --untracked-files=all openspec/ 2>/dev/null || true)
 
       if [ -n "$PENDING" ]; then
         echo "❌ Hay archives de specs sin commitear:"
@@ -324,25 +324,25 @@ verify-spec-history:
         echo "Esto rompe el historial de requirements en git (sin autor ni fecha)."
         echo "Soluciones:"
         echo "  1) Si archivaste sin querer: restaura el working tree con"
-        echo "     git restore .specify/specs/archive/ y borra los specs no commiteados."
+        echo "     git restore openspec/specs/archive/ y borra los specs no commiteados."
         echo "  2) Si fue intencional: commitea el archive con"
         echo "     make archive-spec COMMIT=1 SPEC=<path>"
         echo "     (o usa --commit / --force-dirty si el tree tiene cambios no relacionados)."
         exit 1
       fi
 
-      echo "  ✓ Working tree en .specify/ limpio (todo commiteado)"
+      echo "  ✓ Working tree en openspec/ limpio (todo commiteado)"
 
       echo
       echo "═══ Si system-spec.md está tracked, el commit más reciente debe tocarlo ═══"
-      if [ -f .specify/system-spec.md ] && git ls-files --error-unmatch .specify/system-spec.md >/dev/null 2>&1; then
+      if [ -f openspec/system-spec.md ] && git ls-files --error-unmatch openspec/system-spec.md >/dev/null 2>&1; then
         # System-spec está tracked: el HEAD debe incluir un cambio en él o en archive/
-        if ! git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -qE "(\.specify/system-spec\.md|\.specify/specs/archive/)"; then
+        if ! git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -qE "(openspec/system-spec\.md|openspec/specs/archive/)"; then
           echo "⚠  system-spec.md está tracked pero el último commit no lo toca."
           echo "   Esto puede ser intencional (fix sin cambios de spec) o un descuido."
           echo "   Continúa, pero verifica que el historial refleja los changes."
         else
-          LAST_TOUCHED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -E "(\.specify/system-spec\.md|\.specify/specs/archive/)" | head -1)
+          LAST_TOUCHED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -E "(openspec/system-spec\.md|openspec/specs/archive/)" | head -1)
           echo "  ✓ Último commit toca: $LAST_TOUCHED"
         fi
       else

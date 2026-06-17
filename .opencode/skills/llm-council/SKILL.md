@@ -127,6 +127,7 @@ Usa Glob y Read para localizar:
 - README.md (contexto general)
 - PROJECT_STATUS.md o equivalente (estado actual)
 - Archivos mencionados por el usuario
+- `openspec/` specs y constitution
 ```
 
 Compón la pregunta incluyendo:
@@ -315,10 +316,13 @@ Presenta el veredicto completo en la conversación como markdown.
 Solo si el usuario lo solicita o la decisión tiene peso arquitectónico
 suficiente para referenciar después.
 
-Usa la herramienta `Write`:
+Usa la herramienta `Write` en ambos paths:
 
 ```
+# Primary transcript
 Ruta:    active/council-transcript-[YYYY-MM-DD-tema].md
+# OpenSpec mirror (best-effort)
+Ruta:    openspec/council/council-transcript-[YYYY-MM-DD-tema].md
 Contenido: pregunta + 5 respuestas de advisors + 5 peer reviews + veredicto del chairman
 ```
 

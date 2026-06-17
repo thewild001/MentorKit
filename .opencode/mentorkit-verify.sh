@@ -128,6 +128,21 @@ else
     exit 1
 fi
 
+# OpenSpec integrity check
+echo ""
+info "Verificando estructura de openspec/..."
+if [ -d "openspec" ]; then
+  ok "openspec/ presente"
+  if [ ! -f "openspec/memory/constitution.md" ]; then
+    warn "openspec/memory/constitution.md no encontrado"
+  fi
+  if [ ! -f "openspec/config.yaml" ]; then
+    warn "openspec/config.yaml no encontrado"
+  fi
+else
+  warn "openspec/ no presente (omitiendo verificación)"
+fi
+
 # Verificar imports
 echo ""
 info "Verificando imports..."
@@ -163,6 +178,10 @@ echo ""
 if [[ $fail -eq 0 ]]; then
     ok "PASS — entorno verificado"
     info "Re-install idempotente: bash .opencode/install-mentorkit.sh"
+    echo ""
+    echo "💡 Antes de implementar, recuerda usar:"
+    echo "   opencode run skill verification-before-completion"
+    echo "   para validar evidencia de que tu trabajo está listo."
     exit 0
 else
     err "FAIL — uno o más deps faltan o están rotos"

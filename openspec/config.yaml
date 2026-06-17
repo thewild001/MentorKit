@@ -1,0 +1,42 @@
+# openspec/config.yaml — SDD Configuration for mentorkit
+schema: spec-driven
+dual_path: false
+
+context: |
+  Project: MentorKit v4.0 — Agentic development orchestrator for junior devs (legacy system support)
+  Stack: Bash 4+ (6 scripts), Python 3.12.13 (pin exacto), uv package manager
+  CI: GitLab CI (4 parallel verify jobs: verify-install, verify-platform-coverage, verify-archive-spec, verify-spec-history)
+  VCS: git, Conventional Commits with scoped types (feat/fix/chore/docs/refactor/test/perf/build/ci/style)
+  Architecture: Agentic orchestrator with constitution → spec → fingerprinting → plan → confirm → implement → PR cycle
+  Skills: 6 custom OpenCode skills (codebase-conformist, codebase-graph, spec-writer, prd-reader, document-extractor, llm-council)
+  Spec store: openspec/ (delta-based merge, archive-spec workflow, sole canonical store — .specify/ eliminated)
+  Spec resolution: Everything reads from openspec/; all writes go to openspec/
+  Language conventions: Commit bodies in Spanish, keywords/types in English
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Specify which existing openspec/ specs are affected
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Delta format with ADDED/MODIFIED/REMOVED Requirements
+    - Use ## Dominio: for domain classification
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: "make verify"
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+    - All spec writes go to openspec/ paths (sole store)
+    - No mirror logic, no fallback paths

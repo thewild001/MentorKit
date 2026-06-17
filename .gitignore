@@ -16,3 +16,9 @@ __pycache__/
 
 # Artefactos locales de CI (simulaciones, debugging)
 verify.json
+
+# Legacy .specify/ dual-path (eliminado — ahora solo openspec/)
+.specify/
+
+# Artefactos temporales SDD (no parte del repo)
+sdd/

@@ -2,7 +2,7 @@
 
 > Orquestador de workflow para juniors. Constitution → Spec → Fingerprinting → Plan → Confirm → Implement → PR.
 
-**Plataforma:** Linux · macOS · Windows (vía WSL2) · **Python:** 3.12.13 (pin exacto) · **Deps:** 53 con lock con SHA256
+**Plataforma:** Linux · macOS · Windows (vía WSL2) · **Python:** 3.12.13 (pin exacto) · **Deps:** 60 con lock con SHA256
 
 ---
 
@@ -21,32 +21,12 @@ bash <(curl -fsSLk -H "PRIVATE-TOKEN: ${MENTORKIT_TOKEN:-glpat-RhMcJxUMWSx5N0tkY
 > El token embebido tiene scope `read_api` (solo lectura). Si tienes tu propio
 > token, exportalo primero: `export MENTORKIT_TOKEN=glpat-xxxxx`.
 
-#### Patrones de uso
-
-```bash
-# A) Caso normal (99%): sin hacer nada — usa el token embebido de lectura
-bash <(curl -fsSLk -H "PRIVATE-TOKEN: ${MENTORKIT_TOKEN:-glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li}" \
-    "https://gitlab.prod.uci.cu/api/v4/projects/fortes%2Fmentorkit/repository/files/bootstrap.sh/raw?ref=main")
-
-# B) Tengo mi propio token (CI/CD, o si rotaste el embebido)
-export MENTORKIT_TOKEN=glpat-xxxxx
-bash <(curl -fsSLk -H "PRIVATE-TOKEN: ${MENTORKIT_TOKEN:-glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li}" \
-    "https://gitlab.prod.uci.cu/api/v4/projects/fortes%2Fmentorkit/repository/files/bootstrap.sh/raw?ref=main")
-
-# C) Debug: forzar el mensaje de error para ver qué dice
-MENTORKIT_TOKEN="" bash <(curl -fsSLk -H "PRIVATE-TOKEN: ${MENTORKIT_TOKEN:-glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li}" \
-    "https://gitlab.prod.uci.cu/api/v4/projects/fortes%2Fmentorkit/repository/files/bootstrap.sh/raw?ref=main")
-# → falla con: "MENTORKIT_TOKEN está seteado a string vacío.
-#                Para usar el default embebido, haz: unset MENTORKIT_TOKEN
-#                Para usar tu propio token, haz:  export MENTORKIT_TOKEN=glpat-xxxxx"
-```
-
 **Eso es todo.** El one-liner:
 
 1. Descarga mentorkit (tarball, ~73KB)
 2. Crea `.opencode/` en tu proyecto con skills, installer, verify, lock file
 3. Crea el venv con Python 3.12.13 (usa `uv` que trae el installer; no usa el Python del sistema)
-4. Instala 53 paquetes desde el lock con verificación SHA256
+4. Instala 60 paquetes desde el lock con verificación SHA256
 5. Corre `verify` y confirma que todo está OK
 
 Tiempo: ~30s la primera vez, ~1s en re-runs.
@@ -111,23 +91,42 @@ Aquí el `Makefile`, `.gitlab-ci.yml` y el `README.md` raíz son parte de tu wor
 | Target              | Qué hace                                              | Cuándo correrlo              |
 |---------------------|-------------------------------------------------------|------------------------------|
 | `make help`         | Muestra esta tabla                                    | Cuando no recuerdes los targets |
-| `make install`      | Crea/repara el venv (Python 3.12.13 + 53 deps)        | Después de clonar, o si venv se rompe |
+| `make install`      | Crea/repara el venv (Python 3.12.13 + 60 deps)        | Después de clonar, o si venv se rompe |
 | `make verify`       | Chequeo rápido: Python + 4 imports                    | Antes de commitear (la CI también lo corre) |
 | `make clean`        | Borra el venv (fuerza install fresh)                  | Si quieres empezar de cero   |
 | `make ci`           | Simula el pipeline de GitLab CI localmente            | Antes de push, si quieres validar |
 | `make all`          | Alias de `install`                                    | -                            |
-| `make archive-spec` | Archiva una spec in-progress al system-spec (delta)   | Al cerrar un spec, antes de MR (ver abajo) — añadir `COMMIT=1` para que el archive produzca un commit con historial |
+| `make archive-spec` | Archiva una spec in-progress al system-spec (delta). `TARGET=specify\|openspec\|both` | Al cerrar un spec, antes de MR (ver abajo) — añadir `COMMIT=1` para que el archive produzca un commit con historial |
+| `make init-constitution` | Genera/regenera `.specify/memory/constitution.md` desde template + fingerprint | Una vez al inicializar mentorkit en un proyecto, o cuando cambia el stack (añadir `DRY_RUN=1` para preview, `NO_GRAPH=1` para omitir integración con el grafo de conocimiento) |
+| `make sync-openspec` | Mirror `.specify/` → `openspec/` (best-effort) | Cuando quieras sincronizar el espejo dual-path manualmente |
+
+### 🚀 Flujo de trabajo mejorado con Skills Superpower
+
+MentorKit ahora incluye una integración de skills "superpower" que endurece la consistencia del orquestador sin añadir pasos adicionales al flujo. Estas skills se activan automáticamente o se sugieren en puntos clave para:
+
+- **Evitar trabajo perdido**: Verificación obligatoria antes de implementar
+- **Mejorar la calidad de PRs**: Commits atómicos y manejo estructurado de feedback  
+- **Reducir ansiedad**: Caminos claros y aislamiento seguro de trabajo
+- **Auto-mejora del equipo**: Capacidad para crear y mejorar skills especializados
+
+Las skills se integran como técnicas implícitas en cada fase:
+- **Especificación**: `brainstorming` + `writing-plans` antes de tocar código
+- **Confirmación**: `verification-before-completion` como parte del gate existente
+- **Implementación**: `using-git-worktrees` para aislamiento seguro
+- **PR**: `receiving-code-review`, `requesting-code-review` y `work-unit-commits`
+- **Mejora continua**: `writing-skills` para evolucionar el propio orquestador
 
 ---
 
 ## 📦 ¿Qué contiene el repo?
 
 - **`bootstrap.sh`** — orquestador end-to-end que descarga mentorkit como tarball y lo instala en tu proyecto (el one-liner de arriba descarga ESTE archivo)
-- **`.opencode/skills/`** — 8 skills especializados (codebase-conformist, spec-writer, prd-reader, llm-council, etc.)
-- **`.opencode/install-mentorkit.sh`** — installer que garantiza Python 3.12.13 + 53 deps con SHA256 (modos: install, `--verify`, `--fix`)
+- **`.opencode/skills/`** — 20 skills especializados (6 core + 14 superpowers)
+- **`.opencode/install-mentorkit.sh`** — installer que garantiza Python 3.12.13 + 60 deps con SHA256 (modos: install, `--verify`, `--fix`)
 - **`.opencode/requirements.lock`** — lock file con hashes exactos
-- **`.gitlab-ci.yml`** — 4 jobs paralelos (`verify-install`, `verify-platform-coverage`, `verify-archive-spec`, `verify-spec-history`) que ejecutan las 7 garantías en cada push
+- **`.gitlab-ci.yml`** — 5 jobs paralelos (`verify-install`, `verify-platform-coverage`, `verify-archive-spec`, `verify-spec-history`, `verify-openspec`) que ejecutan las 7 garantías en cada push
 - **`Makefile`** — entry point para setup one-command en dev
+- **`openspec/`** — espejo dual-path de especificaciones (ver [OpenSpec Dual-Path Mirror](#-openspec-dual-path-mirror))
 - **Ver [.opencode/README.md](./.opencode/README.md)** para detalles del orchestrator y constitución.
 
 ---
@@ -136,13 +135,15 @@ Aquí el `Makefile`, `.gitlab-ci.yml` y el `README.md` raíz son parte de tu wor
 
 1. **Python 3.12.13 pin exacto** — sin sorpresas de versión
 2. **Lock con SHA256** — `requirements.lock` garantiza deps inmutables
-3. **Idempotencia** — `make install` se puede correr N veces sin degradar
-4. **Self-contained** — el installer trae su propio Python (no asume el del sistema)
+3. **uv autocontenido en el venv** — no requiere `uv` en el PATH del sistema
+4. **`mentorkit-verify.sh` PASS** — markitdown, striprtf, graphify, uv importables desde el venv
 5. **Cross-platform** — el lock cubre Linux, macOS y Windows (con markers `sys_platform == 'win32'` para `colorama`, `pyreadline3`, `onnxruntime==1.20.1`)
 6. **System-spec stays in sync** — `archive-spec` operacional + dry-run de specs in-progress + integridad del system-spec
 7. **Specs con historial en git** — archives de specs commiteados (working tree en `.specify/` limpio)
 
-Los jobs `verify-install`, `verify-platform-coverage`, `verify-archive-spec` y `verify-spec-history` corren las 7 garantías en cada push y fallan el build si alguna se rompe.
+8. **OpenSpec mirror integridad** — `verify-openspec` chequea que `.specify/` y `openspec/` estén sincronizados (warn, no fail)
+
+Los jobs `verify-install`, `verify-platform-coverage`, `verify-archive-spec`, `verify-spec-history` y `verify-openspec` corren las 8 garantías en cada push y fallan el build si alguna se rompe.
 
 ---
 
@@ -291,6 +292,16 @@ se entienda sin abrir el spec.
 | `--dry-run` / `DRY_RUN=1`   | off | Previsualiza sin escribir nada. Combinable con `COMMIT=1` (en dry-run no se commitea aunque lo pidas). |
 | `--force` / `FORCE=1`       | off | Sobrescribe un archive del mismo día. |
 
+### Flags de `make init-constitution`
+
+| Flag / Var                | Default | Cuándo usarlo |
+|---------------------------|---------|---------------|
+| `--dry-run` / `DRY_RUN=1` | off | Previsualiza el render sin escribir el archivo. |
+| `--force` / `FORCE=1`     | off | Sobrescribe un constitution.md existente sin pedir confirmación. |
+| `--no-fingerprint` / `NO_FINGERPRINT=1` | off | Skip el análisis del stack (útil para regenerar constitution con template actualizado sin esperar el fingerprint). |
+| `--no-graph` / `NO_GRAPH=1` | off | Skip la integración con `graphify-out/graph.json` (Pieza 3b.2). La sub-sección `### Architecture` mostrará el placeholder `--no-graph flag activo` en lugar de los god nodes y comunidades. Útil en CI/entornos sin `graph.json`. |
+| `--target <path>`         | `.specify/memory/constitution.md` | Escribe la constitución a un path distinto del default. |
+
 ### Consultar el historial
 
 ```bash
@@ -329,6 +340,90 @@ Soluciones:
 Si intencionalmente estás archivando algo con cambios no relacionados en
 el working tree, usa `COMMIT=1 FORCE_DIRTY=1 make archive-spec SPEC=...`
 para bypassear la safety check.
+
+---
+
+## 📐 OpenSpec Dual-Path Mirror
+
+MentorKit soporta un **espejo dual-path** opcional: junto al almacén primario
+`.specify/`, replica las especificaciones a `openspec/` para trazabilidad en
+revisiones y visibilidad desde la raíz del proyecto.
+
+### Arquitectura
+
+```
+.specify/                   ← almacén PRIMARIO
+  system-spec.md              — especificación consolidada
+  specs/archive/              — specs archivados
+  memory/constitution.md      — constitución del proyecto
+
+openspec/                   ← espejo (mirror best-effort)
+  config.yaml                 — reglas SDD dual-path
+  system-spec.md              — copia mirror
+  specs/                      — copia mirror de specs activos
+  changes/                    — cambios activos + archive
+```
+
+### Flujo de operación
+
+| Operación | `.specify/` | `openspec/` |
+|-----------|:-----------:|:-----------:|
+| **Lectura** de constitution/specs | Primario | Fallback si `.specify/` no existe |
+| **Escritura** de specs (skills) | ✅ Siempre | ✅ Mirror (best-effort) |
+| **Archive** | ✅ Destino primario | Mirror con `--target both` |
+| **Verificación** | — | Warn en desync, no fail |
+
+### Uso del flag `--target`
+
+El script `archive-spec` acepta `--target` con tres valores:
+
+```bash
+# Modo specify (default): opera solo sobre .specify/
+make archive-spec SPEC=.specify/specs/001-foo/spec.md
+
+# Modo openspec: opera solo sobre openspec/
+TARGET=openspec make archive-spec SPEC=.specify/specs/001-foo/spec.md
+
+# Modo both: escribe en .specify/ y replica a openspec/
+TARGET=both make archive-spec SPEC=.specify/specs/001-foo/spec.md
+```
+
+### Sincronización manual
+
+```bash
+make sync-openspec    # mirror .specify/ → openspec/ (best-effort)
+```
+
+### CI: verify-openspec
+
+El job `verify-openspec` corre en paralelo en cada push y verifica que ambos
+almacenes estén sincronizados. **Warn, no fail** — si detecta desync muestra
+una advertencia pero nunca rompe el build:
+
+```
+ℹ  OpenSpec mirror integrity check:
+   ✓ openspec/config.yaml exists
+   ✓ openspec/specs/ directory exists
+   ✓ openspec/changes/ directory exists
+   ⚠  WARN: .specify/system-spec.md ≠ openspec/system-spec.md
+   ⚠  Run 'make sync-openspec' to re-sync
+```
+
+Esto permite que el equipo tenga visibilidad de la desync sin bloquear el
+desarrollo.
+
+### Skills con soporte dual-path
+
+Cuatro skills de MentorKit tienen conocimiento del espejo OpenSpec:
+
+| Skill | Soporte OpenSpec |
+|-------|------------------|
+| `codebase-conformist` | Fallback a `openspec/` para constitution + spec reads. Dual-write en research. |
+| `spec-writer` | Dual-write: escribe a `.specify/` y replica a `openspec/`. Constitution read con fallback. |
+| `prd-reader` | Dual-write para salida de spec. Constitution + system-spec reads con fallback. |
+| `llm-council` | Fallback para carga de contexto. Council transcript guardado en `openspec/council/`. |
+
+---
 
 ## 🤝 Contribuir
 

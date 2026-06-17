@@ -110,8 +110,8 @@ if ! REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"; then
   exit 1
 fi
 
-SYSTEM_SPEC="$REPO_ROOT/.specify/system-spec.md"
-ARCHIVE_DIR="$REPO_ROOT/.specify/specs/archive"
+SYSTEM_SPEC="$REPO_ROOT/openspec/system-spec.md"
+ARCHIVE_DIR="$REPO_ROOT/openspec/changes/archive"
 SPECS_TMP="$(mktemp -d)"
 trap 'rm -rf "$SPECS_TMP"' EXIT
 
@@ -232,7 +232,7 @@ else:
     system = f"""# System Spec
 
 > AUTO-GENERATED. No editar a mano.
-> Para proponer cambios, crear un spec en `.specify/specs/<NNN>-<slug>/spec.md`
+> Para proponer cambios, crear un spec en `openspec/specs/<NNN>-<slug>/spec.md`
 > con formato delta y correr `make archive-spec SPEC=<path>`.
 
 **Última actualización**: {date.today().isoformat()}
