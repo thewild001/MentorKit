@@ -12,14 +12,8 @@ Si quieres usar mentorkit en **tu propio proyecto**, sin clonar este repo:
 
 ```bash
 # Desde la raíz de tu proyecto (cualquier directorio, no necesita ser un repo git)
-bash <(curl -fsSLk -H "PRIVATE-TOKEN: ${MENTORKIT_TOKEN:-glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li}" \
-    "https://gitlab.prod.uci.cu/api/v4/projects/fortes%2Fmentorkit/repository/files/bootstrap.sh/raw?ref=main")
+bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/main/bootstrap.sh")
 ```
-
-> El endpoint `/-/raw/` no funciona con `PRIVATE-TOKEN` en este GitLab (devuelve
-> el sign-in). El endpoint `/api/v4/.../repository/files/.../raw` SÍ funciona.
-> El token embebido tiene scope `read_api` (solo lectura). Si tienes tu propio
-> token, exportalo primero: `export MENTORKIT_TOKEN=glpat-xxxxx`.
 
 **Eso es todo.** El one-liner:
 

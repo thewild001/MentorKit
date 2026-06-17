@@ -2,14 +2,10 @@
 # MentorKit — Bootstrap (one-liner installer)
 #
 # Uso:
-#   bash <(curl -fsSLk -H "PRIVATE-TOKEN: ${MENTORKIT_TOKEN:-glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li}" \
-#       "https://gitlab.prod.uci.cu/api/v4/projects/fortes%2Fmentorkit/repository/files/bootstrap.sh/raw?ref=main")
-#
-# (El endpoint /-/raw/ de este GitLab no responde al PRIVATE-TOKEN header —
-#  devuelve el sign-in. Por eso usamos el API endpoint con el token embebido.)
+#   bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/main/bootstrap.sh")
 #
 # Lo que hace (sin que el usuario tenga que saber nada):
-#   1. Descarga mentorkit como tarball desde GitLab API
+#   1. Descarga mentorkit como tarball desde GitHub
 #   2. Extrae en /tmp
 #   3. Copia al directorio actual del usuario:
 #        .opencode/      (skills, installer, verify, requirements lock)
@@ -25,42 +21,14 @@
 
 set -uo pipefail
 
-REPO="fortes/mentorkit"
+REPO="thewild001/MentorKit"
 BRANCH="main"
-GITLAB_HOST="https://gitlab.prod.uci.cu"
-
-# Resolución del token (orden de prioridad):
-#   1) MENTORKIT_TOKEN env var — recomendado para CI/CD y para que el usuario
-#      pueda rotar el token sin tocar el script
-#   2) Hardcoded PAT (read_api scope) — fallback de conveniencia para el
-#      one-liner del usuario que no quiere/necesita configurar env vars.
-#      El PAT solo puede LEER el repo, no mutar nada.
-#
-# Uso:   export MENTORKIT_TOKEN=glpat-xxxxx && bash bootstrap.sh
-#   o:   bash bootstrap.sh                     (usa el default)
-DEFAULT_TOKEN="glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li"
-
-# Distinguimos "unset" de "set to empty string" para no caer al default
-# silenciosamente si el usuario explícitamente exportó MENTORKIT_TOKEN=""
-if [[ -n "${MENTORKIT_TOKEN+x}" ]]; then
-    TOKEN="$MENTORKIT_TOKEN"
-else
-    TOKEN="$DEFAULT_TOKEN"
-fi
+GITHUB_CODELOAD_HOST="https://codeload.github.com"
 
 CYAN='\033[0;36m'; DIM='\033[2m'; GREEN='\033[0;32m'; RED='\033[0;31m'; RESET='\033[0m'
 [[ ! -t 1 ]] && CYAN=''; DIM=''; GREEN=''; RED=''; RESET=''
 
 # ─── Validaciones tempranas ────────────────────────────────────────────
-
-# El usuario explícitamente exportó MENTORKIT_TOKEN="" → fallar con mensaje
-# claro en vez de caer al default silenciosamente
-if [[ -n "${MENTORKIT_TOKEN+x}" ]] && [[ -z "$TOKEN" ]]; then
-    echo -e "  ${RED}x${RESET}  MENTORKIT_TOKEN está seteado a string vacío."
-    echo "     Para usar el default embebido, haz: unset MENTORKIT_TOKEN"
-    echo "     Para usar tu propio token, haz:  export MENTORKIT_TOKEN=glpat-xxxxx"
-    exit 1
-fi
 
 if [[ -d ".opencode" ]] && [[ -f ".opencode/install-mentorkit.sh" ]]; then
     echo -e "  ${RED}x${RESET}  .opencode/ ya existe en $(pwd)"
@@ -75,18 +43,15 @@ trap "rm -rf $TMP" EXIT
 
 echo -e "\n  ${CYAN}MentorKit${RESET}  ${DIM}v4.0 — Instalador one-liner${RESET}\n"
 
-# ─── 1) Descargar tarball (vía API, requiere auth) ─────────────────────
-
-# El endpoint /-/raw/ NO funciona con PRIVATE-TOKEN header en este GitLab
-# (devuelve 302 a sign-in). El endpoint /api/v4/ SÍ funciona.
-TARBALL_URL="${GITLAB_HOST}/api/v4/projects/$(printf '%s' "$REPO" | sed 's|/|%2F|g')/repository/archive.tar.gz?sha=${BRANCH}"
+# ─── 1) Descargar tarball ────────────────────────────────────────────────
+TARBALL_URL="${GITHUB_CODELOAD_HOST}/${REPO}/tar.gz/refs/heads/${BRANCH}"
 echo -e "  ${DIM}1/4${RESET}  Descargando mentorkit (tarball)..."
 
-if ! curl -fsSLk -H "PRIVATE-TOKEN: $TOKEN" --max-time 180 \
+if ! curl -fsSL --max-time 180 \
         "$TARBALL_URL" -o "${TMP}/repo.tar.gz"; then
-    echo -e "  ${RED}x${RESET}  Error descargando tarball desde GitLab API"
+    echo -e "  ${RED}x${RESET}  Error descargando tarball desde GitHub"
     echo "     URL: $TARBALL_URL"
-    echo "     ¿Tienes acceso a la red y el TOKEN es válido?"
+    echo "     ¿Tienes acceso a la red?"
     exit 1
 fi
 
@@ -99,8 +64,10 @@ if ! tar -xzf "${TMP}/repo.tar.gz" -C "$TMP"; then
     exit 1
 fi
 
-# El tarball extrae a 'mentorkit-main-<sha>/' (nombre con hash)
-REPO_DIR=$(find "$TMP" -maxdepth 1 -mindepth 1 -type d -name "${REPO##*/}-${BRANCH}-*" | head -1)
+# El tarball de GitHub extrae a '<repo>-<branch>/'
+REPO_DIR=$(find "$TMP" -maxdepth 1 -mindepth 1 -type d | while read -r d; do
+    [[ -d "$d/.opencode" ]] && { echo "$d"; break; }
+done)
 if [[ -z "$REPO_DIR" ]] || [[ ! -d "$REPO_DIR/.opencode" ]]; then
     echo -e "  ${RED}x${RESET}  Tarball extraído no contiene .opencode/"
     echo "     Contenido extraído:"

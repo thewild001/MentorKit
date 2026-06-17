@@ -190,36 +190,14 @@ codebase-conformist
 Desde la raíz de cualquier proyecto:
 
 ```bash
-bash <(curl -fsSLk -H "PRIVATE-TOKEN: ${MENTORKIT_TOKEN:-glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li}" \
-    "https://gitlab.prod.uci.cu/api/v4/projects/fortes%2Fmentorkit/repository/files/bootstrap.sh/raw?ref=main")
+bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/main/bootstrap.sh")
 ```
-
-> El endpoint `/-/raw/` de este GitLab no responde al `PRIVATE-TOKEN` header
-> (devuelve 302 al sign-in). El endpoint `/api/v4/.../repository/files/.../raw`
-> SÍ responde. Por eso el one-liner usa el API endpoint con el token embebido
-> como `PRIVATE-TOKEN`.
 
 El script descarga mentorkit (tarball, ~73KB), copia `.opencode/`, `Makefile`
 y `.gitlab-ci.yml` al directorio actual, y luego corre el installer
 end-to-end que **garantiza Python 3.12.13 LTS** (lo descarga si el sistema no
 lo tiene), crea un venv aislado e instala las dependencias **pinneadas con
 SHA256** desde `requirements.lock`.
-
-**Sobre el token (opcional):** mentorkit es un repo privado en GitLab, así que
-el one-liner incluye un `PRIVATE-TOKEN` con scope `read_api` para autenticarse
-contra el API endpoint. No necesitas exportar nada — el snippet trae un token
-embebido por defecto. Si quieres usar tu propio token (recomendado para CI/CD,
-o si rotás el token embebido):
-
-```bash
-export MENTORKIT_TOKEN=glpat-xxxxx
-bash <(curl -fsSLk -H "PRIVATE-TOKEN: $MENTORKIT_TOKEN" \
-    "https://gitlab.prod.uci.cu/api/v4/projects/fortes%2Fmentorkit/repository/files/bootstrap.sh/raw?ref=main")
-```
-
-El token embebido solo puede LEER el repo (no mutar nada). Si lo rotás en
-GitLab, la próxima ejecución del bootstrap va a fallar con 401 — basta con
-exportar el nuevo valor en `MENTORKIT_TOKEN` y reintentar.
 
 ### Modos del instalador
 
