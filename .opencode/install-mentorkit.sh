@@ -132,10 +132,41 @@ step() { echo -e "\n${BOLD}-- $1${RESET}\n"; }
 
 # ─── Localización de ejecutables ──────────────────────────────────────────────
 
+find_first_executable() {
+    local p
+    for p in "$@"; do
+        [[ -x "$p" ]] && { echo "$p"; return 0; }
+    done
+    return 1
+}
+
 find_venv_python() {
     local base="${PWD}/${VENV_DIR}"
-    for p in "$base/bin/python" "$base/bin/python3" "$base/Scripts/python.exe"; do
-        [[ -f "$p" && -x "$p" ]] && { echo "$p"; return 0; }
+    find_first_executable \
+        "$base/bin/python" \
+        "$base/bin/python3" \
+        "$base/Scripts/python.exe"
+}
+
+find_venv_uv() {
+    local base="${PWD}/${VENV_DIR}"
+    find_first_executable \
+        "$base/bin/uv" \
+        "$base/Scripts/uv.exe"
+}
+
+find_venv_pip() {
+    local base="${PWD}/${VENV_DIR}"
+    find_first_executable \
+        "$base/bin/pip" \
+        "$base/bin/pip3" \
+        "$base/Scripts/pip.exe"
+}
+
+find_system_python() {
+    local py
+    for py in python3 python py; do
+        command -v "$py" &>/dev/null && { echo "$py"; return 0; }
     done
     return 1
 }
@@ -184,8 +215,9 @@ ensure_uv() {
     fi
 
     # Venv existente con uv (autocontención)
-    if [[ -x "${PWD}/${VENV_DIR}/bin/uv" ]]; then
-        export PATH="${PWD}/${VENV_DIR}/bin:$PATH"
+    local venv_uv
+    if venv_uv="$(find_venv_uv 2>/dev/null)"; then
+        export PATH="$(dirname "$venv_uv"):$PATH"
         ok "uv del venv (autocontenido): $(uv --version 2>/dev/null)"
         return 0
     fi
@@ -206,18 +238,24 @@ ensure_uv() {
     fi
 
     # Último recurso: pip install uv en venv temporal con Python del sistema
-    if command -v python3 &>/dev/null; then
+    local system_python
+    if system_python="$(find_system_python 2>/dev/null)"; then
         info "Bootstrap alternativo: pip install uv en venv temporal"
-        local tmpv
-        tmpv="$(mktemp -d)/uv-bootstrap"
-        if python3 -m venv "$tmpv" 2>/dev/null \
-                && "$tmpv/bin/pip" install --quiet uv 2>/dev/null \
-                && [[ -x "$tmpv/bin/uv" ]]; then
-            export PATH="$tmpv/bin:$PATH"
-            ok "uv bootstrapeado via pip: $(uv --version 2>/dev/null)"
-            return 0
+        local tmp_root tmpv tmp_pip tmp_uv
+        tmp_root="$(mktemp -d)"
+        tmpv="$tmp_root/uv-bootstrap"
+        if "$system_python" -m venv "$tmpv" 2>/dev/null; then
+            tmp_pip="$(find_first_executable "$tmpv/bin/pip" "$tmpv/bin/pip3" "$tmpv/Scripts/pip.exe" 2>/dev/null || true)"
+            if [[ -n "$tmp_pip" ]] && "$tmp_pip" install --quiet uv 2>/dev/null; then
+                tmp_uv="$(find_first_executable "$tmpv/bin/uv" "$tmpv/Scripts/uv.exe" 2>/dev/null || true)"
+                if [[ -n "$tmp_uv" ]]; then
+                    export PATH="$(dirname "$tmp_uv"):$PATH"
+                    ok "uv bootstrapeado via pip: $(uv --version 2>/dev/null)"
+                    return 0
+                fi
+            fi
         fi
-        rm -rf "$tmpv"
+        rm -rf "$tmp_root"
     fi
 
     err "No se pudo obtener uv (prueba instalarlo manualmente: https://docs.astral.sh/uv/)"

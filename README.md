@@ -2,7 +2,7 @@
 
 > Orquestador de workflow para juniors. Constitution → Spec → Fingerprinting → Plan → Confirm → Implement → PR.
 
-**Plataforma:** Linux · macOS · Windows (vía WSL2) · **Python:** 3.12.13 (pin exacto) · **Deps:** 60 con lock con SHA256
+**Plataforma:** Linux · macOS · Windows (Git Bash o WSL2) · **Python:** 3.12.13 (pin exacto) · **Deps:** 60 con lock con SHA256
 
 ---
 
@@ -44,27 +44,28 @@ Ver [`bootstrap.sh`](./bootstrap.sh) y [.opencode/README.md](./.opencode/README.
 
 ### 🪟 ¿Estás en Windows?
 
-MentorKit está escrito en bash. El instalador, el Makefile y el CI asumen un
-entorno POSIX. En Windows nativo (PowerShell, CMD) **no funciona todavía** —
-el lock file tiene los wheels correctos (colorama, pyreadline3, onnxruntime 1.20.1
-para `sys_platform == 'win32'`), pero el journey end-to-end no está validado fuera
-de Linux.
+MentorKit funciona en Windows siempre que ejecutes el flujo en un shell POSIX:
+**Git Bash** (nativo) o **WSL2** (Ubuntu).
 
-**Camino recomendado: WSL2.** Habilitá WSL2 y Ubuntu desde PowerShell (admin):
+#### Opción A — Git Bash (Windows nativo)
+
+1. Instala [Git for Windows](https://git-scm.com/download/win) (incluye Git Bash).
+2. Abre **Git Bash** dentro de tu proyecto.
+3. Ejecuta el mismo one-liner:
+
+```bash
+bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/main/bootstrap.sh")
+```
+
+> En PowerShell/CMD no ejecutes el installer directamente: usa Git Bash o WSL2.
+
+#### Opción B — WSL2 (recomendado para entorno Linux completo)
 
 ```powershell
 wsl --install
 ```
 
-Reinicia, abre "Ubuntu" desde el menú inicio, y a partir de ahí todo es bash nativo.
-El one-liner de arriba funciona **tal cual** dentro de Ubuntu en WSL2 — no hay
-cambios. Tiempo total del setup WSL2 + MentorKit: ~5 minutos.
-
-> ¿Por qué no PowerShell nativo? Reescribir `bootstrap.sh`, `install-mentorkit.sh`
-> y `Makefile` a PowerShell es ~3x trabajo y mantiene dos codebases. WSL2 te da
-> el mismo DX que un dev de Linux/macOS a costo cero de
-> mantenimiento. Si necesitas soporte nativo de Windows, abre un issue — es
-> decisión de roadmap, no de un fix rápido.
+Reinicia, abre "Ubuntu" desde el menú inicio y ejecuta el one-liner desde allí.
 
 ---
 
