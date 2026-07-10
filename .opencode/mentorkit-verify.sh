@@ -27,10 +27,16 @@ step() { echo -e "\n${BOLD}-- $1${RESET}\n"; }
 
 # ─── Localizar venv ──────────────────────────────────────────────────────────
 
+find_first_executable() {
+    local p
+    for p in "$@"; do
+        [[ -x "$p" ]] && { echo "$p"; return 0; }
+    done
+    return 1
+}
+
 VENV_PYTHON=""
-for p in "$VENV_DIR/bin/python" "$VENV_DIR/bin/python3" "$VENV_DIR/Scripts/python.exe"; do
-    [[ -f "$p" && -x "$p" ]] && { VENV_PYTHON="$p"; break; }
-done
+VENV_PYTHON="$(find_first_executable "$VENV_DIR/bin/python" "$VENV_DIR/bin/python3" "$VENV_DIR/Scripts/python.exe" 2>/dev/null || true)"
 
 if [[ -z "$VENV_PYTHON" ]]; then
     err "Venv no encontrado en $VENV_DIR/"
@@ -119,7 +125,12 @@ fi
 # Lock file platform coverage
 echo ""
 info "Verificando que el lock cubre esta plataforma..."
-UV_BIN="$(dirname "$VENV_PYTHON")/uv"
+UV_BIN="$(find_first_executable "$(dirname "$VENV_PYTHON")/uv" "$(dirname "$VENV_PYTHON")/uv.exe" 2>/dev/null || true)"
+if [[ -z "$UV_BIN" ]]; then
+    err "uv no encontrado junto al Python del venv"
+    info "Reparar: bash .opencode/install-mentorkit.sh --fix"
+    exit 1
+fi
 if "$UV_BIN" pip install --dry-run --python "$VENV_PYTHON" -r .opencode/requirements.lock &>/dev/null; then
     ok "Lock file cubre $(uname -sm)"
 else
