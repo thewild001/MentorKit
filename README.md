@@ -23,7 +23,7 @@ El bootstrap:
 
 > No hace falta correr `make install` después del one-liner.
 
-Ver detalles en [`bootstrap.sh`](./bootstrap.sh) y [`/.opencode/README.md`](./.opencode/README.md).
+Ver detalles en [`bootstrap.sh`](./bootstrap.sh) y en [`.opencode/agents/MentorKit5.0.md`](./.opencode/agents/MentorKit5.0.md).
 
 ---
 
