@@ -251,7 +251,6 @@ ensure_uv() {
                 if [[ -n "$tmp_uv" ]]; then
                     export PATH="$(dirname "$tmp_uv"):$PATH"
                     ok "uv bootstrapeado via pip: $(uv --version 2>/dev/null)"
-                    rm -rf "$tmp_root"
                     return 0
                 fi
             fi
