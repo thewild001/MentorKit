@@ -22,3 +22,4 @@ verify.json
 
 # Artefactos temporales SDD (no parte del repo)
 sdd/
+.omo/

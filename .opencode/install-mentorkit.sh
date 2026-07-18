@@ -200,6 +200,146 @@ download_file() {
     ok "$path"
 }
 
+# ─── Configuración global de OpenCode (MCP codebase-memory-mcp) ─────────────
+
+# Verifica si codebase-memory-mcp está configurado en el config global de OpenCode
+# Soporta Linux, macOS, Windows (Git Bash/WSL2) — XDG + APPDATA + defaults
+# Si no existe, lo agrega. Retorna 0 si OK, 1 si falla.
+ensure_opencode_mcp_config() {
+    step "Configuración MCP (codebase-memory-mcp) en OpenCode global"
+
+    # 1. Detectar binary MCP multiplataforma
+    local mcp_binary=""
+    local mcp_name="codebase-memory-mcp"
+
+    # Primero: PATH
+    if command -v codebase-memory-mcp &>/dev/null; then
+        mcp_binary="$(command -v codebase-memory-mcp)"
+    fi
+
+    # Fallbacks comunes por plataforma
+    if [[ -z "$mcp_binary" ]]; then
+        for candidate in \
+            "${HOME}/.local/bin/codebase-memory-mcp" \
+            "${HOME}/.cargo/bin/codebase-memory-mcp" \
+            "/usr/local/bin/codebase-memory-mcp" \
+            "/opt/homebrew/bin/codebase-memory-mcp" \
+            "${PWD}/.opencode/node_modules/.bin/codebase-memory-mcp"; do
+            [[ -x "$candidate" ]] && { mcp_binary="$candidate"; break; }
+        done
+    fi
+
+    # Windows/Git Bash/WSL2: APPDATA, LOCALAPPDATA
+    if [[ -z "$mcp_binary" && -n "${APPDATA:-}" ]]; then
+        for candidate in \
+            "${APPDATA}/npm/codebase-memory-mcp.cmd" \
+            "${APPDATA}/npm/codebase-memory-mcp" \
+            "${LOCALAPPDATA}/Programs/codebase-memory-mcp/codebase-memory-mcp.exe"; do
+            [[ -x "$candidate" ]] && { mcp_binary="$candidate"; break; }
+        done
+    fi
+
+    if [[ -z "$mcp_binary" ]]; then
+        warn "Binary MCP 'codebase-memory-mcp' no encontrado en PATH ni ubicaciones estándar"
+        info "Instala con: npm install -g codebase-memory-mcp"
+        info "O desde source: cargo install codebase-memory-mcp"
+        info "O descarga release: https://github.com/DeusData/codebase-memory-mcp/releases"
+        return 1
+    fi
+
+    ok "Binary MCP detectado: $mcp_binary"
+
+    # 2. Detectar directorio de config OpenCode multiplataforma
+    local opencode_config_dir=""
+    local opencode_config_file=""
+
+    # XDG Base Directory Spec (Linux/macOS)
+    if [[ -n "${XDG_CONFIG_HOME:-}" ]]; then
+        opencode_config_dir="${XDG_CONFIG_HOME}/opencode"
+    # macOS default
+    elif [[ "$(uname -s)" == "Darwin" ]]; then
+        opencode_config_dir="${HOME}/Library/Application Support/opencode"
+    # Windows (Git Bash/WSL2 detecta APPDATA)
+    elif [[ -n "${APPDATA:-}" ]]; then
+        opencode_config_dir="${APPDATA}/opencode"
+    # Linux/Unix default
+    else
+        opencode_config_dir="${HOME}/.config/opencode"
+    fi
+
+    opencode_config_file="${opencode_config_dir}/opencode.json"
+
+    # 3. Crear directorio config si no existe
+    if [[ ! -d "$opencode_config_dir" ]]; then
+        info "Creando directorio config: $opencode_config_dir"
+        mkdir -p "$opencode_config_dir" || {
+            err "No se pudo crear $opencode_config_dir"
+            return 1
+        }
+    fi
+
+    # 4. Leer config existente o crear nueva
+    local config_json="{}"
+    if [[ -f "$opencode_config_file" ]]; then
+        config_json="$(cat "$opencode_config_file" 2>/dev/null || echo '{}')"
+        ok "Config OpenCode existente: $opencode_config_file"
+    else
+        info "No hay config OpenCode global — creando nueva en $opencode_config_file"
+    fi
+
+    # 5. Verificar si MCP ya está configurado correctamente
+    local mcp_configured_correctly="false"
+    mcp_configured_correctly=$(echo "$config_json" | python3 -c "
+import sys, json, os
+try:
+    data = json.load(sys.stdin)
+    mcp = data.get('mcp', {}).get('codebase-memory-mcp', {})
+    cmd = mcp.get('command', [])
+    if isinstance(cmd, str):
+        cmd = [cmd]
+    binary_path = os.path.realpath('$mcp_binary') if os.path.exists('$mcp_binary') else '$mcp_binary'
+    cmd_resolved = [os.path.realpath(c) if os.path.exists(c) else c for c in cmd]
+    if mcp.get('enabled') == True and cmd_resolved == [binary_path]:
+        print('true')
+    else:
+        print('false')
+except Exception as e:
+    print('false')
+" 2>/dev/null)
+
+    if [[ "$mcp_configured_correctly" == "true" ]]; then
+        ok "MCP '$mcp_name' ya configurado correctamente en $opencode_config_file"
+        return 0
+    else
+        info "MCP '$mcp_name' no configurado o desactualizado — actualizando"
+    fi
+
+    # 6. Actualizar config con MCP (usando python para JSON seguro)
+    local new_config
+    new_config=$(echo "$config_json" | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+if 'mcp' not in data:
+    data['mcp'] = {}
+data['mcp']['codebase-memory-mcp'] = {
+    'enabled': True,
+    'type': 'local',
+    'command': ['$mcp_binary']
+}
+json.dump(data, sys.stdout, indent=2, ensure_ascii=False)
+" 2>/dev/null)
+
+    if [[ -z "$new_config" ]]; then
+        err "Error generando nueva config JSON"
+        return 1
+    fi
+
+    # 7. Escribir config actualizada
+    echo "$new_config" > "$opencode_config_file"
+    ok "Config OpenCode actualizada: $opencode_config_file"
+    return 0
+}
+
 # ─── uv: detección + bootstrap ───────────────────────────────────────────────
 
 # Encuentra un uv utilizable. Orden de prioridad:
@@ -427,6 +567,37 @@ sys.exit(0 if ok else 1)
 " 2>/dev/null
     fail=$?
 
+    # Verificar configuración MCP global (cross-platform)
+    local mcp_binary=""
+    if command -v codebase-memory-mcp &>/dev/null; then
+        mcp_binary="$(command -v codebase-memory-mcp)"
+    else
+        for candidate in \
+            "${HOME}/.local/bin/codebase-memory-mcp" \
+            "${HOME}/.cargo/bin/codebase-memory-mcp" \
+            "/usr/local/bin/codebase-memory-mcp" \
+            "/opt/homebrew/bin/codebase-memory-mcp" \
+            "${PWD}/.opencode/node_modules/.bin/codebase-memory-mcp"; do
+            [[ -x "$candidate" ]] && { mcp_binary="$candidate"; break; }
+        done
+        if [[ -z "$mcp_binary" && -n "${APPDATA:-}" ]]; then
+            for candidate in \
+                "${APPDATA}/npm/codebase-memory-mcp.cmd" \
+                "${APPDATA}/npm/codebase-memory-mcp" \
+                "${LOCALAPPDATA}/Programs/codebase-memory-mcp/codebase-memory-mcp.exe"; do
+                [[ -x "$candidate" ]] && { mcp_binary="$candidate"; break; }
+            done
+        fi
+    fi
+
+    if [[ -n "$mcp_binary" && -x "$mcp_binary" ]]; then
+        ok "MCP codebase-memory-mcp: $(codebase-memory-mcp --version 2>/dev/null || echo 'OK')"
+    else
+        warn "MCP codebase-memory-mcp no encontrado"
+        info "  Instala con: npm install -g codebase-memory-mcp"
+        fail=1
+    fi
+
     if [[ $fail -eq 0 ]]; then
         echo ""
         ok "Verificación PASS — entorno listo"
@@ -494,6 +665,9 @@ run_install() {
 
     # Bootstrap uv
     ensure_uv || exit 1
+
+    # Configurar MCP codebase-memory-mcp en OpenCode global
+    ensure_opencode_mcp_config || exit 1
 
     # Garantizar Python 3.12
     ensure_python_312 || exit 1

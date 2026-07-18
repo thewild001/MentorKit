@@ -54,11 +54,16 @@ Continúa sin ella — pero los Phase -1 Gates del Paso 2.5 operarán en modo re
 
 ## Paso -0.5 — Graph Context (codebase-graph)
 
-Antes del Fingerprinting, carga el grafo de conocimiento:
+Antes del Fingerprinting, carga el grafo de conocimiento (MCP primario, Graphify fallback):
 
 ```
 skill({ name: "codebase-graph" })
 ```
+
+**codebase-graph v2.0+** detecta automáticamente:
+- **MCP (codebase-memory-mcp)** → backend primario, grafo cross-sesión/proyecto
+- **Graphify (graphifyy)** → fallback local en `.opencode/.mentorkit/venv/`
+- **Ninguno** → Fingerprinting manual (sin bloqueo)
 
 Si el Graph Context está disponible, úsalo en los pasos siguientes:
 
@@ -66,8 +71,20 @@ Si el Graph Context está disponible, úsalo en los pasos siguientes:
 - **Rationale nodes** — conocimiento implícito ya extraído (#WHY, #HACK, #IMPORTANT)
 - **Comunidades Leiden** — módulos naturales del proyecto (separación real de responsabilidades)
 - **Conexiones sorprendentes** — acoplamiento oculto: inclúyelas en el Impact Gate
+- **Arquitectura** — visión general: packages, dependencies, clusters
 
-Si no está disponible, continúa. El Fingerprinting manual cubre el mismo terreno.
+**NUEVAS HERRAMIENTAS BAJO DEMANDA (vía MCP):**
+
+| Herramienta | Cuándo usar | Paso codebase-conformist |
+|-------------|-------------|--------------------------|
+| `trace_path` | Blast radius real desde archivo/símbolo | **Paso 2.5 (Impact Gate)** — reemplaza estimación manual |
+| `detect_changes` | Spec↔code traceability, drift detection | **Paso 4/5 (Archive/PR)** — specs huérfanas, código sin spec |
+| `manage_adr` | ADRs versionados en grafo | **Paso -1 (Constitution)** — decisiones vivas, no solo markdown |
+
+Si no está disponible, continúa. El Fingerprinting manual cubre el mismo terreno (con más tokens).
+
+> **Nota:** El backend MCP persiste el grafo en `~/.codebase-memory/` y sobrevive a reinicios,
+> trabajo en múltiples proyectos, y cambios de máquina. Graphify persiste en `graphify-out/`.
 
 ---
 
@@ -288,6 +305,17 @@ Si no existe, usa los defaults.
 ### Impact Gate
 - [ ] ¿Los archivos de alto impacto tienen cobertura de tests suficiente?
 - [ ] ¿El blast radius del cambio es aceptable dado el riesgo?
+- [ ] **NUEVO (MCP):** ¿`trace_path` desde archivos modificados confirma blast radius esperado?
+  ```bash
+  # Ejemplo bajo demanda en Paso 2.5:
+  codebase-memory-mcp cli trace_path "{
+    \"project\": \"$(basename $PWD)\",
+    \"function_name\": \"archivo_modificado.py\",
+    \"mode\": \"calls\",
+    \"depth\": 3
+  }"
+  ```
+  → Devuelve callers/callees reales hasta 3 saltos, no estimación.
 
 ### Council Gate
 - [ ] ¿El plan modifica una zona sensible (auth, DB, seguridad)?

@@ -17,7 +17,7 @@ bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/main/b
 El bootstrap:
 
 1. Descarga el tarball del repo.
-2. Copia `.opencode/`, `Makefile` y `.gitlab-ci.yml` al proyecto destino.
+2. Copia `.opencode/` y `Makefile` al proyecto destino.
 3. Ejecuta `.opencode/install-mentorkit.sh --fix`.
 4. Deja el entorno verificado y listo para usar.
 

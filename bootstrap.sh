@@ -10,7 +10,7 @@
 #   3. Copia al directorio actual del usuario:
 #        .opencode/      (skills, installer, verify, requirements lock)
 #        Makefile        (targets install/verify/clean/ci)
-#        .gitlab-ci.yml  (jobs verify-* reutilizables)
+#        
 #   4. Corre el installer: crea venv, instala 53 deps desde lock, verifica
 #   5. Reporta éxito
 #
@@ -88,11 +88,6 @@ fi
 # Makefile — opcional pero útil (make verify, make clean, make ci)
 if [[ -f "$REPO_DIR/Makefile" ]]; then
     cp "$REPO_DIR/Makefile" "./"
-fi
-
-# .gitlab-ci.yml — jobs verify-* reutilizables en el CI del usuario
-if [[ -f "$REPO_DIR/.gitlab-ci.yml" ]]; then
-    cp "$REPO_DIR/.gitlab-ci.yml" "./"
 fi
 
 # ─── 4) Install end-to-end (lo que el usuario NO ve) ──────────────────
