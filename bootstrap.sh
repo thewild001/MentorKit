@@ -10,8 +10,10 @@
 #   3. Copia al directorio actual del usuario:
 #        .opencode/      (skills, installer, verify, requirements lock)
 #        Makefile        (targets install/verify/clean/ci)
+#        # NO se copian: openspec/ (store local de este repo)
+#        # NO se copian: .specify/ (legacy, deprecated)
 #        
-#   4. Corre el installer: crea venv, instala 53 deps desde lock, verifica
+#   4. Corre el installer: crea venv, instala 60 deps desde lock, verifica
 #   5. Reporta éxito
 #
 # El usuario corre UN comando y obtiene mentorkit funcionando. No necesita
