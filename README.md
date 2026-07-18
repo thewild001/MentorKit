@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./MentorKit5.0-Banner.png" alt="MentorKit v5.0" width="100%" />
+</p>
+
 # mentorkit
 
 > Orquestador de workflow para juniors. Constitution → Spec → Fingerprinting → Plan → Confirm → Implement → PR.
@@ -172,4 +176,6 @@ git blame openspec/system-spec.md
 
 ## 📜 Créditos
 
-Desarrollado por [fortes](https://gitlab.prod.uci.cu/fortes) · Universidad de las Ciencias Informáticas (UCI)
+Desarrollado por [thewild001](https://github.com/thewild001) · Universidad de las Ciencias Informáticas (UCI)
+
+Repositorio: [github.com/thewild001/MentorKit](https://github.com/thewild001/MentorKit)
