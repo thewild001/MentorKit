@@ -3,14 +3,15 @@ name: document-extractor
 description: >
   Extrae texto e imágenes de documentos (ODT, DOCX, PDF, DOC) sin dependencias
   del sistema operativo. Compatible con Linux y Windows. ODT y DOCX usan Python
-  puro (zipfile + xml, cero dependencias). PDF usa markitdown (pip install
-  markitdown, sin tools del SO). DOC solicita conversión. Invocado por prd-reader
+  puro (zipfile + xml, cero dependencias). PDF usa markitdown y cae a
+  firecrawl-anydoc como fallback si markitdown falla. DOC solicita conversión.
+  Invocado por prd-reader
   para desacoplar la extracción del parseo.
 compatibility: opencode
 metadata:
   version: "2.0"
   platform: linux-windows
-  pip-deps: "markitdown (solo para PDF)"
+  pip-deps: "markitdown + firecrawl-anydoc (PDF fallback)"
   system-deps: none
 ---
 
@@ -21,7 +22,7 @@ Extrae texto e imágenes de documentos. Sin herramientas del sistema operativo.
 > **IMPORTANTE — Usar SIEMPRE el wrapper de MentorKit:**
 >
 > Todo el código Python de este skill DEBE ejecutarse vía `.opencode/mentorkit-python.sh`,
-> nunca con `python3` directo. Esto garantiza que `markitdown` se importe del venv de
+> nunca con `python3` directo. Esto garantiza que `markitdown` y `anydoc` se importen del venv de
 > MentorKit (no del Python del sistema, ni de pyenv, ni de conda).
 >
 > El wrapper lee la ruta del Python del venv desde `.opencode/.mentorkit/python-path.txt`
@@ -31,13 +32,13 @@ Extrae texto e imágenes de documentos. Sin herramientas del sistema operativo.
 > **Patrón de invocación:**
 > ```bash
 > # Diagnóstico, extracción, install — todo via wrapper:
-> .opencode/mentorkit-python.sh -c "import markitdown; ..."
-> .opencode/mentorkit-python.sh -m pip install markitdown
+> .opencode/mentorkit-python.sh -c "import markitdown, anydoc; ..."
+> .opencode/mentorkit-python.sh -m pip install markitdown firecrawl-anydoc
 > ```
 >
 > **Anti-patrón (NO hacer):**
 > ```bash
-> python3 -c "import markitdown"          # ✗ usa Python del sistema
+> python3 -c "import markitdown, anydoc"  # ✗ usa Python del sistema
 > "$VENV_PYTHON" -c "..."                  # ✗ frágil, depende de venv presente
 > sys.executable en subprocess.run        # ✗ propaga el Python del caller
 > ```
@@ -48,7 +49,7 @@ Extrae texto e imágenes de documentos. Sin herramientas del sistema operativo.
 |---------|--------|-------------|-----------|
 | ODT | Python puro (zipfile + xml) | Ninguna | Texto completo + imágenes |
 | DOCX | Python puro (zipfile + xml) | Ninguna | Texto completo + imágenes |
-| PDF digital | markitdown | pip install markitdown | Texto completo |
+| PDF digital | markitdown → fallback anydoc | pip install markitdown firecrawl-anydoc | Texto completo |
 | PDF escaneado | — | — | Sin texto (imagen, no OCR) |
 | DOC | — | — | Solicitar conversión |
 
@@ -71,31 +72,35 @@ print('✓  zipfile + xml.etree  → ODT y DOCX listos (Python puro)')
 try:
     import markitdown
     print(f'✓  markitdown {markitdown.__version__}  → PDF listo')
-    PDF_READY = True
 except ImportError:
-    print('○  markitdown no instalado en el venv → PDF no disponible')
+    print('○  markitdown no instalado en el venv → se intentará anydoc')
+
+try:
+    import anydoc
+    print(f'✓  anydoc {anydoc.__version__}  → fallback PDF listo')
+except ImportError:
+    print('○  anydoc no instalado en el venv → fallback PDF no disponible')
     print('   Re-ejecuta: .opencode/install-mentorkit.sh')
-    PDF_READY = False
 "
 ```
 
-Si el archivo es PDF y markitdown no está instalado, instálalo vía wrapper:
+Si el archivo es PDF y falta algún conversor, instálalo vía wrapper:
 
 ```bash
-.opencode/mentorkit-python.sh -m pip install markitdown --quiet
-echo "✓  markitdown instalado"
+.opencode/mentorkit-python.sh -m pip install markitdown firecrawl-anydoc --quiet
+echo "✓  markitdown + anydoc instalados"
 ```
 
 > **Equivalentes correctos (todos usan el wrapper):**
 > ```bash
-> .opencode/mentorkit-python.sh -m pip install markitdown          # ✓ preferida
-> .opencode/mentorkit-python.sh -m pip install markitdown --quiet # ✓ silenciosa
+> .opencode/mentorkit-python.sh -m pip install markitdown firecrawl-anydoc          # ✓ preferida
+> .opencode/mentorkit-python.sh -m pip install markitdown firecrawl-anydoc --quiet # ✓ silenciosa
 > ```
 >
 > **NO hacer** (cae en Python del sistema o rompe la cadena):
 > ```bash
-> python3 -m pip install markitdown                                # ✗ sistema
-> "$VENV_PYTHON/bin/python" -m pip install markitdown              # ✗ frágil
+> python3 -m pip install markitdown firecrawl-anydoc               # ✗ sistema
+> "$VENV_PYTHON/bin/python" -m pip install markitdown firecrawl-anydoc  # ✗ frágil
 > ```
 >
 > **Desde Python** (si necesitas hacer install programático, ej. en un script
@@ -103,7 +108,7 @@ echo "✓  markitdown instalado"
 > ```python
 > import subprocess
 > subprocess.run(
->     [".opencode/mentorkit-python.sh", "-m", "pip", "install", "markitdown", "--quiet"],
+>     [".opencode/mentorkit-python.sh", "-m", "pip", "install", "markitdown", "firecrawl-anydoc", "--quiet"],
 >     check=True
 > )
 > ```
@@ -204,14 +209,15 @@ def extract_docx(file_path: str, images_dir: str) -> dict:
 
 ---
 
-## Paso 3 — Extracción PDF (markitdown, pip, cross-platform)
+## Paso 3 — Extracción PDF (markitdown + fallback anydoc)
 
 ```python
 from pathlib import Path
 
 def extract_pdf(file_path: str, images_dir: str) -> dict:
     """
-    markitdown extrae texto de PDFs digitales sin herramientas del SO.
+    markitdown es el camino principal.
+    Si falla o no está disponible, usar anydoc como fallback.
     No extrae imágenes embebidas — se referencia el PDF original.
     """
     result = {"text": "", "images": [], "format": "pdf",
@@ -221,29 +227,50 @@ def extract_pdf(file_path: str, images_dir: str) -> dict:
         md = MarkItDown()
         conversion = md.convert(file_path)
         result["text"] = conversion.text_content
-
-        if not result["text"].strip():
+    except Exception as markitdown_error:
+        try:
+            import anydoc
+            result["text"] = anydoc.to_markdown(file_path)
             result["warnings"].append(
-                "PDF sin texto extraíble — posiblemente escaneado (imagen).\n"
-                "  Convierte a ODT/DOCX en LibreOffice para extracción completa:\n"
-                "  Archivo → Exportar como → ODT o DOCX"
+                f"markitdown falló ({type(markitdown_error).__name__}); "
+                "se usó fallback anydoc."
             )
-        else:
-            result["warnings"].append(
-                "Las imágenes del PDF no se extraen — referenciar el PDF original "
-                "para los prototipos de UI."
+        except Exception as anydoc_error:
+            result["error"] = (
+                "No fue posible convertir el PDF con markitdown ni con anydoc.\n"
+                f"  markitdown: {type(markitdown_error).__name__}: {markitdown_error}\n"
+                f"  anydoc: {type(anydoc_error).__name__}: {anydoc_error}"
             )
+            return result
 
-    except ImportError:
-        result["error"] = (
-            "markitdown no instalado.\n"
-            "  Instalar: pip install markitdown"
+    if not result["text"].strip():
+        result["warnings"].append(
+            "PDF sin texto extraíble — posiblemente escaneado (imagen).\n"
+            "  Convierte a ODT/DOCX en LibreOffice para extracción completa:\n"
+            "  Archivo → Exportar como → ODT o DOCX"
         )
-    except Exception as e:
-        result["error"] = f"Error procesando PDF: {e}"
+    else:
+        result["warnings"].append(
+            "Las imágenes del PDF no se extraen — referenciar el PDF original "
+            "para los prototipos de UI."
+        )
 
     return result
 ```
+
+---
+
+## Análisis de viabilidad — fallback `markitdown` → `anydoc`
+
+- **Compatibilidad técnica:** viable. `firecrawl-anydoc` importa como `anydoc` y
+  convierte `pdf` a Markdown en local.
+- **Cobertura funcional:** mejora resiliencia ante errores de `markitdown` o falta
+  de instalación puntual en algunos entornos.
+- **Riesgos:** ambos motores no hacen OCR local para PDF escaneado; el fallback no
+  elimina esa limitación.
+- **Decisión recomendada:** mantener `markitdown` como primario por continuidad del
+  flujo actual y usar `anydoc` como respaldo automático para reducir fallos de
+  conversión en adjuntos de usuario.
 
 ---
 
@@ -336,7 +363,7 @@ def extract_document(file_path: str, output_dir: str) -> dict:
 
 ```
 Formato:    [ODT | DOCX | PDF | DOC]
-Método:     [Python puro | markitdown]
+Método:     [Python puro | markitdown | anydoc fallback]
 Texto:      [N] caracteres
 Imágenes:   [N archivos en ui-prototypes/ | referencia al PDF]
 Warnings:   [lista si hay]
