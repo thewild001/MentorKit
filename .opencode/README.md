@@ -120,7 +120,8 @@ completo, reemplaza a spec-writer eliminando el paso de clarificación.
 
 ### document-extractor (Skill de soporte)
 Extrae texto e imágenes de documentos (ODT, DOCX, PDF, DOC) sin dependencias del
-sistema operativo. ODT y DOCX usan Python puro. PDF usa markitdown.
+sistema operativo. ODT y DOCX usan Python puro. PDF usa markitdown con fallback
+a firecrawl-anydoc.
 
 ### llm-council (Skill de escalación)
 Panel de 5 advisors independientes (Contrarian, First Principles, Expansionist,

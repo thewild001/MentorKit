@@ -262,7 +262,7 @@ botones. NO parafrasees.]
 
 ```
 PRD procesado:     [nombre-archivo]
-Extracción:        document-extractor ([método: Python puro | markitdown])
+Extracción:        document-extractor ([método: Python puro | markitdown→anydoc fallback])
 Spec:              openspec/changes/[NNN]-[slug]/spec.md
 Dominio:           [nombre]
 ADDED:             [N]   MODIFIED: [N]   REMOVED: [N]

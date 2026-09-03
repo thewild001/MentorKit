@@ -30,7 +30,7 @@ help:  ## Mostrar esta ayuda
 install:  ## Crear/reparar venv (Python 3.12.13 + 60 deps)
 	@bash .opencode/install-mentorkit.sh --fix
 
-verify:  ## Check: Python version + 4 imports (markitdown, striprtf, graphify, uv)
+verify:  ## Check: Python version + 5 imports (markitdown, anydoc, striprtf, graphify, uv)
 	@bash .opencode/mentorkit-verify.sh
 
 clean:  ## Borrar venv y python-path.txt (fuerza install fresh)

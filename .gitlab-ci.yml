@@ -9,7 +9,7 @@
 #     1. Python 3.12.13 exacto
 #     2. 60 paquetes pinneados con SHA256
 #     3. uv autocontenido en el venv
-#     4. mentorkit-verify.sh PASS (markitdown, striprtf, graphify, uv)
+#     4. mentorkit-verify.sh PASS (markitdown, anydoc, striprtf, graphify, uv)
 #   verify-platform-coverage:
 #     5. Lock generado con --universal (cubre linux/macos/windows)
 #   verify-archive-spec:
