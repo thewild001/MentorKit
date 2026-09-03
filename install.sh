@@ -32,7 +32,7 @@ FILES=(
     ".opencode/agents/dev-guide.md"
 )
 
-PIP_DEPS=("markitdown" "striprtf")
+PIP_DEPS=("markitdown" "firecrawl-anydoc" "striprtf")
 
 # ─── Colores ──────────────────────────────────────────────────────────────────
 
@@ -161,6 +161,7 @@ install_pip_deps() {
     for dep in "${PIP_DEPS[@]}"; do
         mod="${dep//-/_}"
         [[ "${dep}" == "striprtf" ]] && mod="striprtf.striprtf"
+        [[ "${dep}" == "firecrawl-anydoc" ]] && mod="anydoc"
 
         if "${PYTHON}" -c "import ${mod}" &>/dev/null 2>&1; then
             local ver
@@ -183,7 +184,7 @@ install_pip_deps() {
     echo -e "  ${BOLD}Formatos soportados:${RESET}"
     info "ODT   texto + imagenes   Python puro"
     info "DOCX  texto + imagenes   Python puro"
-    info "PDF   texto              markitdown"
+    info "PDF   texto              markitdown (+ fallback anydoc)"
     info "HTML  texto              markitdown"
     info "TXT   texto              Python puro"
     info "MD    texto              Python puro"

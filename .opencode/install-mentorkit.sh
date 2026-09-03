@@ -9,7 +9,7 @@
 #    1. Python 3.12.x LTS (descargado por uv si el sistema no lo tiene)
 #    2. Dependencias pinneadas con SHA256 (mismas versiones, mismos hashes)
 #    3. Re-install idempotente (<1s) — uv detecta que todo está al día
-#    4. Verificación post-install: import test de markitdown, striprtf, graphifyy, uv
+#    4. Verificación post-install: import test de markitdown, firecrawl-anydoc, striprtf, graphifyy, uv
 #
 #  Comandos:
 #    bash install-mentorkit.sh            # install/repair (default)
@@ -506,7 +506,7 @@ install_deps_from_lock() {
         echo -e "  ${GREEN}OK${RESET}"
         # Listar deps principales
         uv pip list --python "$VENV_PYTHON" --quiet 2>/dev/null \
-            | grep -iE "^(markitdown|striprtf|graphifyy|uv)\b" \
+            | grep -iE "^(markitdown|firecrawl-anydoc|striprtf|graphifyy|uv)\b" \
             | while read -r line; do ok "$line"; done
     else
         echo -e "  ${RED}Error${RESET}"
@@ -545,6 +545,7 @@ import sys, importlib.metadata as md
 # (distribution_name, import_name) — algunos paquetes tienen nombres distintos
 deps = [
     ('markitdown', 'markitdown'),
+    ('firecrawl-anydoc', 'anydoc'),
     ('striprtf',   'striprtf'),
     ('graphifyy',  'graphify'),   # PyPI: graphifyy, import: graphify
     ('uv',         'uv'),

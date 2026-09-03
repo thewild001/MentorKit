@@ -59,6 +59,7 @@ py_ver = f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.m
 # (distribution_name, import_name) — graphifyy (PyPI) se importa como 'graphify'
 deps = [
     ('markitdown', 'markitdown'),
+    ('firecrawl-anydoc', 'anydoc'),
     ('striprtf',   'striprtf'),
     ('graphifyy',  'graphify'),
     ('uv',         'uv'),
@@ -163,6 +164,7 @@ import sys, importlib.metadata as md
 
 deps = [
     ('markitdown', 'markitdown'),
+    ('firecrawl-anydoc', 'anydoc'),
     ('striprtf',   'striprtf'),
     ('graphifyy',  'graphify'),   # PyPI: graphifyy, import: graphify
     ('uv',         'uv'),

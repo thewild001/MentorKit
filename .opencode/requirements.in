@@ -12,6 +12,7 @@ uv>=0.11,<0.12
 
 # Document extraction (PDF, ODT, DOCX)
 markitdown>=0.1
+firecrawl-anydoc>=0.2
 striprtf>=0.0.10
 
 # Codebase graph (god nodes, rationale nodes, Leiden clustering)
