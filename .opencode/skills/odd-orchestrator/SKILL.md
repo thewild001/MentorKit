@@ -13,7 +13,9 @@ metadata:
   workflow: "organic-driven-development"
 ---
 
-# ODD Orchestrator
+# ODD Orchestrator — OpenCode Adapter
+
+The runtime-neutral ODD semantics live in `odd/CONTRACT.md`. This skill is the OpenCode adapter that exposes those semantics through OpenCode's native skill/runtime mechanisms. It may add execution details, but must not redefine the contract.
 
 ODD no es un formato de spec alternativo. Es la capa que decide **cuándo hace falta una spec, un plan, un documento persistente o ninguno**.
 
