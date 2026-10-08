@@ -165,13 +165,23 @@ Minimum sections:
 - Log
 - Delivery
 
-## 8. PRD and Implementation Planning
+## 8. Optional PRD and Implementation Planning
 
-A user-provided PRD is an optional structured input to ODD. Its file format is irrelevant after ingestion.
+A user-provided PRD is an **optional input**, not a prerequisite for ODD, planning, or implementation.
 
-Supported inputs include PDF, DOCX, DOC and ODT when the runtime adapter provides the corresponding document-extractor capability.
+ODD must work correctly from a direct user request alone.
 
-The planning pipeline is:
+When a PRD exists, it is an additional structured source of user intent and requirements. It must be normalized and analyzed before being used for implementation planning.
+
+The planning decision is independent from PRD presence:
+
+- **No PRD + SMALL** → normally implement directly after exploration.
+- **No PRD + SUBSTANTIAL** → create the ODD feature document and plan/route from the request plus codebase knowledge.
+- **PRD + SMALL** → do not force persistent planning merely because a PRD exists.
+- **PRD + SUBSTANTIAL** → use PRD analysis as an additional input to the repository-aware Implementation Plan.
+- **User explicitly asks for a plan** → a plan may be produced without authorization to implement, with or without a PRD.
+
+When a PRD is present, the optional pipeline is:
 
 ```
 PRD
@@ -189,22 +199,37 @@ IMPLEMENTATION PLAN
 ODD S# / T#
 ```
 
+Without a PRD, the corresponding route is:
+
+```
+USER REQUEST
+  ↓
+EXPLORE CODEBASE
+  ↓
+POLICIES / ARCHITECTURE
+  ↓
+PLAN / ROUTE WHEN JUSTIFIED
+  ↓
+ODD S# / T#
+```
+
 The Implementation Plan answers:
 
-> How should this PRD be implemented in this repository?
+> How should the authorized intent be implemented in this repository?
+
+When a PRD exists, it contributes product intent and requirements. When it does not, the authorized user request is the primary intent source.
 
 The ODD feature document answers:
 
 > What authorized work units are being executed?
 
-For SUBSTANTIAL PRD-driven work:
+For substantial work:
 
 ```
-odd/planning/<feature-name>.md
 odd/tasks/<feature-name>.md
 ```
 
-The plan is architectural/design context. The ODD task is execution state.
+A separate `odd/planning/<feature-name>.md` is created when an explicit or material Implementation Plan is justified, not merely because the work exists.
 
 A plan never authorizes implementation by itself.
 
