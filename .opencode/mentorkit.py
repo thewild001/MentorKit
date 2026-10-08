@@ -243,7 +243,11 @@ def main():
     sub.add_parser("verify").add_argument("--json", action="store_true")
     sub.add_parser("fix")
     t=sub.add_parser("odd-task"); t.add_argument("feature"); t.add_argument("request")
-    a=ap.parse_args()
+    raw_args = sys.argv[1:]
+    # Backward-compatible alias for older launchers that invoked --fix.
+    if raw_args and raw_args[0] == "--fix":
+        raw_args[0] = "fix"
+    a=ap.parse_args(raw_args)
     if a.cmd in ("install","fix"):
         ensure_files(); uv=install_uv(); ensure_python(uv); py=ensure_venv(uv); install_deps(uv,py); raise SystemExit(verify(False))
     if a.cmd=="verify": raise SystemExit(verify(a.json))
