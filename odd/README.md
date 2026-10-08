@@ -2,6 +2,10 @@
 
 MentorKit usa ODD como modelo de orquestación para decidir **cuánto proceso necesita realmente cada cambio**.
 
+## Canonical contract
+
+La semántica runtime-neutral de ODD está definida en [`odd/CONTRACT.md`](./CONTRACT.md). Ese documento es la fuente de verdad de la metodología. Los runtimes y agentes soportados deben adaptarla sin crear variantes semánticas.
+
 ## Principios
 
 1. Una explicación, investigación o lectura no autoriza cambios.
