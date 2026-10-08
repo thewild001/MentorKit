@@ -1,10 +1,10 @@
 # MentorKit — Agent Contract
 
-MentorKit is an agentic software-engineering workflow built on top of an AI coding agent. Its orchestration model is Organic Driven Development (ODD).
+MentorKit is an agentic software-engineering workflow built on top of AI coding agents. Its orchestration model is Organic Driven Development (ODD). The runtime-neutral ODD semantics are defined in `odd/CONTRACT.md`.
 
 ## Core rule
 
-Use ODD proportionally to the requested change:
+Read `odd/CONTRACT.md` as the canonical ODD contract. Use ODD proportionally to the requested change:
 
 1. AUTHORIZE — determine what the user explicitly authorized.
 2. EXPLORE — inspect only the context needed to act safely.
@@ -35,7 +35,7 @@ Follow the repository's actual build, test, lint, typecheck, and deployment comm
 
 ## Compatibility contract
 
-This file is intentionally agent-neutral. Cursor, Codex, Claude Code, and OpenCode should consume this contract directly or through their native compatibility mechanisms. Do not create a competing workflow with different semantics in an agent-specific file.
+`odd/CONTRACT.md` is the canonical runtime-neutral methodology. This file is the repository-level agent contract that points runtimes to that methodology and states the minimum integration rules. It is intentionally agent-neutral. Cursor, Codex, Claude Code, and OpenCode should consume this contract directly or through their native compatibility mechanisms. Do not create a competing workflow with different semantics in an agent-specific file.
 
 ## Agent-specific integration
 
