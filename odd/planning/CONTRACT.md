@@ -146,6 +146,7 @@ A PRD does not automatically imply a large plan.
 
 - SMALL implementation: a lightweight plan may be sufficient.
 - SUBSTANTIAL implementation: persist the plan under `odd/planning/<feature-name>.md` and use it to derive the ODD feature document.
+  The derived ODD execution document is `odd/tasks/<feature-name>.md`.
 - Explicit user request for a plan: produce the plan even when implementation is not yet authorized.
 
 A plan is not authorization to implement.
