@@ -2,7 +2,7 @@
 
 ## Status
 
-This document is the runtime-neutral contract for generating an **Implementation Plan** from a user-provided PRD.
+This document is the runtime-neutral contract for generating an **Implementation Plan** from an authorized user request, optionally enriched by a user-provided PRD.
 
 It is independent of the PRD file format and of the agent runtime.
 
@@ -189,7 +189,7 @@ A plan is not authorization to implement.
 
 The plan answers:
 
-> How should this PRD be implemented in this repository?
+> How should the authorized intent be implemented in this repository?
 
 The ODD feature document answers:
 
@@ -213,6 +213,8 @@ Implementation
 
 A direct request without PRD is a first-class ODD input.
 
+A direct request without PRD is a first-class ODD input.
+
 The same PRD or request may generate multiple ODD tasks or work units.
 
 ## Scope control
@@ -223,7 +225,7 @@ Discovered opportunities, technical debt, or unrelated bugs are recorded as find
 
 ## Human control
 
-Before implementation of a substantial PRD-driven change, material architectural choices, scope changes, and unresolved business decisions remain under human control.
+Before implementation of a substantial change, material architectural choices, scope changes, and unresolved business decisions remain under human control.
 
 ## Completion
 
