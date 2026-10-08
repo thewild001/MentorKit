@@ -137,6 +137,58 @@ def ensure_venv(uv):
         die("no se pudo crear el entorno virtual de MentorKit")
     return py
 
+def find_mcp_binary():
+    candidates = [
+        shutil.which("codebase-memory-mcp"),
+        Path.home() / ".local/bin/codebase-memory-mcp",
+        Path.home() / ".cargo/bin/codebase-memory-mcp",
+        Path("/usr/local/bin/codebase-memory-mcp"),
+        Path("/opt/homebrew/bin/codebase-memory-mcp"),
+    ]
+    if platform.system() == "Windows":
+        appdata = os.environ.get("APPDATA")
+        localappdata = os.environ.get("LOCALAPPDATA")
+        if appdata:
+            candidates += [Path(appdata) / "npm/codebase-memory-mcp.cmd",
+                           Path(appdata) / "npm/codebase-memory-mcp"]
+        if localappdata:
+            candidates += [Path(localappdata) / "Programs/codebase-memory-mcp/codebase-memory-mcp.exe"]
+    for candidate in candidates:
+        if candidate and Path(candidate).exists():
+            return Path(candidate)
+    return None
+
+def opencode_config_path():
+    if platform.system() == "Windows":
+        base = os.environ.get("APPDATA") or (Path.home() / "AppData/Roaming")
+        return Path(base) / "opencode/opencode.json"
+    if platform.system() == "Darwin":
+        return Path.home() / "Library/Application Support/opencode/opencode.json"
+    base = os.environ.get("XDG_CONFIG_HOME")
+    return Path(base) / "opencode/opencode.json" if base else Path.home() / ".config/opencode/opencode.json"
+
+def configure_mcp():
+    binary = find_mcp_binary()
+    if not binary:
+        log("  ! codebase-memory-mcp no encontrado; se conserva Graphify/fingerprinting como fallback")
+        return 0
+    config = opencode_config_path()
+    config.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        data = json.loads(config.read_text(encoding="utf-8")) if config.exists() else {}
+    except (json.JSONDecodeError, OSError) as exc:
+        log(f"  ! no se pudo leer {config}: {exc}")
+        return 0
+    data.setdefault("mcp", {})
+    data["mcp"]["codebase-memory-mcp"] = {
+        "enabled": True,
+        "type": "local",
+        "command": [str(binary)],
+    }
+    config.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+    log(f"  + codebase-memory-mcp configurado en {config}")
+    return 0
+
 def install_deps(uv, py):
     if not LOCK.is_file():
         die(f"no existe {LOCK}")
@@ -245,6 +297,7 @@ def main():
     sub.add_parser("install")
     sub.add_parser("verify").add_argument("--json", action="store_true")
     sub.add_parser("fix")
+    sub.add_parser("configure-mcp")
     t=sub.add_parser("odd-task"); t.add_argument("feature"); t.add_argument("request")
     raw_args = sys.argv[1:]
     # Backward-compatible alias for older launchers that invoked --fix.
@@ -252,7 +305,8 @@ def main():
         raw_args[0] = "fix"
     a=ap.parse_args(raw_args)
     if a.cmd in ("install","fix"):
-        ensure_files(); uv=install_uv(); ensure_python(uv); py=ensure_venv(uv); install_deps(uv,py); raise SystemExit(verify(False))
+        ensure_files(); uv=install_uv(); ensure_python(uv); py=ensure_venv(uv); install_deps(uv,py); configure_mcp(); raise SystemExit(verify(False))
+    if a.cmd=="configure-mcp": raise SystemExit(configure_mcp())
     if a.cmd=="verify": raise SystemExit(verify(a.json))
     if a.cmd=="odd-task": odd_task(a.feature,a.request)
 
