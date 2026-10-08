@@ -189,7 +189,7 @@ install_pip_deps() {
     info "TXT   texto              Python puro"
     info "MD    texto              Python puro"
     info "RTF   texto              striprtf"
-    info "DOC   conversion manual  (formato obsoleto)"
+    info "DOC   texto              anydoc"
     echo ""
 }
 
