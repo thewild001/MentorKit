@@ -123,9 +123,13 @@ Usa SUBSTANTIAL cuando:
 - debe sobrevivir a una interrupción;
 - una revisión útil necesita una unidad de trabajo explícita.
 
-## 5. PRD → Implementation Plan
+## 5. Plan / Route
 
-Cuando exista PRD y el trabajo sea lo bastante complejo como para beneficiarse de planificación:
+Planning is driven by complexity and user intent, not by PRD presence.
+
+### With PRD
+
+When a PRD exists and planning is justified:
 
 ```
 prd-reader
@@ -139,17 +143,23 @@ codebase-graph
 Implementation Plan
 ```
 
-El plan debe seguir `odd/planning/CONTRACT.md`.
+The plan must follow `odd/planning/CONTRACT.md`.
 
-Para trabajo SUBSTANTIAL persiste:
+Persist the plan for SUBSTANTIAL work when it is material or explicitly requested:
 
 ```
 odd/planning/<feature-name>.md
 ```
 
-El plan debe ser revisable antes de comenzar la implementación.
+The plan must be reviewable before implementation.
 
-Si el usuario pidió solo el plan, el proceso termina en el plan y permanece read-only.
+If the user requested only a plan, the process ends at the plan and remains read-only.
+
+### Without PRD
+
+For substantial work without a PRD, derive the plan/route from the authorized user request, Codebase Knowledge Snapshot, project policies, architecture, patterns, blast radius, and verification strategy.
+
+A PRD is optional enrichment, never a prerequisite for planning or implementation.
 
 ## 6. Feature Document
 
