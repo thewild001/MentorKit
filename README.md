@@ -315,6 +315,21 @@ MentorKit/
 
 ---
 
+## 🤖 Compatibilidad con agentes
+
+MentorKit mantiene un contrato ODD común y desacoplado del agente. El objetivo no es crear cuatro versiones del workflow, sino proporcionar adaptadores nativos sobre una misma semántica.
+
+| Agente | Integración nativa | Contrato compartido |
+|---|---|---|
+| **OpenCode** | `.opencode/skills/` + `.opencode/agents/` + `AGENTS.md` | Sí |
+| **Cursor** | `.cursor/rules/` + `AGENTS.md` | Sí |
+| **Codex** | `AGENTS.md` + `.agents/skills/` | Sí |
+| **Claude Code** | `CLAUDE.md` + `.claude/skills/` | Sí |
+
+El contrato canónico está en `AGENTS.md`. Los archivos específicos de cada agente son adaptadores y no deben introducir una metodología ODD alternativa.
+
+Esto permite que el mismo proyecto conserve la misma autorización, clasificación SMALL/SUBSTANTIAL, persistencia en `odd/tasks/`, verificación y reglas de cierre independientemente del agente utilizado.
+
 ## 🖥️ Compatibilidad multiplataforma\n\nMentorKit separa la lógica de instalación del shell del sistema:\n\n- **Linux:** `bootstrap.sh` + `install-mentorkit.sh`.\n- **macOS:** `bootstrap.sh` + `install-mentorkit.sh`.\n- **Windows:** `bootstrap.ps1` + `install-mentorkit.ps1`, sin depender de Bash.\n- **Runtime común:** `.opencode/mentorkit.py` basado únicamente en la biblioteca estándar de Python.\n- **Python:** gestionado por `uv` para evitar depender de la versión instalada por el usuario.\n- **Verificación:** runners reales de Ubuntu, macOS y Windows en `.github/workflows/platform-smoke.yml`.\n\nGit Bash y WSL2 continúan soportados en Windows como opciones compatibles, pero ya no son requisitos para instalar MentorKit.\n\n## 🔒 Reproducibilidad
 
 MentorKit mantiene un runtime Python aislado:
