@@ -31,7 +31,7 @@ MentorKit no dependa del formato de entrada.
 | PDF escaneado | markitdown/anydoc | ❌ | — | Se detecta y se reporta como `needs_ocr` |
 | DOC | anydoc | ✅ | ⚠️ | Documento binario Word 97–2003; imágenes no se materializan en `ui-prototypes/` |
 
-`firecrawl-anydoc` soporta actualmente Word `.doc`, `.docx` y otros formatos mediante una API común de Markdown. MentorKit usa esa capacidad para cubrir el formato binario `.doc` sin requerir Microsoft Word, LibreOffice, COM ni ejecutables específicos del SO. citeturn859555search5turn859555search7
+`firecrawl-anydoc` soporta actualmente Word `.doc`, `.docx` y otros formatos mediante una API común de Markdown. MentorKit usa esa capacidad para cubrir el formato binario `.doc` sin requerir Microsoft Word, LibreOffice, COM ni ejecutables específicos del SO.
 
 ## Paso 0 — Diagnóstico
 
