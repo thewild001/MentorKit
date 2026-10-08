@@ -13,7 +13,11 @@ try {
   $root = Get-ChildItem $Tmp -Directory | Where-Object { Test-Path (Join-Path $_.FullName ".opencode/install-mentorkit.ps1") } | Select-Object -First 1
   if (-not $root) { throw "El release no contiene un bootstrap MentorKit válido." }
   Copy-Item (Join-Path $root.FullName ".opencode") "." -Recurse
-  foreach ($d in @("odd",".mentor")) {
+  foreach ($f in @("AGENTS.md","CLAUDE.md")) {
+    $src=Join-Path $root.FullName $f
+    if (Test-Path $src) { Copy-Item $src "." -Force }
+  }
+  foreach ($d in @(".cursor",".claude",".agents","odd",".mentor")) {
     $src=Join-Path $root.FullName $d
     if (Test-Path $src) { Copy-Item $src "." -Recurse }
   }
