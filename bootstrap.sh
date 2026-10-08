@@ -92,7 +92,7 @@ cp -R "$REPO_DIR/.opencode" "./" || fail "No se pudo copiar .opencode/."
 [[ -f "$REPO_DIR/Makefile" ]] &&
     cp "$REPO_DIR/Makefile" "./"
 
-bash ".opencode/install-mentorkit.sh" fix ||
+bash ".opencode/install-mentorkit.sh" ||
     fail "El instalador no pudo completar la preparación del entorno."
 
 echo ""
