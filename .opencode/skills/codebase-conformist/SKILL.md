@@ -3,14 +3,13 @@ name: codebase-conformist
 description: >
   Ingeniero Senior de integración para MentorKit. Ejecuta el ciclo ODD después
   de que odd-orchestrator autoriza y clasifica el trabajo: explora el codebase,
-  fingerprinting, investigación, gates de riesgo, implementación conforme,
-  verificación, commits por unidad y PR. No impone specs persistentes para
-  cambios pequeños.
+  fingerprinting, análisis de PRD, políticas/arquitectura, investigación,
+  gates de riesgo, implementación conforme, verificación, commits por unidad y PR.
+  No impone specs persistentes para cambios pequeños.
 compatibility: opencode
 metadata:
-  version: "6.0"
+  version: "7.0"
   workflow: "odd"
-  inspired-by: github/spec-kit + karpathy-llm-council
 ---
 
 # Codebase Conformist
@@ -22,16 +21,17 @@ metadata:
 ## Ciclo ODD
 
 ```
-Authorize → Explore → Classify → [Feature Document] → Fingerprint
-→ Research/Council → Plan/Route → Implement → Verify → Work-unit Commit → Close
+Authorize → Explore → Classify → [PRD Analysis]
+→ [Feature Document] → Fingerprint
+→ Research/Council → Plan/Route
+→ Implement → Verify → Work-unit Commit → Close
 ```
 
 La clasificación y la decisión de persistencia pertenecen a `odd-orchestrator`.
-Esta skill no debe crear un spec persistente solo por rutina.
 
 ## Paso 0 — Gobernanza
 
-Lee la constitución si existe:
+Lee:
 
 ```
 .mentor/constitution.md
@@ -43,8 +43,8 @@ Compatibilidad legacy:
 openspec/memory/constitution.md
 ```
 
-La constitución contiene invariantes del proyecto: stack aprobado, seguridad, testing,
-convenciones y restricciones. No la uses como motor del workflow.
+La constitución contiene invariantes del proyecto: stack aprobado, seguridad,
+testing, convenciones y restricciones. No la uses como motor del workflow.
 
 ## Paso 1 — Explore
 
@@ -56,14 +56,8 @@ Antes de escribir código:
 4. Revisa callers y blast radius.
 5. Extrae naming, estructura, errores, asincronía y testing.
 6. Busca conflictos de patrones.
-
-Para trabajo SUBSTANTIAL, verifica que exista:
-
-```
-odd/tasks/<feature-name>.md
-```
-
-y que contenga S#/T# suficientes para la unidad que se va a ejecutar.
+7. Si existe PRD Analysis, traza los requisitos R# al contexto real del repo.
+8. Comprueba políticas/constitution aplicables.
 
 ## Paso 2 — Research / Council
 
@@ -73,15 +67,52 @@ Activa investigación solo cuando la incertidumbre lo justifique:
 - integración externa;
 - patrón sin precedente;
 - conflicto entre patrones;
-- zona de alto impacto.
+- zona de alto impacto;
+- decisión material introducida por el PRD.
 
 El council valida decisiones; no autoriza scope adicional.
 
 ## Paso 3 — Plan / Route
 
+### Sin PRD
+
+Usa la ruta ODD normal.
+
+### Con PRD
+
+El PRD no se transforma directamente en tareas.
+
+Primero genera un **Implementation Plan** siguiendo:
+
+```
+odd/planning/CONTRACT.md
+```
+
+El plan debe combinar:
+
+- requisitos del PRD;
+- arquitectura observada;
+- políticas/constitution;
+- patrones existentes;
+- blast radius;
+- estrategia de verificación;
+- riesgos y decisiones abiertas.
+
+Para trabajo SUBSTANTIAL persiste:
+
+```
+odd/planning/<feature-name>.md
+```
+
+Después usa el plan para alimentar `spec-writer` y producir S#/T# en:
+
+```
+odd/tasks/<feature-name>.md
+```
+
 ### SMALL
 
-No generes feature document salvo que el contexto no sea recuperable.
+No generes planificación persistente salvo que el usuario la solicite.
 
 Ruta:
 
@@ -99,15 +130,6 @@ odd/tasks/<feature-name>.md
 
 Planifica por T# y referencia los S# correspondientes.
 
-Ejemplo:
-
-```
-| T# | Archivo | Acción | S# | Dependencia |
-|----|---------|--------|----|-------------|
-| T1 | path/a | CREAR | S1 | — |
-| T2 | path/b | MODIFICAR | S1,S2 | T1 |
-```
-
 ## Paso 4 — Gates
 
 Evalúa proporcionalmente:
@@ -119,6 +141,11 @@ Evalúa proporcionalmente:
 ### Conformity
 - ¿Existe precedente?
 - ¿El cambio respeta la arquitectura actual?
+- ¿El PRD está siendo aterrizado al diseño real del repo?
+
+### Policy
+- ¿La propuesta viola alguna política/constitution?
+- Si existe contradicción entre política y código, registra el conflicto; no decidas unilateralmente.
 
 ### Impact
 - ¿Cuál es el blast radius?
@@ -163,15 +190,6 @@ Una unidad sustancial cerrada debe tener:
 - commit Conventional Commit;
 - SHA registrado en su T#.
 
-Ejemplo:
-
-```
-- [x] T2 — ...
-  - Spec: S1
-  - Route: src/...
-  - Commit: abc1234
-```
-
 No mezcles cambios no relacionados.
 
 ## Paso 8 — PR
@@ -179,7 +197,7 @@ No mezcles cambios no relacionados.
 Para un PR, describe:
 
 - objetivo;
-- S#/T# afectados;
+- R#/S#/T# afectados;
 - decisiones relevantes;
 - evidencia de verificación;
 - work-unit commits;
@@ -197,25 +215,25 @@ Si aparece trabajo fuera del scope:
 2. no lo implementes;
 3. solicita ampliación si el usuario quiere incorporarlo.
 
-Si el usuario amplía scope, actualiza S#/T# antes de continuar.
-
 ## Resume
 
 Al reanudar trabajo SUBSTANTIAL:
 
 1. lee el documento ODD completo;
-2. inspecciona código y diff reales;
-3. recupera el espejo Engram si existe;
-4. reconcilia memoria y repositorio;
-5. continúa desde el siguiente T# incompleto.
+2. si existe Implementation Plan, léelo completo;
+3. inspecciona código y diff reales;
+4. recupera el espejo Engram si existe;
+5. reconcilia memoria y repositorio;
+6. continúa desde el siguiente T# incompleto.
 
 La memoria nunca vence a la realidad observada.
 
 ## Anti-patrones
 
 - Crear spec para cada cambio.
-- Confirmación artificial para un cambio explícitamente autorizado y trivial.
-- Código antes del feature document en trabajo sustancial.
+- Convertir un PRD directamente en una lista de tareas sin explorar el repositorio.
+- Generar arquitectura genérica sin evidencias del codebase.
+- Tratar una propuesta del Implementation Plan como autorización.
 - Expandir scope por iniciativa propia.
 - Introducir patrones nuevos sin justificar.
 - Tratar Engram como fuente de verdad superior al repositorio.
