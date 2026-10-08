@@ -1,48 +1,263 @@
 <p align="center">
-  <img src="./MentorKit5.0-Banner.png" alt="MentorKit v5.0" width="100%" />
+  <img src="./MentorKit5.0-Banner.png" alt="MentorKit" width="100%" />
 </p>
 
-# mentorkit
+# MentorKit
 
-> Orquestador de workflow para desarrolladores basado en **Organic Driven Development (ODD)**. Authorization → Explore → Classify → Implement/Track → Verify → Commit → Delivery.
+> **Agentic engineering workflow para desarrolladores**, construido sobre OpenCode y orientado a aplicar **Organic Driven Development (ODD)** de forma proporcional al cambio.
 
-**Plataforma:** Linux · macOS · Windows (Git Bash o WSL2) · **Python:** 3.12.13 (pin exacto) · **Deps lockeadas:** 60 con SHA256
+MentorKit no pretende imponer una ceremonia para cada modificación. Su objetivo es que el agente determine **cuánto proceso necesita realmente el trabajo**: desde un cambio pequeño y autocontenido hasta una feature sustancial que requiere contexto persistente, tareas, verificación y unidades de entrega revisables.
+
+**Plataformas:** Linux · macOS · Windows (Git Bash / WSL2)  
+**Python:** 3.12.13  
+**Runtime:** OpenCode + skills MentorKit  
+**Workflow:** ODD — SMALL / SUBSTANTIAL
 
 ---
 
-## 🚀 Instalación rápida (en tu proyecto)
+## 🚀 Instalación en un proyecto
 
-Si quieres usar MentorKit en tu proyecto (sin clonar este repo):
+Desde la raíz del proyecto donde quieres utilizar MentorKit:
 
 ```bash
 bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/main/bootstrap.sh")
 ```
 
-El bootstrap:
+El one-liner:
 
-1. Descarga el tarball del repo.
-2. Copia `.opencode/` y `Makefile` al proyecto destino.
-3. Ejecuta `.opencode/install-mentorkit.sh --fix`.
-4. Deja el entorno verificado y listo para usar.
+1. Descarga el release de MentorKit desde GitHub.
+2. Instala `.opencode/`, `odd/`, la plantilla `.mentor/` y el `Makefile`.
+3. Prepara el runtime Python aislado en `.opencode/.mentorkit/venv/`.
+4. Instala las dependencias desde `requirements.lock`.
+5. Verifica el entorno.
+6. Deja OpenCode listo para utilizar el agente `MentorKit5.0`.
 
-> No hace falta correr `make install` después del one-liner.
+**No requiere clonar MentorKit ni ejecutar un segundo comando de instalación.**
 
-Ver detalles en [`bootstrap.sh`](./bootstrap.sh) y en [`.opencode/agents/MentorKit5.0.md`](./.opencode/agents/MentorKit5.0.md).
+### Probar una rama experimental
+
+La instalación puede apuntar a cualquier rama:
+
+```bash
+MENTORKIT_BRANCH=feature/odd-migration \
+bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.sh")
+```
+
+Esto permite probar una versión experimental sin tocar `main`.
+
+> El instalador no contiene credenciales ni depende de un GitLab privado.
 
 ---
 
-## 🪟 Windows
+## 🧠 ¿Qué es ODD en MentorKit?
 
-Usa siempre shell POSIX:
+**Organic Driven Development** es el modelo de orquestación de MentorKit.
 
-- **Git Bash** (Git for Windows)
-- **WSL2**
+La idea central es sencilla:
 
-Ejecuta el mismo one-liner desde ese shell.
+> **No todos los cambios necesitan el mismo nivel de proceso.**
+
+El agente comienza determinando si la solicitud autoriza una modificación y después explora el codebase antes de decidir cómo proceder.
+
+```
+Request
+   ↓
+Authorization
+   ↓
+Explore
+   ↓
+Resolve uncertainty
+   ↓
+Classify
+   ├────────────── SMALL
+   │                 ↓
+   │             Implement
+   │                 ↓
+   │              Verify
+   │                 ↓
+   │              Commit
+   │                 ↓
+   │              Close
+   │
+   └──────────── SUBSTANTIAL
+                     ↓
+             odd/tasks/<feature>.md
+                     ↓
+                Specs S#
+                Tasks T#
+                     ↓
+             Implement task-by-task
+                     ↓
+                  Verify
+                     ↓
+             Work-unit Commit
+                     ↓
+                Review / PR
+                     ↓
+                  Close
+```
+
+### SMALL
+
+Un cambio es candidato a **SMALL** cuando:
+
+- está completamente entendido;
+- tiene alcance contenido;
+- existe un patrón claro en el codebase;
+- el blast radius es bajo;
+- no requiere decisiones materiales;
+- puede recuperarse razonablemente desde la solicitud y el estado de Git.
+
+Ejemplos:
+
+- typo;
+- ajuste localizado;
+- pequeño cambio de configuración;
+- test de regresión sencillo;
+- corrección puntual.
+
+No se crea automáticamente un documento persistente.
+
+### SUBSTANTIAL
+
+Un cambio es **SUBSTANTIAL** cuando requiere contexto durable o coordinación significativa.
+
+Por ejemplo:
+
+- cruza varios módulos;
+- contiene lógica de negocio no trivial;
+- requiere investigación;
+- implica decisiones arquitectónicas;
+- tiene blast radius significativo;
+- necesita varias tareas;
+- debe poder reanudarse después de una interrupción.
+
+Antes del primer cambio de código se crea:
+
+```
+odd/tasks/<feature-name>.md
+```
+
+Ese documento contiene:
+
+- `Objective`
+- `Specs` — S1, S2, ...
+- `Tasks` — T1, T2, ...
+- `Verification`
+- `Log`
+- `Delivery`
 
 ---
 
-## 🛠 Desarrollo de MentorKit (este repositorio)
+## 🧩 Arquitectura de MentorKit
+
+ODD es la **capa de orquestación**, no una sustitución de las capacidades de ingeniería existentes.
+
+```
+                         MentorKit
+                            │
+                     ┌──────▼──────┐
+                     │ ODD Engine  │
+                     └──────┬──────┘
+                            │
+       ┌────────────────────┼────────────────────┐
+       │                    │                    │
+    Explore              Classify             Track
+       │                    │                    │
+       └──────────────┬─────┴────────────────────┘
+                      │
+              Engineering Skills
+                      │
+     ┌────────────────┼───────────────────┐
+     │                │                   │
+ Codebase Graph   Fingerprinting       Research
+     │                │                   │
+ TDD / Debugging   Council             Review
+     │                │                   │
+     └────────────────┼───────────────────┘
+                      │
+                 Git / Delivery
+```
+
+Las skills especializadas siguen siendo reutilizables. ODD decide **cuándo y cuánto** utilizarlas.
+
+---
+
+## 📂 Persistencia de trabajo
+
+La persistencia ODD vive en:
+
+```
+odd/
+├── README.md
+├── ODD-MIGRATION.md
+├── PERSISTENCE.md
+├── templates/
+│   └── task.md
+└── tasks/
+    └── <feature>.md
+```
+
+### LocalFile
+
+Es la persistencia mínima y obligatoria para trabajo SUBSTANTIAL:
+
+```
+odd/tasks/<feature-name>.md
+```
+
+### Engram
+
+Puede utilizarse como espejo opcional para continuidad entre sesiones.
+
+Engram **no es la autoridad sobre el repositorio**. Al reanudar:
+
+1. se lee el documento local;
+2. se recupera el espejo si existe;
+3. se inspecciona el código y Git;
+4. se reconcilian las diferencias;
+5. se continúa desde la siguiente tarea incompleta.
+
+---
+
+## 🎯 Control de alcance
+
+ODD introduce una regla especialmente importante:
+
+> **Un hallazgo no equivale a autorización.**
+
+Si durante una implementación aparece otro bug, deuda técnica o mejora potencial:
+
+1. se registra;
+2. no se implementa automáticamente;
+3. se continúa con el alcance autorizado.
+
+Si el usuario amplía el alcance, se actualizan los S#/T# afectados antes de continuar.
+
+---
+
+## 🧪 TDD y verificación
+
+Cuando existe un test determinista con resultado esperado claro, MentorKit favorece:
+
+```
+RED → GREEN → REFACTOR
+```
+
+Cuando TDD no es apropiado, la excepción debe explicarse y deben ejecutarse los checks funcionales correspondientes.
+
+Una unidad de trabajo SUBSTANTIAL se cierra con:
+
+1. implementación;
+2. verificación;
+3. commit atómico;
+4. SHA registrado en el T#.
+
+El commit constituye una frontera natural de revisión.
+
+---
+
+## 🛠 Desarrollo de MentorKit
 
 ```bash
 git clone https://github.com/thewild001/MentorKit.git
@@ -50,128 +265,108 @@ cd MentorKit
 make install
 ```
 
-### Targets disponibles
+### Targets principales
 
-| Target | Qué hace |
+| Target | Descripción |
 |---|---|
-| `make help` | Muestra ayuda de targets |
-| `make install` | Crea/repara venv (Python 3.12.13 + lock) |
-| `make verify` | Verifica Python + imports críticos |
-| `make clean` | Elimina venv y `python-path.txt` |
-| `make ci` | Simula CI local (`install` + `verify` + assert JSON) |
-| `make archive-spec` | Aplica delta de un `spec.md` al `openspec/system-spec.md` y archiva el spec |
-| `make init-constitution` | Genera/regenera `openspec/memory/constitution.md` |
-| `make all` | Alias de `install` |
+| `make help` | Muestra los targets disponibles |
+| `make install` | Prepara el runtime Python |
+| `make verify` | Verifica el entorno |
+| `make odd-check` | Valida la estructura ODD |
+| `make odd-task FEATURE=x REQUEST="..."` | Crea un documento ODD para trabajo sustancial |
+| `make clean` | Limpia el runtime local |
+| `make ci` | Ejecuta las comprobaciones locales del proyecto |
+| `make all` | Alias de instalación |
+
+OpenSpec permanece disponible durante la migración experimental únicamente como **compatibilidad legacy**. No es el workflow ODD por defecto.
 
 ---
 
-## 📦 ¿Qué contiene el repo?
+## 📦 Estructura relevante del repositorio
 
-- `bootstrap.sh` — one-liner installer.
-- `.opencode/install-mentorkit.sh` — instalación/verificación/reparación del entorno.
-- `.opencode/mentorkit-verify.sh` — verificación standalone (exit 0/1, salida JSON opcional).
-- `.opencode/mentorkit-archive-spec.sh` — merge delta + archive de specs.
-- `.opencode/mentorkit-init-constitution.sh` — render de constitución desde template + fingerprint.
-- `.opencode/requirements.lock` — lock con hashes.
-- `.opencode/skills/` — 20 skills (core + superpowers).
-- `.opencode/agents/MentorKit5.0.md` — agente principal.
-- `odd/` — workflow ODD, templates y feature documents.
-- `openspec/` — store legacy conservado durante la migración experimental.
-- `.gitlab-ci.yml` — pipeline de verificación.
-- `Makefile` — entry point local.
-
----
-
-## 🔒 Garantías del entorno (CI)
-
-La CI actual ejecuta **4 jobs** paralelos (`verify-install`, `verify-platform-coverage`, `verify-archive-spec`, `verify-spec-history`) para cubrir **7 garantías**:
-
-1. Python 3.12.13 pin exacto.
-2. Lock con hashes SHA256.
-3. `uv` autocontenido en el venv.
-4. `mentorkit-verify.sh` PASS.
-5. Cobertura cross-platform del lock (`--universal`).
-6. `archive-spec` operacional + validación de specs in-progress.
-7. Historial de specs en git (working tree de `openspec/` limpio para archives).
-
----
-
-## 📐 Flujo de specs (single-path en `openspec/`)
-
-MentorKit usa `openspec/` como store canónico:
-
-- Specs in-progress: `openspec/specs/<NNN>-<slug>/spec.md`
-- System spec consolidado: `openspec/system-spec.md`
-- Constitución: `openspec/memory/constitution.md`
-- Archives: `openspec/changes/archive/<YYYY-MM-DD>-<slug>/...`
-
-### `make archive-spec`
-
-Ejemplos:
-
-```bash
-# Dry-run
-DRY_RUN=1 make archive-spec SPEC=openspec/specs/001-archive-spec/spec.md
-
-# Aplicar delta + archivar
-make archive-spec SPEC=openspec/specs/001-archive-spec/spec.md
-
-# Aplicar + archivar + commit automático
-COMMIT=1 make archive-spec SPEC=openspec/specs/001-archive-spec/spec.md
-
-# Re-archivar forzando overwrite
-FORCE=1 make archive-spec SPEC=openspec/specs/001-archive-spec/spec.md
+```
+MentorKit/
+├── .mentor/
+│   └── constitution.template.md
+├── .opencode/
+│   ├── agents/
+│   │   └── MentorKit5.0.md
+│   ├── skills/
+│   │   ├── odd-orchestrator/
+│   │   ├── codebase-conformist/
+│   │   ├── codebase-graph/
+│   │   ├── spec-writer/
+│   │   ├── llm-council/
+│   │   └── superpowers/
+│   ├── install-mentorkit.sh
+│   ├── mentorkit-odd-task.sh
+│   └── requirements.lock
+├── odd/
+│   ├── ODD-MIGRATION.md
+│   ├── PERSISTENCE.md
+│   ├── templates/
+│   └── tasks/
+├── openspec/                 # legacy durante la migración
+├── bootstrap.sh
+├── Makefile
+└── README.md
 ```
 
-Flags/vars soportadas por el script:
+---
 
-- `--dry-run` / `DRY_RUN=1`
-- `--force` / `FORCE=1`
-- `--commit` / `COMMIT=1`
-- `--no-commit` / `COMMIT=0`
-- `--force-dirty` / `FORCE_DIRTY=1`
+## 🔒 Reproducibilidad
 
-### `make init-constitution`
+MentorKit mantiene un runtime Python aislado:
 
-```bash
-make init-constitution
-DRY_RUN=1 make init-constitution
-NO_FINGERPRINT=1 make init-constitution
-NO_GRAPH=1 make init-constitution
-FORCE=1 make init-constitution
+- Python 3.12.13;
+- dependencias bloqueadas;
+- hashes SHA256;
+- `uv`;
+- instalación idempotente;
+- verificación posterior.
+
+El runtime vive dentro de:
+
+```
+.opencode/.mentorkit/
 ```
 
-Notas:
-
-- El target default es `openspec/memory/constitution.md`.
-- `--target` existe por compatibilidad pero está deprecado/ignorado por el script.
+y se mantiene fuera del control de versiones mediante `.gitignore`.
 
 ---
 
-## 📜 Historial de requirements
+## 🌱 Estado de la migración ODD
 
-Comandos útiles:
+Esta implementación se encuentra en una **rama experimental**.
 
-```bash
-# Historial del system-spec
-git log --follow -- openspec/system-spec.md
+La migración no elimina OpenSpec de inmediato. Primero se valida ODD con casos reales:
 
-# Diff de un commit de archive
-git show <sha>
+- cambios SMALL;
+- features SUBSTANTIAL;
+- bugs;
+- investigación;
+- decisiones arquitectónicas;
+- interrupciones y resume;
+- cambios de scope;
+- trabajo que requiere council.
 
-# Auditoría por línea
-git blame openspec/system-spec.md
-```
+Solo después de esa validación debe decidirse si OpenSpec puede retirarse definitivamente.
+
+Consulta el diagnóstico y plan en:
+
+[`odd/ODD-MIGRATION.md`](./odd/ODD-MIGRATION.md)
 
 ---
 
 ## 🤝 Contribuir
 
-1. `make install`
-2. Crea rama: `git checkout -b feat/mi-feature`
-3. Haz cambios y commits atómicos
-4. Ejecuta `make verify` (y opcional `make ci`)
-5. Push y abre PR en GitHub
+1. Crea una rama.
+2. Comprende el cambio antes de implementarlo.
+3. Respeta el workflow ODD.
+4. Mantén los cambios dentro del scope autorizado.
+5. Verifica antes de declarar completado el trabajo.
+6. Usa commits atómicos y descriptivos.
+7. Abre un PR cuando corresponda.
 
 ---
 
@@ -179,34 +374,4 @@ git blame openspec/system-spec.md
 
 Desarrollado por [thewild001](https://github.com/thewild001) · Universidad de las Ciencias Informáticas (UCI)
 
-Repositorio: [github.com/thewild001/MentorKit](https://github.com/thewild001/MentorKit)
-
----
-
-## 🌱 ODD — Organic Driven Development (rama experimental)
-
-Esta rama prueba ODD como modelo de workflow de MentorKit. La idea central no es reemplazar `openspec/` por otra carpeta de specs, sino hacer que MentorKit decida proporcionalmente cuánto proceso necesita cada cambio.
-
-### Flujo
-
-```
-Request → Authorization → Explore → Classify
-                              ├─ SMALL → Implement → Verify → Commit → Close
-                              └─ SUBSTANTIAL → odd/tasks/<feature>.md
-                                              → Specs/Tasks → Implement
-                                              → Verify → Work-unit Commit
-                                              → Review/PR → Close
-```
-
-### Principios
-
-- Un análisis o investigación permanece read-only.
-- Una solicitud explícita de implementación autoriza el alcance indicado.
-- Los cambios pequeños no generan artefactos persistentes innecesarios.
-- El trabajo sustancial crea un feature document antes del primer source write.
-- `TodoWrite` es tracking efímero; `odd/tasks/*.md` es persistencia recuperable.
-- Los hallazgos no amplían silenciosamente el scope.
-- Cada unidad sustancial se verifica y registra mediante un commit atómico.
-- Push, PR y merge siguen siendo decisiones separadas.
-
-La migración está descrita en [`odd/ODD-MIGRATION.md`](./odd/ODD-MIGRATION.md). OpenSpec permanece disponible como compatibilidad durante la evaluación y no debe recibir nuevos artefactos por defecto.
+Repositorio: https://github.com/thewild001/MentorKit
