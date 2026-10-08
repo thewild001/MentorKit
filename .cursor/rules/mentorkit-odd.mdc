@@ -1,0 +1,18 @@
+---
+description: Apply MentorKit's Organic Driven Development workflow to coding tasks in this repository.
+alwaysApply: true
+---
+
+# MentorKit ODD
+
+The canonical project contract is `AGENTS.md`. Follow it.
+
+Use ODD proportionally:
+- AUTHORIZE → EXPLORE → UNCERTAINTY → CLASSIFY → TRACK → IMPLEMENT → VERIFY → COMMIT → CLOSE.
+- Do not treat findings as authorization.
+- SMALL changes do not require artificial planning ceremony.
+- SUBSTANTIAL changes require `odd/tasks/<feature>.md` as durable source of truth.
+- Do not expand scope without authorization.
+- Verify before claiming completion.
+
+Do not invent a Cursor-specific workflow. This rule is only the native Cursor adapter for the shared MentorKit contract.
