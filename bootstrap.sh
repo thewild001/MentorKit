@@ -89,6 +89,15 @@ cp -R "$REPO_DIR/.opencode" "./" || fail "No se pudo copiar .opencode/."
 [[ -d "$REPO_DIR/.mentor" ]] &&
     cp -R "$REPO_DIR/.mentor" "./"
 
+# Agent-neutral contract and native adapters.
+for file in AGENTS.md CLAUDE.md; do
+    [[ -f "$REPO_DIR/$file" ]] && cp "$REPO_DIR/$file" "./"
+done
+
+for dir in .cursor .claude .agents; do
+    [[ -d "$REPO_DIR/$dir" ]] && cp -R "$REPO_DIR/$dir" "./"
+done
+
 [[ -f "$REPO_DIR/Makefile" ]] &&
     cp "$REPO_DIR/Makefile" "./"
 
