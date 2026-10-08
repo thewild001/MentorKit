@@ -1,371 +1,167 @@
 ---
 name: document-extractor
 description: >
-  Extrae texto e imágenes de documentos (ODT, DOCX, PDF, DOC) sin dependencias
-  del sistema operativo. Compatible con Linux y Windows. ODT y DOCX usan Python
-  puro (zipfile + xml, cero dependencias). PDF usa markitdown y cae a
-  firecrawl-anydoc como fallback si markitdown falla. DOC solicita conversión.
-  Invocado por prd-reader
-  para desacoplar la extracción del parseo.
+  Extrae y normaliza contenido de documentos para MentorKit. Soporta ODT, DOCX,
+  PDF y DOC sin depender de aplicaciones de escritorio. ODT y DOCX usan Python
+  puro; DOC usa firecrawl-anydoc; PDF usa markitdown con fallback anydoc.
+  Invocado por prd-reader para desacoplar ingestión de interpretación.
 compatibility: opencode
 metadata:
-  version: "2.0"
-  platform: linux-windows
-  pip-deps: "markitdown + firecrawl-anydoc (PDF fallback)"
+  version: "2.1"
+  platform: linux-macos-windows
   system-deps: none
+  pip-deps: "markitdown + firecrawl-anydoc"
 ---
 
 # Document Extractor
 
-Extrae texto e imágenes de documentos. Sin herramientas del sistema operativo.
+Convierte documentos PRD a una representación normalizada para que el resto de
+MentorKit no dependa del formato de entrada.
 
-> **IMPORTANTE — Usar SIEMPRE el wrapper de MentorKit:**
->
-> Todo el código Python de este skill DEBE ejecutarse vía `.opencode/mentorkit-python.sh`,
-> nunca con `python3` directo. Esto garantiza que `markitdown` y `anydoc` se importen del venv de
-> MentorKit (no del Python del sistema, ni de pyenv, ni de conda).
->
-> El wrapper lee la ruta del Python del venv desde `.opencode/.mentorkit/python-path.txt`
-> y `exec` el binario correcto. Si el venv no está disponible, hace fallback a `python3`
-> del sistema con un WARNING explícito (no falla silenciosamente).
->
-> **Patrón de invocación:**
-> ```bash
-> # Diagnóstico, extracción, install — todo via wrapper:
-> .opencode/mentorkit-python.sh -c "import markitdown, anydoc; ..."
-> .opencode/mentorkit-python.sh -m pip install markitdown firecrawl-anydoc
-> ```
->
-> **Anti-patrón (NO hacer):**
-> ```bash
-> python3 -c "import markitdown, anydoc"  # ✗ usa Python del sistema
-> "$VENV_PYTHON" -c "..."                  # ✗ frágil, depende de venv presente
-> sys.executable en subprocess.run        # ✗ propaga el Python del caller
-> ```
+> **IMPORTANTE — Usar siempre el wrapper de MentorKit:** todo Python del skill
+> debe ejecutarse mediante `.opencode/mentorkit-python.sh`.
 
-## Matriz de cobertura (validada en tests)
+## Matriz de cobertura
 
-| Formato | Método | Dependencia | Resultado |
-|---------|--------|-------------|-----------|
-| ODT | Python puro (zipfile + xml) | Ninguna | Texto completo + imágenes |
-| DOCX | Python puro (zipfile + xml) | Ninguna | Texto completo + imágenes |
-| PDF digital | markitdown → fallback anydoc | pip install markitdown firecrawl-anydoc | Texto completo |
-| PDF escaneado | — | — | Sin texto (imagen, no OCR) |
-| DOC | — | — | Solicitar conversión |
+| Formato | Método | Texto | Imágenes | Observaciones |
+|---------|--------|-------|----------|---------------|
+| ODT | Python puro | ✅ | ✅ | Extrae `Pictures/` |
+| DOCX | Python puro | ✅ | ✅ | Extrae `word/media/` |
+| PDF digital | markitdown → anydoc | ✅ | ⚠️ | Las imágenes se conservan como referencia al PDF |
+| PDF escaneado | markitdown/anydoc | ❌ | — | Se detecta y se reporta como `needs_ocr` |
+| DOC | anydoc | ✅ | ⚠️ | Documento binario Word 97–2003; imágenes no se materializan en `ui-prototypes/` |
 
----
+`firecrawl-anydoc` soporta actualmente Word `.doc`, `.docx` y otros formatos mediante una API común de Markdown. MentorKit usa esa capacidad para cubrir el formato binario `.doc` sin requerir Microsoft Word, LibreOffice, COM ni ejecutables específicos del SO. citeturn859555search5turn859555search7
 
-## Paso 0 — Diagnóstico del entorno
+## Paso 0 — Diagnóstico
 
-Ejecutá SIEMPRE con `Bash` vía wrapper (nunca `python3` directo):
+Para validar dependencias:
 
 ```bash
 .opencode/mentorkit-python.sh -c "
 import sys
-print(f'Python {sys.version.split()[0]} ({sys.executable})')
-
-# Siempre disponibles
-import zipfile, xml.etree.ElementTree
-print('✓  zipfile + xml.etree  → ODT y DOCX listos (Python puro)')
-
-# Opcional para PDF
-try:
-    import markitdown
-    print(f'✓  markitdown {markitdown.__version__}  → PDF listo')
-except ImportError:
-    print('○  markitdown no instalado en el venv → se intentará anydoc')
-
-try:
-    import anydoc
-    print(f'✓  anydoc {anydoc.__version__}  → fallback PDF listo')
-except ImportError:
-    print('○  anydoc no instalado en el venv → fallback PDF no disponible')
-    print('   Re-ejecuta: .opencode/install-mentorkit.sh')
+print(f'Python {sys.version.split()[0]}')
+import markitdown
+import anydoc
+print('✓ markitdown')
+print('✓ anydoc')
 "
 ```
 
-Si el archivo es PDF y falta algún conversor, instálalo vía wrapper:
+No instales dependencias desde el skill si ya están gestionadas por
+`.opencode/requirements.lock`.
 
-```bash
-.opencode/mentorkit-python.sh -m pip install markitdown firecrawl-anydoc --quiet
-echo "✓  markitdown + anydoc instalados"
-```
+## Paso 1 — ODT
 
-> **Equivalentes correctos (todos usan el wrapper):**
-> ```bash
-> .opencode/mentorkit-python.sh -m pip install markitdown firecrawl-anydoc          # ✓ preferida
-> .opencode/mentorkit-python.sh -m pip install markitdown firecrawl-anydoc --quiet # ✓ silenciosa
-> ```
->
-> **NO hacer** (cae en Python del sistema o rompe la cadena):
-> ```bash
-> python3 -m pip install markitdown firecrawl-anydoc               # ✗ sistema
-> "$VENV_PYTHON/bin/python" -m pip install markitdown firecrawl-anydoc  # ✗ frágil
-> ```
->
-> **Desde Python** (si necesitas hacer install programático, ej. en un script
-> que también es ejecutado vía wrapper, usa `subprocess` apuntando al wrapper):
-> ```python
-> import subprocess
-> subprocess.run(
->     [".opencode/mentorkit-python.sh", "-m", "pip", "install", "markitdown", "firecrawl-anydoc", "--quiet"],
->     check=True
-> )
-> ```
-> (Esto es defensivo: el `sys.executable` actual ya es el del venv porque el
-> script se ejecutó vía wrapper, pero la ruta explícita al wrapper hace el
-> comportamiento resistente si alguien copia este bloque a otro contexto.)
+Usa el parser Python puro existente:
 
----
+- extrae párrafos y encabezados;
+- conserva contenido de tablas;
+- extrae imágenes embebidas a `ui-prototypes/`.
 
-## Paso 1 — Extracción ODT (Python puro, cero dependencias)
+## Paso 2 — DOCX
+
+Usa el parser Python puro existente:
+
+- extrae párrafos;
+- conserva texto;
+- extrae imágenes embebidas a `ui-prototypes/`.
+
+## Paso 3 — PDF
+
+Camino principal:
 
 ```python
-import zipfile
-import xml.etree.ElementTree as ET
-from pathlib import Path
-
-def extract_odt(file_path: str, images_dir: str) -> dict:
-    result = {"text": "", "images": [], "format": "odt", "error": None}
-    try:
-        with zipfile.ZipFile(file_path, 'r') as z:
-
-            # Imágenes embebidas
-            img_dir = Path(images_dir)
-            img_dir.mkdir(parents=True, exist_ok=True)
-            for entry in z.namelist():
-                if entry.startswith("Pictures/") or entry.startswith("media/"):
-                    name = Path(entry).name
-                    (img_dir / name).write_bytes(z.read(entry))
-                    result["images"].append(str(img_dir / name))
-
-            # Texto desde content.xml
-            root = ET.parse(z.open("content.xml")).getroot()
-            lines = []
-            for elem in root.iter():
-                tag = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
-                if tag in ("p", "h"):
-                    text = "".join(elem.itertext()).strip()
-                    if text:
-                        lines.append(text)
-                elif tag == "table-cell":
-                    cell = "".join(elem.itertext()).strip()
-                    if cell:
-                        lines.append(f"| {cell}")
-
-            result["text"] = "\n".join(lines)
-
-    except zipfile.BadZipFile:
-        result["error"] = "Archivo ODT inválido o corrupto"
-    except KeyError as e:
-        result["error"] = f"Estructura ODT inesperada: {e}"
-
-    return result
+from markitdown import MarkItDown
+conversion = MarkItDown().convert(file_path)
+text = conversion.text_content
 ```
 
----
-
-## Paso 2 — Extracción DOCX (Python puro, cero dependencias)
+Fallback:
 
 ```python
-import zipfile
-import xml.etree.ElementTree as ET
-from pathlib import Path
-
-def extract_docx(file_path: str, images_dir: str) -> dict:
-    result = {"text": "", "images": [], "format": "docx", "error": None}
-    try:
-        with zipfile.ZipFile(file_path, 'r') as z:
-
-            # Imágenes embebidas
-            img_dir = Path(images_dir)
-            img_dir.mkdir(parents=True, exist_ok=True)
-            for entry in z.namelist():
-                if entry.startswith("word/media/"):
-                    name = Path(entry).name
-                    (img_dir / name).write_bytes(z.read(entry))
-                    result["images"].append(str(img_dir / name))
-
-            # Texto desde word/document.xml
-            W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-            root = ET.parse(z.open("word/document.xml")).getroot()
-            lines = []
-            for para in root.iter(f"{{{W}}}p"):
-                text = "".join(
-                    (t.text or "") for t in para.iter(f"{{{W}}}t")
-                ).strip()
-                if text:
-                    lines.append(text)
-
-            result["text"] = "\n".join(lines)
-
-    except zipfile.BadZipFile:
-        result["error"] = "Archivo DOCX inválido o corrupto"
-    except KeyError as e:
-        result["error"] = f"Estructura DOCX inesperada: {e}"
-
-    return result
+import anydoc
+text = anydoc.to_markdown(file_path)
 ```
 
----
+Si ambos fallan, devuelve un error explícito.
 
-## Paso 3 — Extracción PDF (markitdown + fallback anydoc)
+Si no existe texto extraíble, marca:
+
+```yaml
+warnings:
+  - type: needs_ocr
+    message: "PDF sin texto extraíble; requiere OCR."
+```
+
+No presentes un PDF escaneado como PRD procesado correctamente.
+
+## Paso 4 — DOC
 
 ```python
-from pathlib import Path
-
-def extract_pdf(file_path: str, images_dir: str) -> dict:
-    """
-    markitdown es el camino principal.
-    Si falla o no está disponible, usar anydoc como fallback.
-    No extrae imágenes embebidas — se referencia el PDF original.
-    """
-    result = {"text": "", "images": [], "format": "pdf",
-              "warnings": [], "error": None}
-    try:
-        from markitdown import MarkItDown
-        md = MarkItDown()
-        conversion = md.convert(file_path)
-        result["text"] = conversion.text_content
-    except Exception as markitdown_error:
-        try:
-            import anydoc
-            result["text"] = anydoc.to_markdown(file_path)
-            result["warnings"].append(
-                f"markitdown falló ({type(markitdown_error).__name__}); "
-                "se usó fallback anydoc."
-            )
-        except Exception as anydoc_error:
-            result["error"] = (
-                "No fue posible convertir el PDF con markitdown ni con anydoc.\n"
-                f"  markitdown: {type(markitdown_error).__name__}: {markitdown_error}\n"
-                f"  anydoc: {type(anydoc_error).__name__}: {anydoc_error}"
-            )
-            return result
-
-    if not result["text"].strip():
-        result["warnings"].append(
-            "PDF sin texto extraíble — posiblemente escaneado (imagen).\n"
-            "  Convierte a ODT/DOCX en LibreOffice para extracción completa:\n"
-            "  Archivo → Exportar como → ODT o DOCX"
-        )
-    else:
-        result["warnings"].append(
-            "Las imágenes del PDF no se extraen — referenciar el PDF original "
-            "para los prototipos de UI."
-        )
-
-    return result
+import anydoc
+text = anydoc.to_markdown(file_path)
 ```
 
----
+El parser valida el contenido binario del documento y no ejecuta macros ni
+objetos embebidos. Si falla, devuelve un error explícito con el motivo.
 
-## Análisis de viabilidad — fallback `markitdown` → `anydoc`
+No conviertas silenciosamente el archivo mediante Word/LibreOffice ni dependas
+de un ejecutable instalado en el sistema.
 
-- **Compatibilidad técnica:** viable. `firecrawl-anydoc` importa como `anydoc` y
-  convierte `pdf` a Markdown en local.
-- **Cobertura funcional:** mejora resiliencia ante errores de `markitdown` o falta
-  de instalación puntual en algunos entornos.
-- **Riesgos:** ambos motores no hacen OCR local para PDF escaneado; el fallback no
-  elimina esa limitación.
-- **Decisión recomendada:** mantener `markitdown` como primario por continuidad del
-  flujo actual y usar `anydoc` como respaldo automático para reducir fallos de
-  conversión en adjuntos de usuario.
-
----
-
-## Paso 4 — Formato DOC (binario legacy)
-
-```python
-def extract_doc(file_path: str, images_dir: str) -> dict:
-    name = Path(file_path).name
-    return {
-        "text": "", "images": [], "format": "doc",
-        "error": (
-            f"El archivo '{name}' está en formato .doc (Word 97-2003).\n"
-            f"Este formato binario no tiene extracción pip cross-platform.{CONVERSION_GUIDE}"
-        )
-    }
-```
-
----
+Las imágenes embebidas no se consideran extraídas por esta ruta. Si son
+importantes para requisitos de UI, conserva la referencia al documento original
+y repórtalo como warning para que prd-reader lo tenga en cuenta.
 
 ## Paso 5 — Dispatcher
 
 ```python
-from pathlib import Path
-
 SUPPORTED_FORMATS = {
-    ".odt":  extract_odt,
+    ".odt": extract_odt,
     ".docx": extract_docx,
-    ".pdf":  extract_pdf,
-    ".doc":  extract_doc,
+    ".pdf": extract_pdf,
+    ".doc": extract_doc,
 }
-
-CONVERSION_GUIDE = """
-  Los formatos soportados son: ODT, DOCX, PDF.
-
-  Cómo convertir desde cualquier formato:
-  ┌─────────────────────────────────────────────────────────┐
-  │  Desde LibreOffice (Linux y Windows):                   │
-  │    Abrir el archivo → Archivo → Guardar como → .odt     │
-  │                                                         │
-  │  Desde Microsoft Word (Windows):                        │
-  │    Archivo → Guardar como → .docx                       │
-  │                                                         │
-  │  Desde Google Docs:                                     │
-  │    Archivo → Descargar → OpenDocument (.odt)            │
-  │                         o  Word (.docx)                 │
-  └─────────────────────────────────────────────────────────┘
-  Recomendación: ODT o DOCX para extracción completa
-  (texto + imágenes). PDF si el archivo ya está en ese formato.
-"""
-
-def format_not_supported(file_path: str, ext: str) -> dict:
-    name = Path(file_path).name
-    return {
-        "text": "", "images": [], "format": ext, "error": (
-            f"El archivo '{name}' tiene formato '{ext}' "
-            f"que no está soportado.{CONVERSION_GUIDE}"
-        )
-    }
-
-def extract_document(file_path: str, output_dir: str) -> dict:
-    images_dir = str(Path(output_dir) / "ui-prototypes")
-    name = Path(file_path).name
-    ext = Path(file_path).suffix.lower()
-
-    print(f"\nProcesando {name} [{ext.upper() if ext else 'sin extensión'}]...")
-
-    # Formato no reconocido
-    if ext not in SUPPORTED_FORMATS:
-        result = format_not_supported(file_path, ext)
-        print(f"  ✗  {result['error']}")
-        return result
-
-    result = SUPPORTED_FORMATS[ext](file_path, images_dir)
-
-    # Reporte unificado
-    if result.get("error"):
-        print(f"  ✗  {result['error']}")
-    else:
-        print(f"  ✓  Texto extraído: {len(result['text'])} caracteres")
-        print(f"  ✓  Imágenes:       {len(result['images'])}")
-        for w in result.get("warnings", []):
-            print(f"  ⚠  {w}")
-
-    return result
 ```
 
----
+Devuelve siempre una estructura equivalente a:
+
+```yaml
+source:
+  filename: "<name>"
+  format: "<odt|docx|pdf|doc>"
+
+content:
+  text: "<normalized text>"
+
+assets:
+  images: []
+
+metadata:
+  extraction_method: "<method>"
+  warnings: []
+  errors: []
+```
+
+El resultado debe ser suficiente para que `prd-reader` trabaje sin conocer la
+implementación específica del extractor.
 
 ## Retorno a prd-reader
 
 ```
-Formato:    [ODT | DOCX | PDF | DOC]
-Método:     [Python puro | markitdown | anydoc fallback]
-Texto:      [N] caracteres
-Imágenes:   [N archivos en ui-prototypes/ | referencia al PDF]
-Warnings:   [lista si hay]
-Error:      [mensaje si falló — prd-reader detiene el flujo]
+Formato:      [ODT | DOCX | PDF | DOC]
+Método:       [Python puro | markitdown | anydoc]
+Texto:        [N] caracteres
+Imágenes:     [N]
+OCR needed:   [sí/no]
+Warnings:     [lista]
+Error:        [mensaje si falló]
 ```
+
+## Seguridad y portabilidad
+
+- tratar los documentos del usuario como entrada no confiable;
+- no ejecutar macros;
+- no invocar Word, LibreOffice, COM o aplicaciones del SO;
+- mantener el flujo compatible con Linux, macOS y Windows;
+- no usar lógica específica del shell para interpretar el contenido documental.
