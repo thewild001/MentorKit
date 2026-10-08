@@ -38,6 +38,14 @@ ODD S#/T#
 Implementation
 ```
 
+## Codebase Knowledge
+
+La comprensión del repositorio sigue siendo una capacidad central de MentorKit:
+
+\`codebase-memory-mcp\` → **Graphify** → **Fingerprinting / inspección directa**.
+
+`codebase-graph` conserva la integración MCP y el fallback local. Consulta `odd/knowledge/CONTRACT.md` para la semántica runtime-neutral.
+
 ## Skills
 
 ```
