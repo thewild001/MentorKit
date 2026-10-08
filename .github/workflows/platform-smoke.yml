@@ -70,6 +70,18 @@ jobs:
           grep -q "DOC" .opencode/skills/document-extractor/SKILL.md
           grep -q "anydoc.to_markdown(file_path)" .opencode/skills/document-extractor/SKILL.md
           grep -q "odd/planning/<feature-name>.md" .opencode/skills/prd-reader/SKILL.md
+      - name: Verify codebase knowledge contracts
+        shell: bash
+        run: |
+          cd "$MENTORKIT_TEST_DIR"
+          test -f odd/knowledge/CONTRACT.md
+          test -f odd/knowledge/README.md
+          grep -q "codebase-memory-mcp" odd/knowledge/CONTRACT.md
+          grep -q "Graphify" odd/knowledge/CONTRACT.md
+          grep -q "Fingerprinting" odd/knowledge/CONTRACT.md
+          grep -q "Codebase Knowledge Snapshot" odd/knowledge/CONTRACT.md
+          grep -q "codebase-memory-mcp" .opencode/skills/codebase-graph/SKILL.md
+          grep -q "Graphify" .opencode/skills/codebase-graph/SKILL.md
       - name: Verify agent compatibility contract
         shell: bash
         run: |
