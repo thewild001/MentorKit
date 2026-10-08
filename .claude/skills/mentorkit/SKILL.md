@@ -6,7 +6,7 @@ compatibility: Claude Code
 
 # MentorKit ODD
 
-The canonical contract is `AGENTS.md`.
+The canonical runtime-neutral contract is `odd/CONTRACT.md`; `AGENTS.md` is the repository-level agent contract.
 
 Use this skill when the task requires MentorKit's engineering workflow:
 1. Determine authorization.
