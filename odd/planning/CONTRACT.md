@@ -8,12 +8,16 @@ It is independent of the PRD file format and of the agent runtime.
 
 ## Objective
 
-Transform product intent into an implementation approach that is compatible with the repository where the change will be implemented.
+Transform user intent into an implementation approach that is compatible with the repository where the change will be implemented.
+
+A PRD may provide structured product requirements, but it is never required.
 
 The plan MUST combine:
 
 ```
-PRD intent
+user intent
++
+optional PRD intent
 +
 repository reality
 +
@@ -40,17 +44,38 @@ Existing repository patterns and confirmed project policies take precedence over
 
 The planning pipeline may receive:
 
-- PDF;
-- DOCX;
-- DOC;
-- ODT;
+- a direct user request;
+- an optional PDF;
+- an optional DOCX;
+- an optional DOC;
+- an optional ODT;
 - other formats supported by `document-extractor`.
 
 The format MUST be normalized before semantic analysis.
 
 The planner consumes a normalized PRD representation, not format-specific parsing logic.
 
-## Required phases
+## Planning phases
+
+### Without PRD
+
+```
+AUTHORIZE
+  ↓
+EXPLORE REPOSITORY
+  ↓
+CHECK POLICIES / ARCHITECTURE
+  ↓
+RESOLVE MATERIAL UNCERTAINTY
+  ↓
+DESIGN / ROUTE
+  ↓
+GENERATE IMPLEMENTATION PLAN
+  ↓
+MAP TO ODD SPECS / TASKS
+```
+
+### With PRD
 
 ```
 INGEST
@@ -72,9 +97,13 @@ GENERATE IMPLEMENTATION PLAN
 MAP TO ODD SPECS / TASKS
 ```
 
+### Important rule
+
+PRD presence MUST NOT change whether a change is SMALL or SUBSTANTIAL by itself.
+
 ## PRD analysis
 
-The analysis should identify, when present:
+When a PRD is present, the analysis should identify, when present:
 
 - objectives;
 - actors;
@@ -133,7 +162,7 @@ Do not silently convert an inference into a project rule.
 A plan should normally contain:
 
 1. Objective and scope.
-2. PRD requirements traceability.
+2. Requirements traceability when a PRD exists.
 3. Existing architecture and patterns.
 4. Applicable policies and constraints.
 5. Proposed solution/design.
@@ -149,10 +178,10 @@ A plan should normally contain:
 
 A PRD does not automatically imply a large plan.
 
-- SMALL implementation: a lightweight plan may be sufficient.
-- SUBSTANTIAL implementation: persist the plan under `odd/planning/<feature-name>.md` and use it to derive the ODD feature document.
-  The derived ODD execution document is `odd/tasks/<feature-name>.md`.
-- Explicit user request for a plan: produce the plan even when implementation is not yet authorized.
+- SMALL implementation: a lightweight plan may be sufficient, and persistent planning is normally unnecessary unless explicitly requested.
+- SUBSTANTIAL implementation without PRD: plan/route directly from the user request and repository knowledge; persist the plan when complexity or user request justifies it.
+- SUBSTANTIAL implementation with PRD: persist the repository-aware plan under `odd/planning/<feature-name>.md`.
+- Explicit user request for a plan: produce the plan even when implementation is not yet authorized, with or without a PRD.
 
 A plan is not authorization to implement.
 
@@ -169,8 +198,10 @@ The ODD feature document answers:
 Therefore:
 
 ```
-PRD
-  ↓
+User Request
+    ↓
+[Optional PRD]
+    ↓
 Implementation Plan
   ↓
 ODD Feature Document
@@ -180,7 +211,9 @@ S#/T#
 Implementation
 ```
 
-The same PRD may generate multiple ODD tasks or work units.
+A direct request without PRD is a first-class ODD input.
+
+The same PRD or request may generate multiple ODD tasks or work units.
 
 ## Scope control
 
@@ -196,10 +229,11 @@ Before implementation of a substantial PRD-driven change, material architectural
 
 A PRD-driven planning operation is complete when:
 
-- the PRD was normalized successfully;
+- the user intent is understood;
+- if a PRD exists, it was normalized successfully;
 - requirements and material uncertainties are identified;
 - repository context has been considered;
 - the implementation approach is explicit;
 - verification is defined;
 - open decisions are visible;
-- the plan can be traced to the source requirements.
+- the plan can be traced to the source request and, when present, PRD requirements.
