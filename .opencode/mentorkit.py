@@ -98,7 +98,7 @@ def install_uv():
         curl = shutil.which("curl")
         if not curl:
             die("curl es necesario en macOS/Linux para instalar uv")
-        run([curl, "-LsSf", "https://astral.sh/uv/install.sh"], capture=False)
+        run(["bash", "-lc", "curl -LsSf https://astral.sh/uv/install.sh | sh"])
         # The official installer may update ~/.local/bin or ~/.cargo/bin.
     uv = uv_exe()
     if not uv:
