@@ -1,11 +1,31 @@
-# PRD → Implementation Planning
+# Implementation Planning
 
-MentorKit preserves the ability to accept a Product Requirements Document and turn it into an implementation plan grounded in the target repository.
+MentorKit preserves the ability to accept a Product Requirements Document and turn it into a repository-aware implementation plan, but a PRD is **optional**.
 
-## Pipeline
+## Two valid entry paths
 
+### Direct user request
+
+```text
+User Request
+  ↓
+Authorization
+  ↓
+Codebase Knowledge
+  ↓
+Plan / Route when justified
+  ↓
+ODD Feature Document
+  ↓
+S#/T#
 ```
-User PRD
+
+### User request + PRD
+
+```text
+User Request
+  ↓
+Optional PRD
   ↓
 document-extractor
   ↓
@@ -15,13 +35,9 @@ prd-reader
   ↓
 PRD Analysis
   ↓
-codebase-conformist + codebase-graph
-  ↓
-Architecture / Policies / Existing Patterns
+Codebase Knowledge
   ↓
 Implementation Plan
-  ↓
-spec-writer
   ↓
 ODD Feature Document
   ↓
@@ -43,29 +59,41 @@ PDF files that contain only scanned images are detected as requiring OCR and are
 
 ## Artifact locations
 
-For substantial PRD-driven work:
+For substantial work:
 
-```
-odd/planning/<feature-name>.md
+```text
 odd/tasks/<feature-name>.md
+```
+
+When an explicit or material Implementation Plan is justified:
+
+```text
+odd/planning/<feature-name>.md
 ```
 
 The implementation plan is architectural/design context. The ODD feature document is the authoritative execution state.
 
 ## Important distinction
 
-```
-PRD
-  = user intent
+```text
+User Request
+  = authorized intent
+
+PRD (optional)
+  = structured product intent
 
 Implementation Plan
   = repository-aware solution route
 
 ODD Feature Document
-  = authorized execution plan
+  = authorized execution state
 
 Todo / agent scratchpad
   = ephemeral execution state
 ```
 
 Never use the implementation plan as implicit authorization.
+
+## Key rule
+
+> PRD is an accelerator and source of structured requirements, not a gate to development.
