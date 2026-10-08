@@ -8,7 +8,8 @@
 
 MentorKit no pretende imponer una ceremonia para cada modificación. Su objetivo es que el agente determine **cuánto proceso necesita realmente el trabajo**: desde un cambio pequeño y autocontenido hasta una feature sustancial que requiere contexto persistente, tareas, verificación y unidades de entrega revisables.
 
-**Plataformas:** Linux · macOS · Windows (Git Bash / WSL2)  
+**Plataformas:** Linux · macOS · Windows (PowerShell nativo, además de Git Bash/WSL2)  
+**Compatibilidad:** instalación y runtime diseñados para los tres SO; CI de smoke test en runners Linux/macOS/Windows  
 **Python:** 3.12.13  
 **Runtime:** OpenCode + skills MentorKit  
 **Workflow:** ODD — SMALL / SUBSTANTIAL
@@ -34,7 +35,7 @@ El one-liner:
 
 **No requiere clonar MentorKit ni ejecutar un segundo comando de instalación.**
 
-### Probar una rama experimental
+### Instalación nativa en Windows\n\nPowerShell no requiere Git Bash para la instalación:\n\n```powershell\npowershell -ExecutionPolicy Bypass -File .\\bootstrap.ps1\n```\n\nDespués puedes verificar con:\n\n```powershell\npowershell -ExecutionPolicy Bypass -File .\\.opencode\\mentorkit-verify.ps1\n```\n\nEn Linux y macOS, `bootstrap.sh` y los launchers `.sh` son la ruta POSIX recomendada. El `Makefile` sigue siendo una interfaz de desarrollo POSIX; no es un requisito del runtime.\n\n### Probar una rama experimental
 
 La instalación puede apuntar a cualquier rama:
 
@@ -314,7 +315,7 @@ MentorKit/
 
 ---
 
-## 🔒 Reproducibilidad
+## 🖥️ Compatibilidad multiplataforma\n\nMentorKit separa la lógica de instalación del shell del sistema:\n\n- **Linux:** `bootstrap.sh` + `install-mentorkit.sh`.\n- **macOS:** `bootstrap.sh` + `install-mentorkit.sh`.\n- **Windows:** `bootstrap.ps1` + `install-mentorkit.ps1`, sin depender de Bash.\n- **Runtime común:** `.opencode/mentorkit.py` basado únicamente en la biblioteca estándar de Python.\n- **Python:** gestionado por `uv` para evitar depender de la versión instalada por el usuario.\n- **Verificación:** runners reales de Ubuntu, macOS y Windows en `.github/workflows/platform-smoke.yml`.\n\nGit Bash y WSL2 continúan soportados en Windows como opciones compatibles, pero ya no son requisitos para instalar MentorKit.\n\n## 🔒 Reproducibilidad
 
 MentorKit mantiene un runtime Python aislado:
 
