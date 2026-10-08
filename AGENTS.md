@@ -24,14 +24,16 @@ Before material planning or implementation, use `odd/knowledge/CONTRACT.md`. Pre
 
 ## PRD-driven work
 
-MentorKit may receive a PRD as an external input. Its file format must not leak into the planning or implementation layers.
+MentorKit may receive a PRD as an optional external input. Its file format must not leak into the planning or implementation layers.
 
 Supported document inputs include PDF, DOCX, DOC and ODT when the runtime adapter exposes `document-extractor`.
 
-The canonical planning relationship is:
+The canonical planning relationships are:
 
 ```
-PRD
+User Request
+  ↓
+[Optional PRD]
   ↓
 Normalized PRD
   ↓
