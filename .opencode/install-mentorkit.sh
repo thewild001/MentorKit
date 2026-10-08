@@ -14,4 +14,12 @@ if [[ -z "$UV" ]]; then
   command -v uv >/dev/null 2>&1 || { echo "uv no quedó disponible en PATH." >&2; exit 1; }
   UV="uv"
 fi
-exec "$UV" run --python 3.12 "$SCRIPT_DIR/mentorkit.py" fix "$@"
+
+# Backward-compatible interface: older bootstraps called this script with
+# `--fix`, while the Python CLI exposes the subcommand as `fix`.
+ARGS=("$@")
+if [[ "${#ARGS[@]}" -eq 1 && "${ARGS[0]}" == "--fix" ]]; then
+  ARGS=()
+fi
+
+exec "$UV" run --python 3.12 "$SCRIPT_DIR/mentorkit.py" fix "${ARGS[@]}"
