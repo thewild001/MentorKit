@@ -18,6 +18,10 @@ Read `odd/CONTRACT.md` as the canonical ODD contract. Use ODD proportionally to 
 
 A finding is not authorization. Do not expand scope without authorization.
 
+## Codebase knowledge
+
+Before material planning or implementation, use `odd/knowledge/CONTRACT.md`. Prefer `codebase-memory-mcp`, then Graphify, then direct fingerprinting/inspection. The existing `codebase-graph` capability must remain part of MentorKit's understanding layer; enhanced providers accelerate analysis but never replace repository inspection or become sources of authorization.
+
 ## PRD-driven work
 
 MentorKit may receive a PRD as an external input. Its file format must not leak into the planning or implementation layers.
