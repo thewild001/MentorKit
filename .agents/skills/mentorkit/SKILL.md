@@ -6,7 +6,7 @@ compatibility: Codex and compatible agent runtimes
 
 # MentorKit ODD
 
-The canonical contract is `AGENTS.md`.
+The canonical runtime-neutral contract is `odd/CONTRACT.md`; `AGENTS.md` is the repository-level agent contract.
 
 Use ODD proportionally:
 AUTHORIZE → EXPLORE → UNCERTAINTY → CLASSIFY → TRACK → IMPLEMENT → VERIFY → COMMIT → CLOSE.
