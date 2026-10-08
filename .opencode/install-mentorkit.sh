@@ -15,11 +15,9 @@ if [[ -z "$UV" ]]; then
   UV="uv"
 fi
 
-# Backward-compatible interface: older bootstraps called this script with
-# `--fix`, while the Python CLI exposes the subcommand as `fix`.
-ARGS=("$@")
-if [[ "${#ARGS[@]}" -eq 1 && "${ARGS[0]}" == "--fix" ]]; then
-  ARGS=()
+# Backward-compatible interface: older bootstraps called this script with --fix.
+if [[ "$#" -eq 1 && "$1" == "--fix" ]]; then
+  exec "$UV" run --python 3.12 "$SCRIPT_DIR/mentorkit.py" fix
 fi
 
-exec "$UV" run --python 3.12 "$SCRIPT_DIR/mentorkit.py" fix "${ARGS[@]}"
+exec "$UV" run --python 3.12 "$SCRIPT_DIR/mentorkit.py" fix "$@"
