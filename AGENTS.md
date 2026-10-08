@@ -30,10 +30,28 @@ Supported document inputs include PDF, DOCX, DOC and ODT when the runtime adapte
 
 The canonical planning relationships are:
 
+Without PRD:
+
 ```
 User Request
   ↓
-[Optional PRD]
+Codebase Knowledge
+  ↓
+Plan / Route when justified
+  ↓
+ODD Feature Document
+  ↓
+S#/T#
+  ↓
+Implementation
+```
+
+With PRD:
+
+```
+User Request
+  ↓
+Optional PRD
   ↓
 Normalized PRD
   ↓
