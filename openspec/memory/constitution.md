@@ -129,38 +129,21 @@ Si el working tree tiene cambios no relacionados con el archive, usar
 
 ---
 
-## Confirmation gate (regla de proceso)
+## Workflow ODD (regla de proceso)
 
+En la rama experimental ODD, esta constitución define **invariantes de ingeniería**, no un gate universal de confirmación.
 
-Ningún cambio se implementa sin confirmación explícita del junior,
-sin importar la complejidad. Aplica a:
+La autorización se determina así:
 
-- Fixes de 1 línea (typos, renames)
-- Logs / comentarios
-- Borrado de dead code
-- Refactors triviales
-- Tests puntuales
-- Documentación
+- Read-only (analizar, investigar, explicar, revisar): no se escribe.
+- Solicitud explícita de implementar/corregir/modificar: autoriza el alcance indicado.
+- Decisión material no resoluble con evidencia: preguntar antes de escribir.
+- Ampliación de scope: requiere nueva autorización.
 
-El coste de un "go" extra es despreciable. El coste de una
-implementación sorpresa (writes sin rollback, contaminación de git,
-trabajo perdido) es alto. El plan se presenta, el junior dice "go",
-recién ahí se implementa.
+Los cambios SMALL no requieren un confirmation gate artificial si ya fueron autorizados.
+Los cambios SUBSTANTIAL requieren persistencia en `odd/tasks/<feature>.md` y mantienen al humano en control de las decisiones materiales y del delivery.
 
-**Excepciones explícitas** (no requieren gate):
-
-- Cambios puramente operacionales al sistema de mentorkit mismo
-  (commit de esta garantía, save de reglas en engram, etc.)
-- Read-only: `git log`, `grep`, `cat`, búsquedas, lecturas
-
-**Confirmaciones aceptadas** (sin re-preguntar):
-
-`go` · `ok` · `dale` · `sí` · `si` · `adelante` · `proceed` · `yes` ·
-`perfecto` · `confirmo` · `aprobado` · `hazlo`
-
-**Si la respuesta es ambigua** (ej: "más o menos", "ok pero con X"),
-se pide clarificación antes de implementar. No se asume consentimiento
-parcial.
+OpenSpec permanece disponible como compatibilidad legacy; no es el motor de workflow en esta rama.
 
 
 ---

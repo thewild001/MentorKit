@@ -10,7 +10,9 @@
 #   3. Copia al directorio actual del usuario:
 #        .opencode/      (skills, installer, verify, requirements lock)
 #        Makefile        (targets install/verify/clean/ci)
-#        # NO se copian: openspec/ (store local de este repo)
+#        odd/          (workflow ODD y templates)
+#        .mentor/       (template de gobernanza; no contiene datos del repo)
+#        # NO se copian: openspec/ (store legacy local de este repo)
 #        # NO se copian: .specify/ (legacy, deprecated)
 #        
 #   4. Corre el installer: crea venv, instala 60 deps desde lock, verifica
@@ -43,7 +45,7 @@ fi
 TMP=$(mktemp -d)
 trap "rm -rf $TMP" EXIT
 
-echo -e "\n  ${CYAN}MentorKit${RESET}  ${DIM}v5.0 — Instalador one-liner${RESET}\n"
+echo -e "\n  ${CYAN}MentorKit${RESET}  ${DIM}ODD workflow — Instalador one-liner${RESET}\n"
 
 # ─── 1) Descargar tarball ────────────────────────────────────────────────
 TARBALL_URL="${GITHUB_CODELOAD_HOST}/${REPO}/tar.gz/refs/heads/${BRANCH}"
@@ -87,7 +89,17 @@ if ! cp -r "$REPO_DIR/.opencode" "./"; then
     exit 1
 fi
 
-# Makefile — opcional pero útil (make verify, make clean, make ci)
+# ODD workflow — parte del producto instalado
+if [[ -d "$REPO_DIR/odd" ]]; then
+    cp -r "$REPO_DIR/odd" "./"
+fi
+
+# Governance template — no se copia una constitution concreta
+if [[ -d "$REPO_DIR/.mentor" ]]; then
+    cp -r "$REPO_DIR/.mentor" "./"
+fi
+
+# Makefile — opcional pero útil
 if [[ -f "$REPO_DIR/Makefile" ]]; then
     cp "$REPO_DIR/Makefile" "./"
 fi
@@ -111,5 +123,5 @@ echo "  ${DIM}Próximos pasos (todos opcionales):${RESET}"
 echo "     make verify    # confirmar que el venv está OK"
 echo "     make ci        # simular el pipeline de GitLab localmente"
 echo ""
-echo "  ${DIM}Para usar mentorkit:${RESET} abre OpenCode en este proyecto y selecciona el agente MentorKit5.0"
+echo "  ${DIM}Para usar mentorkit:${RESET} abre OpenCode en este proyecto y selecciona el agente MentorKit5.0; ODD decidirá si la tarea es SMALL o SUBSTANTIAL"
 echo ""

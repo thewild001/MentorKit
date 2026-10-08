@@ -15,7 +15,7 @@ SHELL := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install verify clean ci archive-spec init-constitution all
+.PHONY: help install verify clean ci archive-spec init-constitution odd-task odd-check all
 
 help:  ## Mostrar esta ayuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -47,6 +47,14 @@ ci:  ## Simular GitLab CI localmente (install + verify + JSON assert)
 		exit 1; \
 	}
 	@echo "✅ Las 4 garantías se cumplen (igual que en CI)"
+	@$(MAKE) odd-check
+
+odd-task:  ## Crear documento ODD (FEATURE=<slug> REQUEST="...")
+	@if [ -z "$(FEATURE)" ] || [ -z "$(REQUEST)" ]; then echo 'Uso: make odd-task FEATURE=<slug> REQUEST="..."'; exit 1; fi
+	@bash .opencode/mentorkit-odd-task.sh "$(FEATURE)" "$(REQUEST)"
+
+odd-check:  ## Validar estructura ODD y documentos de trabajo
+	@bash -c 'test -f .opencode/skills/odd-orchestrator/SKILL.md && test -f odd/templates/task.md && test -d odd/tasks && echo "✓ ODD foundation válida"'
 
 archive-spec:  ## Merge un spec a openspec/system-spec.md (SPEC=<path> [DRY_RUN=1] [FORCE=1] [COMMIT=1] [FORCE_DIRTY=1])
 	@if [ -z "$(SPEC)" ]; then \

@@ -4,7 +4,7 @@
 
 # mentorkit
 
-> Orquestador de workflow para juniors. Constitution → Spec → Fingerprinting → Plan → Confirm → Implement → PR.
+> Orquestador de workflow para desarrolladores basado en **Organic Driven Development (ODD)**. Authorization → Explore → Classify → Implement/Track → Verify → Commit → Delivery.
 
 **Plataforma:** Linux · macOS · Windows (Git Bash o WSL2) · **Python:** 3.12.13 (pin exacto) · **Deps lockeadas:** 60 con SHA256
 
@@ -75,7 +75,8 @@ make install
 - `.opencode/requirements.lock` — lock con hashes.
 - `.opencode/skills/` — 20 skills (core + superpowers).
 - `.opencode/agents/MentorKit5.0.md` — agente principal.
-- `openspec/` — store canónico de specs/constitution/system-spec.
+- `odd/` — workflow ODD, templates y feature documents.
+- `openspec/` — store legacy conservado durante la migración experimental.
 - `.gitlab-ci.yml` — pipeline de verificación.
 - `Makefile` — entry point local.
 
@@ -179,3 +180,33 @@ git blame openspec/system-spec.md
 Desarrollado por [thewild001](https://github.com/thewild001) · Universidad de las Ciencias Informáticas (UCI)
 
 Repositorio: [github.com/thewild001/MentorKit](https://github.com/thewild001/MentorKit)
+
+---
+
+## 🌱 ODD — Organic Driven Development (rama experimental)
+
+Esta rama prueba ODD como modelo de workflow de MentorKit. La idea central no es reemplazar `openspec/` por otra carpeta de specs, sino hacer que MentorKit decida proporcionalmente cuánto proceso necesita cada cambio.
+
+### Flujo
+
+```
+Request → Authorization → Explore → Classify
+                              ├─ SMALL → Implement → Verify → Commit → Close
+                              └─ SUBSTANTIAL → odd/tasks/<feature>.md
+                                              → Specs/Tasks → Implement
+                                              → Verify → Work-unit Commit
+                                              → Review/PR → Close
+```
+
+### Principios
+
+- Un análisis o investigación permanece read-only.
+- Una solicitud explícita de implementación autoriza el alcance indicado.
+- Los cambios pequeños no generan artefactos persistentes innecesarios.
+- El trabajo sustancial crea un feature document antes del primer source write.
+- `TodoWrite` es tracking efímero; `odd/tasks/*.md` es persistencia recuperable.
+- Los hallazgos no amplían silenciosamente el scope.
+- Cada unidad sustancial se verifica y registra mediante un commit atómico.
+- Push, PR y merge siguen siendo decisiones separadas.
+
+La migración está descrita en [`odd/ODD-MIGRATION.md`](./odd/ODD-MIGRATION.md). OpenSpec permanece disponible como compatibilidad durante la evaluación y no debe recibir nuevos artefactos por defecto.
