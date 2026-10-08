@@ -50,3 +50,15 @@ jobs:
             bash ./.opencode/mentorkit-odd-task.sh platform-smoke "Validate native $RUNNER_OS runtime"
           fi
           test -f odd/tasks/platform-smoke.md
+      - name: Verify agent compatibility contract
+        shell: bash
+        run: |
+          cd "$MENTORKIT_TEST_DIR"
+          test -f AGENTS.md
+          test -f CLAUDE.md
+          test -f .cursor/rules/mentorkit-odd.mdc
+          test -f .claude/skills/mentorkit/SKILL.md
+          test -f .agents/skills/mentorkit/SKILL.md
+          grep -q "AUTHORIZE" AGENTS.md
+          grep -q "SUBSTANTIAL" AGENTS.md
+          grep -q "odd/tasks/<feature>.md" AGENTS.md
