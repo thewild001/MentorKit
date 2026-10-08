@@ -6,11 +6,11 @@
 
 > **Agentic engineering workflow para desarrolladores**, construido sobre OpenCode y orientado a aplicar **Organic Driven Development (ODD)** de forma proporcional al cambio.
 
-MentorKit no pretende imponer una ceremonia para cada modificación. Su objetivo es que el agente determine **cuánto proceso necesita realmente el trabajo**: desde un cambio pequeño y autocontenido hasta una feature sustancial que requiere contexto persistente, planificación, tareas, verificación y unidades de entrega revisables.
+MentorKit no impone una ceremonia uniforme. Determina cuánto proceso necesita cada trabajo: desde un cambio pequeño y localizado hasta una feature sustancial que requiere contexto persistente, planificación, tareas, verificación y unidades de entrega revisables.
 
-**Plataformas:** Linux · macOS · Windows (PowerShell nativo, además de Git Bash/WSL2)  
-**Python:** 3.12.13  
-**Runtime:** OpenCode + skills MentorKit  
+**Plataformas:** Linux · macOS · Windows  
+**Runtime principal:** OpenCode + skills MentorKit  
+**Agentes objetivo:** OpenCode · Cursor · Codex · Claude Code  
 **Workflow:** ODD — SMALL / SUBSTANTIAL
 
 ---
@@ -20,316 +20,339 @@ MentorKit no pretende imponer una ceremonia para cada modificación. Su objetivo
 Desde la raíz del proyecto donde quieres utilizar MentorKit:
 
 ```bash
-bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/main/bootstrap.sh")
+bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.sh")
 ```
 
-El one-liner descarga el release, instala `.opencode/`, `odd/`, la plantilla `.mentor/` y los contratos de agentes, prepara el runtime Python aislado, instala las dependencias desde `requirements.lock` y verifica el entorno.
+Para instalar la rama experimental en Linux o macOS. El instalador prepara los componentes de MentorKit, el runtime Python administrado mediante `uv` y las verificaciones disponibles.
 
-### Instalación nativa en Windows
+### Windows nativo
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\bootstrap.ps1
 ```
 
-Después:
+Verificación:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\.opencode\mentorkit-verify.ps1
 ```
 
-Git Bash y WSL2 continúan soportados, pero ya no son requisitos en Windows.
+Windows también puede utilizar Git Bash o WSL2, pero no son requisitos para el flujo nativo.
 
-### Probar la rama experimental
-
-```bash
-MENTORKIT_BRANCH=feature/odd-migration \
-bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.sh")
-```
-
-El instalador no contiene credenciales ni depende de un GitLab privado.
+> **Importante:** esta es una rama experimental. Instálala primero en un repositorio de prueba y valida los flujos relevantes antes de adoptarla en proyectos críticos.
 
 ---
 
-## 🧠 ODD en MentorKit
+## 🧠 Organic Driven Development (ODD)
 
-**Organic Driven Development** es el modelo de orquestación de MentorKit.
+ODD es el modelo de orquestación de MentorKit. El proceso se adapta a la complejidad y al riesgo, no al revés.
 
-> **No todos los cambios necesitan el mismo nivel de proceso.**
-
-```
-Request
-   ↓
+```text
+User Request
+     ↓
 Authorization
-   ↓
-Explore
-   ↓
-Resolve uncertainty
-   ↓
+     ↓
+Explore / Understand
+     ↓
+Resolve material uncertainty
+     ↓
 Classify
-   ├────────────── SMALL
-   │                 ↓
-   │             Implement
-   │                 ↓
-   │              Verify
-   │                 ↓
-   │              Commit
-   │                 ↓
-   │              Close
-   │
-   └──────────── SUBSTANTIAL
-                     ↓
-             odd/tasks/<feature>.md
-                     ↓
-                Specs S#
-                Tasks T#
-                     ↓
-             Implement task-by-task
-                     ↓
-                  Verify
-                     ↓
-             Work-unit Commit
-                     ↓
-                Review / PR
-                     ↓
-                  Close
+  ┌──┴───────────┐
+ SMALL        SUBSTANTIAL
+   │                │
+   ▼                ▼
+Implement       Durable ODD Task
+   │            odd/tasks/<feature>.md
+   │                │
+   │           Plan / Route as needed
+   │                │
+   └───────┬────────┘
+           ▼
+        Verify
+           ▼
+   Commit / Review as authorized
+           ▼
+         Close
 ```
 
 ### SMALL
 
-Cambio localizado, de bajo riesgo, suficientemente entendido, con patrón claro y blast radius bajo. No se crea planificación persistente por defecto.
+Cambio localizado, de bajo riesgo y suficientemente comprendido. Se implementa y verifica siguiendo los patrones existentes, sin crear documentación persistente por mera formalidad.
 
 ### SUBSTANTIAL
 
-Feature, migración, cambio arquitectónico, refactor transversal, lógica no trivial, trabajo con incertidumbre material o que necesita continuidad entre sesiones. Requiere `odd/tasks/<feature-name>.md`.
+Feature, migración, cambio arquitectónico, refactor transversal, lógica no trivial o trabajo que requiere varias unidades, decisiones relevantes o continuidad entre sesiones. Antes de modificar el código se crea:
 
----
-
-## 📄 PRD → Implementation Plan
-
-MentorKit conserva la capacidad de recibir un Product Requirements Document y convertirlo en un plan de implementación **adaptado al repositorio real**, no en una traducción mecánica del PRD a tareas.
-
-### Formatos
-
-- PDF
-- DOCX
-- DOC
-- ODT
-
-### Flujo
-
-```
-PRD
- ↓
-document-extractor
- ↓
-Normalized PRD
- ↓
-prd-reader
- ↓
-PRD Analysis
- ↓
-codebase-conformist + codebase-graph
- ↓
-Implementation Plan
- ↓
-spec-writer
- ↓
-ODD S#/T#
- ↓
-Implement
-```
-
-### Principio
-
-> **El PRD define la intención. El codebase define el contexto de implementación.**
-
-Antes de generar el plan, MentorKit considera arquitectura existente, políticas/constitución, patrones, dependencias, blast radius, verificación, riesgos y decisiones abiertas.
-
-Para trabajo sustancial se persisten:
-
-```
-odd/planning/<feature-name>.md
+```text
 odd/tasks/<feature-name>.md
 ```
 
-El Implementation Plan representa la ruta técnica y arquitectónica; el ODD Feature Document representa el estado de ejecución. Un plan nunca implica autorización automática para implementar.
+El documento mantiene el objetivo, las especificaciones verificables (S#), las tareas (T#), la estrategia de verificación, el registro de avance y el estado de entrega.
 
-### Cobertura documental
+### Autorización y control de alcance
 
-| Formato | Soporte |
-|---|---|
-| PDF digital | ✅ |
-| PDF escaneado | ⚠️ Requiere OCR |
-| DOCX | ✅ |
-| DOC | ✅ |
-| ODT | ✅ |
-
-La ruta `.doc` utiliza el backend `anydoc` ya presente en el runtime de MentorKit, sin depender de Microsoft Word, LibreOffice, COM ni ejecutables específicos del sistema.
+- Una solicitud de análisis o explicación no autoriza por sí sola cambios de código.
+- Un hallazgo no equivale a autorización.
+- Los cambios de alcance requieren autorización.
+- Generar un plan no autoriza automáticamente su implementación.
+- Push, pull request, merge y despliegue siguen siendo decisiones de entrega independientes.
 
 ---
 
-## 🧭 Conformidad con el proyecto
+## 📄 PRD opcional y planificación de implementación
 
-Una de las ideas fundacionales de MentorKit se mantiene en esta versión:
+**Un PRD no es un requisito para utilizar ODD.** Una solicitud directa del usuario es una entrada de primera clase. La existencia de un PRD tampoco determina si el cambio es SMALL o SUBSTANTIAL.
 
-> **El agente se adapta al proyecto; el proyecto no se adapta al agente.**
+### Ruta sin PRD
 
-MentorKit explora y formaliza el conocimiento del repositorio mediante:
-
-```
-Codebase
-   ↓
-Architecture
-   ↓
-Policies / Constitution
-   ↓
-Patterns / Golden Examples
-   ↓
-ODD Planning
-   ↓
-Implementation
-   ↓
-Policy / Verification checks
+```text
+User Request
+     ↓
+Authorization + Exploration
+     ↓
+Codebase Knowledge
+     ↓
+Plan / Route when justified
+     ↓
+ODD Feature Document, if SUBSTANTIAL
+     ↓
+S# / T# → Implementation
 ```
 
-Se mantiene la separación:
+### Ruta con PRD
 
-- **Observed:** lo que realmente hace el código.
-- **Inferred:** lo que MentorKit deduce.
-- **Confirmed:** lo que el proyecto acepta como política o decisión.
-- **Proposed:** una alternativa de implementación.
-
-Una inferencia nunca se convierte silenciosamente en una política obligatoria.
-
----
-
-## 🧩 Arquitectura
-
-```
-MentorKit
-  ├── ODD Engine
-  │   ├── Authorize
-  │   ├── Explore
-  │   ├── Classify
-  │   ├── Track
-  │   ├── Plan / Route
-  │   ├── Implement
-  │   ├── Verify
-  │   └── Close
-  ├── Engineering capabilities
-  │   ├── Codebase Graph
-  │   ├── Fingerprinting
-  │   ├── PRD Analysis
-  │   ├── Spec Writer
-  │   ├── TDD
-  │   ├── Debugging
-  │   ├── Parallel Agents
-  │   ├── Code Review
-  │   └── Git
-  ├── Project knowledge
-  │   ├── Constitution
-  │   ├── Policies
-  │   ├── Architecture
-  │   ├── Feature Plans
-  │   └── ODD Tasks
-  └── Runtime adapters
-      ├── OpenCode
-      ├── Cursor
-      ├── Codex
-      └── Claude Code
+```text
+User Request + optional PRD
+             ↓
+       document-extractor
+             ↓
+       Normalized PRD
+             ↓
+          prd-reader
+             ↓
+         PRD Analysis
+             ↓
+ Codebase Knowledge + Policies
+             ↓
+     Implementation Plan
+             ↓
+       ODD S# / T#
+             ↓
+        Implementation
 ```
 
----
+El PRD aporta requisitos estructurados cuando existe; no sustituye la exploración del repositorio. El plan se genera cuando la complejidad o la solicitud del usuario lo justifican, no simplemente porque se haya adjuntado un documento.
 
-## 📂 Persistencia
+### Formatos documentales
 
-```
+La capacidad de extracción contempla:
+
+- PDF digital.
+- PDF escaneado (puede requerir OCR; el contenido no extraído no se inventa).
+- DOCX.
+- DOC mediante el backend `anydoc`.
+- ODT.
+
+La extracción de documentos está separada del análisis semántico: `document-extractor` normaliza el contenido y `prd-reader` analiza los requisitos. La planificación sigue siendo independiente del formato.
+
+### Artefactos
+
+```text
 odd/
 ├── CONTRACT.md
 ├── planning/
 │   ├── CONTRACT.md
 │   ├── README.md
-│   └── <feature-name>.md
-├── templates/
+│   ├── templates/
+│   │   └── implementation-plan.md
+│   └── <feature-name>.md       # si el plan es material o solicitado
 └── tasks/
-    └── <feature-name>.md
+    └── <feature-name>.md       # trabajo SUBSTANTIAL
 ```
 
-### LocalFile
-
-Persistencia obligatoria para trabajo SUBSTANTIAL.
-
-### Engram
-
-Espejo opcional para continuidad entre sesiones. Nunca tiene precedencia sobre el estado observado del repositorio.
+El **Implementation Plan** describe la ruta técnica y arquitectónica. El **ODD Feature Document** es la fuente de verdad del estado de ejecución. Un plan puede existir sin autorización para implementar.
 
 ---
 
-## 🧪 Verificación
+## 🧭 Comprensión del codebase
 
-Cuando existe un test determinista con resultado claro:
+La comprensión del repositorio es una capacidad central de MentorKit, no un paso que el PRD pueda reemplazar.
 
+Orden de preferencia definido por el contrato de conocimiento:
+
+```text
+codebase-memory-mcp
+        ↓ si no está disponible o no basta
+Graphify
+        ↓ si no está disponible o no basta
+Fingerprinting + inspección directa
 ```
-RED → GREEN → REFACTOR
+
+### ¿Qué se analiza?
+
+- Arquitectura y límites entre módulos.
+- Puntos de entrada y dependencias.
+- Patrones existentes y *golden examples*.
+- Módulos críticos y relaciones de dependencia.
+- Impacto potencial (*blast radius*).
+- Pruebas y mecanismos de verificación.
+- Configuración, CI/CD y restricciones de ejecución.
+- Políticas explícitas y decisiones arquitectónicas relevantes.
+
+El proveedor de conocimiento acelera la exploración, pero **el repositorio observado sigue siendo la fuente de verdad**. Si el grafo está obsoleto o contradice el código, MentorKit valida el estado real y actualiza o descarta la inferencia.
+
+### Niveles de evidencia
+
+| Nivel | Significado |
+|---|---|
+| **Observed** | Evidencia directa en el repositorio o en la solicitud del usuario. |
+| **Inferred** | Conclusión deducida a partir de evidencias. |
+| **Proposed** | Solución o decisión sugerida por MentorKit. |
+| **Confirmed** | Decisión aceptada explícitamente como política o requisito del proyecto. |
+
+Una inferencia no se convierte silenciosamente en una política obligatoria.
+
+Contrato: `odd/knowledge/CONTRACT.md`.
+
+---
+
+## 🧩 Arquitectura
+
+```text
+MentorKit
+├── ODD Engine
+│   ├── Authorize
+│   ├── Explore
+│   ├── Uncertainty
+│   ├── Classify
+│   ├── Track
+│   ├── Plan / Route
+│   ├── Implement
+│   ├── Verify
+│   └── Close
+├── Engineering Capabilities
+│   ├── Codebase Graph / Knowledge
+│   ├── Fingerprinting
+│   ├── Optional PRD Analysis
+│   ├── Spec Writer
+│   ├── TDD / Debugging
+│   ├── Parallel Agents
+│   ├── Code Review
+│   └── Git
+├── Durable Project Context
+│   ├── Constitution / Policies
+│   ├── Architecture / Patterns
+│   ├── Implementation Plans
+│   └── ODD Feature Documents
+└── Runtime Adapters
+    ├── OpenCode
+    ├── Cursor
+    ├── Codex
+    └── Claude Code
 ```
 
-Una unidad sustancial se cierra con implementación, evidencia de verificación, commit atómico y SHA registrado en su T#.
+La metodología ODD tiene un contrato común. Los archivos específicos de cada agente actúan como adaptadores nativos, no como implementaciones independientes de la metodología.
 
-Nunca se declara completado sin evidencia.
+---
+
+## 💾 Persistencia y continuidad
+
+La persistencia de trabajo sustancial se basa en el documento local versionable:
+
+```text
+odd/tasks/<feature-name>.md
+```
+
+- **LocalFile:** mecanismo obligatorio para el estado durable de trabajo SUBSTANTIAL.
+- **Engram:** backend de memoria opcional, cuando esté disponible.
+- **Todo lists y scratchpads:** estado de ejecución temporal; no reemplazan el documento ODD.
+
+Al reanudar una tarea, MentorKit lee el documento ODD, inspecciona el estado real del repositorio y el diff, y reconcilia cualquier memoria externa con lo observado. La memoria no autoriza cambios ni prevalece sobre el repositorio.
+
+Detalles: `odd/PERSISTENCE.md`.
 
 ---
 
 ## 🤖 Compatibilidad con agentes
 
-| Agente | Integración nativa | Contrato compartido |
-|---|---|---|
-| **OpenCode** | `.opencode/skills/` + `.opencode/agents/` + `AGENTS.md` | Sí |
-| **Cursor** | `.cursor/rules/` + `AGENTS.md` | Sí |
-| **Codex** | `AGENTS.md` + `.agents/skills/` | Sí |
-| **Claude Code** | `CLAUDE.md` + `.claude/skills/` | Sí |
+| Agente | Integración / instrucciones |
+|---|---|
+| **OpenCode** | `.opencode/skills/`, `.opencode/agents/`, `AGENTS.md` |
+| **Cursor** | `.cursor/rules/`, `AGENTS.md` |
+| **Codex** | `AGENTS.md`, `.agents/skills/` |
+| **Claude Code** | `CLAUDE.md`, `.claude/skills/` |
 
-El contrato común vive en `AGENTS.md` y `odd/`. Los archivos específicos de cada agente son adaptadores, no metodologías alternativas.
+`AGENTS.md` y los contratos bajo `odd/` describen la semántica compartida; cada runtime la adapta a sus convenciones. La profundidad de integración puede variar según las capacidades disponibles en cada agente, especialmente en proveedores MCP y conocimiento del codebase.
 
 ---
 
 ## 🖥️ Compatibilidad multiplataforma
 
-- **Linux:** `bootstrap.sh` + launchers POSIX.
-- **macOS:** `bootstrap.sh` + launchers POSIX.
-- **Windows:** `bootstrap.ps1` + `install-mentorkit.ps1` + `mentorkit-verify.ps1`.
+La rama experimental incluye rutas de instalación y verificación para:
+
+- **Linux:** scripts POSIX.
+- **macOS:** scripts POSIX.
+- **Windows:** PowerShell nativo, además de Git Bash/WSL2.
 - **Runtime común:** `.opencode/mentorkit.py`.
-- **Python:** gestionado mediante `uv`.
-- **CI:** smoke tests reales en Ubuntu, macOS y Windows.
+- **Python:** entorno gestionado mediante `uv`.
+- **CI:** workflow de smoke tests con matriz Ubuntu, macOS y Windows.
+
+La compatibilidad está diseñada en torno a un núcleo compartido y launchers específicos por sistema operativo. La matriz de CI y las pruebas locales deben completarse antes de considerar la migración estable.
 
 ---
 
-## 🛠️ Desarrollo de MentorKit
+## 🧪 Verificación y entrega
+
+Cuando existe un resultado determinista, se prefiere:
+
+```text
+RED → GREEN → REFACTOR
+```
+
+La verificación se ajusta al riesgo y a las prácticas reales del repositorio: pruebas, lint, typecheck, build, análisis estático y comprobaciones funcionales cuando corresponda.
+
+Para una unidad sustancial, el flujo habitual es:
+
+1. Implementar el T# autorizado.
+2. Ejecutar las verificaciones aplicables.
+3. Registrar evidencia y actualizar el documento ODD.
+4. Crear un commit atómico y revisable cuando corresponda.
+5. Registrar el SHA del commit en el T#.
+
+Nunca se declara completado un trabajo sin evidencia de verificación. Un commit no implica permiso para hacer push, abrir un PR, fusionar o desplegar.
+
+---
+
+## 🛠️ Desarrollo y validación local
 
 ```bash
-git clone https://github.com/thewild001/MentorKit.git
+git clone --branch feature/odd-migration https://github.com/thewild001/MentorKit.git
 cd MentorKit
 make install
 make verify
+make odd-check
 ```
 
-Targets principales:
+Consulta `make help` o el `Makefile` para los targets disponibles en esta versión.
 
-| Target | Descripción |
-|---|---|
-| `make install` | Prepara/repara el runtime |
-| `make verify` | Verifica Python y dependencias |
-| `make odd-check` | Valida la estructura ODD |
-| `make odd-task FEATURE=x REQUEST="..."` | Crea una tarea ODD |
-| `make clean` | Elimina el runtime local |
-| `make ci` | Ejecuta las comprobaciones locales |
+Antes de probar la rama en un proyecto real, se recomienda validar al menos:
 
-OpenSpec permanece disponible durante la migración experimental únicamente como **compatibilidad legacy**.
+- cambio SMALL sin PRD;
+- cambio SUBSTANTIAL sin PRD;
+- planificación a partir de un PRD;
+- PRD en PDF/DOCX/DOC/ODT;
+- cambios que cruzan varios módulos;
+- interrupción y reanudación;
+- hallazgos fuera del alcance autorizado;
+- proveedor MCP ausente o desactualizado;
+- instalación y verificación en Linux, macOS y Windows;
+- comportamiento de los adaptadores de los agentes disponibles.
 
 ---
 
-## 📦 Estructura relevante
+## 📂 Estructura relevante
 
-```
+```text
 MentorKit/
 ├── .mentor/
 ├── .opencode/
@@ -340,16 +363,19 @@ MentorKit/
 │   │   ├── codebase-graph/
 │   │   ├── prd-reader/
 │   │   ├── document-extractor/
-│   │   ├── spec-writer/
-│   │   ├── llm-council/
-│   │   └── superpowers/
+│   │   └── spec-writer/
 │   ├── mentorkit.py
 │   └── requirements.lock
 ├── odd/
 │   ├── CONTRACT.md
+│   ├── PERSISTENCE.md
+│   ├── knowledge/
+│   │   └── CONTRACT.md
 │   ├── planning/
+│   │   ├── CONTRACT.md
+│   │   ├── README.md
+│   │   └── templates/
 │   └── tasks/
-├── openspec/                 # legacy durante la migración
 ├── AGENTS.md
 ├── CLAUDE.md
 ├── .cursor/
@@ -360,43 +386,44 @@ MentorKit/
 └── Makefile
 ```
 
+OpenSpec se conserva únicamente como compatibilidad legacy durante la migración experimental; el objetivo es retirar gradualmente la dependencia del flujo central una vez validados los casos reales.
+
 ---
 
-## 🌱 Estado de la migración
+## 🌱 Estado experimental
 
-Esta implementación se encuentra en la rama experimental `feature/odd-migration`.
+La evolución ODD se desarrolla en la rama:
 
-La migración se valida progresivamente con:
+**[`feature/odd-migration`](https://github.com/thewild001/MentorKit/tree/feature/odd-migration)**
 
-- cambios SMALL;
-- features SUBSTANTIAL;
-- PRD → Implementation Plan;
-- documentos PDF/DOCX/DOC;
-- cambios arquitectónicos;
-- interrupciones y resume;
-- cambios de scope;
-- políticas y drift;
-- compatibilidad con OpenCode, Cursor, Codex y Claude Code;
-- instalación Linux/macOS/Windows.
+Objetivos de esta rama:
 
-OpenSpec no se retira hasta que el flujo ODD haya sido validado con casos reales.
+- Adoptar ODD como capa central de orquestación.
+- Mantener PRD y planificación como capacidades opcionales.
+- Preservar los mecanismos de comprensión del codebase.
+- Proporcionar persistencia durable y recuperación entre sesiones.
+- Mantener un contrato ODD común para los agentes soportados.
+- Dar soporte a Linux, macOS y Windows.
+- Retirar OpenSpec progresivamente, no antes de validar la migración.
+
+Esta rama es experimental y no debe considerarse estable solo por estar implementada. La validación funcional y el estado de CI deben comprobarse antes de integrar los cambios en `main`.
 
 ---
 
 ## 🤝 Contribuir
 
-1. Crea una rama.
-2. Comprende el cambio antes de implementarlo.
-3. Respeta el workflow ODD.
-4. Mantén los cambios dentro del scope autorizado.
-5. Verifica antes de declarar completado el trabajo.
-6. Usa commits atómicos y descriptivos.
+1. Comprende el contexto del repositorio antes de modificarlo.
+2. Mantén los cambios dentro del alcance autorizado.
+3. Adapta el proceso a la complejidad real del cambio.
+4. Actualiza los artefactos ODD para trabajo sustancial.
+5. Ejecuta las verificaciones aplicables y documenta su evidencia.
+6. Utiliza commits atómicos y descriptivos.
 7. Abre un PR cuando corresponda.
 
 ---
 
 ## 📜 Créditos
 
-Desarrollado por [thewild001](https://github.com/thewild001) · Universidad de las Ciencias Informáticas (UCI)
+Desarrollado por [thewild001](https://github.com/thewild001).
 
 Repositorio: https://github.com/thewild001/MentorKit
