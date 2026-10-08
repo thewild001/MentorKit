@@ -101,6 +101,15 @@ done
 [[ -f "$REPO_DIR/Makefile" ]] &&
     cp "$REPO_DIR/Makefile" "./"
 
+# Shared agent contract and native adapters.
+for file in AGENTS.md CLAUDE.md; do
+    [[ -f "$REPO_DIR/$file" ]] && cp "$REPO_DIR/$file" "./"
+done
+
+for dir in .cursor .claude .agents; do
+    [[ -d "$REPO_DIR/$dir" ]] && cp -R "$REPO_DIR/$dir" "./"
+done
+
 bash ".opencode/install-mentorkit.sh" ||
     fail "El instalador no pudo completar la preparación del entorno."
 
