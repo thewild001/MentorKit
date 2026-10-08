@@ -55,6 +55,8 @@ jobs:
         run: |
           cd "$MENTORKIT_TEST_DIR"
           test -f AGENTS.md
+          test -f odd/CONTRACT.md
+          grep -q "runtime-neutral" odd/CONTRACT.md
           test -f CLAUDE.md
           test -f .cursor/rules/mentorkit-odd.mdc
           test -f .claude/skills/mentorkit/SKILL.md
