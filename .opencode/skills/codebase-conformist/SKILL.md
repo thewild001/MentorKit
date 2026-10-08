@@ -50,7 +50,8 @@ testing, convenciones y restricciones. No la uses como motor del workflow.
 
 Antes de escribir código:
 
-1. Carga `codebase-graph` si está disponible.
+1. Carga `codebase-graph` y construye/reutiliza el Codebase Knowledge Snapshot según `odd/knowledge/CONTRACT.md`.
+2. Carga `codebase-graph` si está disponible.
 2. Identifica el punto de entrada.
 3. Encuentra una plantilla de oro.
 4. Revisa callers y blast radius.
