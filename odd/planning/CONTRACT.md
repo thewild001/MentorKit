@@ -93,10 +93,15 @@ The analysis should identify, when present:
 
 The original PRD vocabulary should be preserved where it is part of the user contract.
 
+## Repository knowledge
+
+Before material planning, use `odd/knowledge/CONTRACT.md`. Prefer `codebase-memory-mcp`, then Graphify, then direct fingerprinting/inspection. Record the provider and freshness of material evidence. The knowledge layer accelerates understanding but never overrides the repository.
+
 ## Repository exploration
 
 The plan should use the available engineering capabilities to determine:
 
+- codebase knowledge snapshot from the available provider;
 - existing architecture;
 - module boundaries;
 - relevant entry points;
