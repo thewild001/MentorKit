@@ -33,6 +33,9 @@ REQUIRED = [
     ".opencode/mentorkit-verify.sh",
     ".opencode/requirements.in",
     ".opencode/requirements.lock",
+    "odd/CONTRACT.md",
+    "odd/planning/CONTRACT.md",
+    "odd/planning/templates/implementation-plan.md",
 ]
 
 def log(msg): print(msg, flush=True)
