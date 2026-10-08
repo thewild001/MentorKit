@@ -165,33 +165,62 @@ Minimum sections:
 - Log
 - Delivery
 
-### Specs
+## 8. PRD and Implementation Planning
 
-Use stable identifiers S1, S2, ...
+A user-provided PRD is an optional structured input to ODD. Its file format is irrelevant after ingestion.
 
-A specification describes verifiable behavior or an explicit constraint.
+Supported inputs include PDF, DOCX, DOC and ODT when the runtime adapter provides the corresponding document-extractor capability.
 
-### Tasks
+The planning pipeline is:
 
-Use stable identifiers T1, T2, ...
+```
+PRD
+  ↓
+NORMALIZE
+  ↓
+PRD ANALYSIS
+  ↓
+EXPLORE CODEBASE
+  ↓
+POLICIES / ARCHITECTURE
+  ↓
+IMPLEMENTATION PLAN
+  ↓
+ODD S# / T#
+```
 
-A task is an executable work unit and references its relevant S# identifiers.
+The Implementation Plan answers:
 
-### Log
+> How should this PRD be implemented in this repository?
 
-Preserve the original request and append decisions, findings, evidence, and scope changes. Do not rewrite history.
+The ODD feature document answers:
 
-### Delivery
+> What authorized work units are being executed?
 
-Record verification, work-unit commits, review status, and remaining risks.
+For SUBSTANTIAL PRD-driven work:
 
-## 8. Ephemeral vs durable state
+```
+odd/planning/<feature-name>.md
+odd/tasks/<feature-name>.md
+```
+
+The plan is architectural/design context. The ODD task is execution state.
+
+A plan never authorizes implementation by itself.
+
+The runtime-neutral planning semantics are defined in:
+
+```
+odd/planning/CONTRACT.md
+```
+
+## 9. Ephemeral vs durable state
 
 Todo lists, chat context, agent scratchpads, and runtime memory are execution aids.
 
-They do not replace `odd/tasks/<feature>.md` for SUBSTANTIAL work.
+They do not replace `odd/tasks/<feature-name>.md` for SUBSTANTIAL work.
 
-## 9. Specification proportionality
+## 10. Specification proportionality
 
 A specification is a capability, not a mandatory ceremony.
 
@@ -203,7 +232,7 @@ Legacy specification systems such as OpenSpec may be used only for explicit comp
 
 ODD must never recreate a rigid system-spec ceremony under another name.
 
-## 10. Engineering capabilities
+## 11. Engineering capabilities
 
 ODD is the orchestration layer. It does not replace engineering capabilities.
 
@@ -223,7 +252,7 @@ Runtimes may expose capabilities such as:
 
 ODD decides when a capability is justified.
 
-## 11. Implementation
+## 12. Implementation
 
 Implement only the authorized scope.
 
@@ -237,7 +266,7 @@ For changes where TDD is not useful or practical, use the most appropriate verif
 
 For SUBSTANTIAL work, update the feature document as work units progress.
 
-## 12. Verification
+## 13. Verification
 
 Never claim completion without evidence.
 
@@ -254,7 +283,7 @@ Use the repository's actual applicable checks:
 
 Verification depth should be proportional to risk.
 
-## 13. Work-unit commits
+## 14. Work-unit commits
 
 A completed SUBSTANTIAL work unit should normally have:
 
@@ -267,7 +296,7 @@ Push, pull request, and merge are separate delivery decisions.
 
 A commit does not imply permission to push or merge.
 
-## 14. Scope control
+## 15. Scope control
 
 When an out-of-scope finding appears:
 
@@ -278,7 +307,7 @@ When an out-of-scope finding appears:
 
 When scope is expanded, update affected S#/T# entries before proceeding.
 
-## 15. Resume and handoff
+## 16. Resume and handoff
 
 When resuming SUBSTANTIAL work:
 
@@ -292,7 +321,7 @@ Repository state has precedence over stale memory.
 
 Memory can preserve context; it cannot authorize changes or override observed code.
 
-## 16. Persistence
+## 17. Persistence
 
 The persistence abstraction is:
 
@@ -307,7 +336,7 @@ LocalFile is the minimum durable mechanism.
 
 Optional backends must preserve the same semantics and must never become a hidden source of authorization.
 
-## 17. Human control
+## 18. Human control
 
 The human remains in control of:
 
@@ -321,7 +350,7 @@ The human remains in control of:
 
 The agent may recommend the next action but must not infer authorization from its own findings.
 
-## 18. Runtime adapter contract
+## 19. Runtime adapter contract
 
 Every supported agent runtime should provide, directly or through native mechanisms:
 
@@ -338,7 +367,7 @@ Runtime adapters may add syntax, file locations, permissions, or invocation deta
 
 They must not introduce conflicting ODD semantics.
 
-## 19. Compatibility rule
+## 20. Compatibility rule
 
 MentorKit has one ODD model.
 
@@ -359,7 +388,7 @@ MentorKit has one ODD model.
 
 The adapter is an execution surface, not a fork of the methodology.
 
-## 20. Completion
+## 21. Completion
 
 A change is complete when:
 
