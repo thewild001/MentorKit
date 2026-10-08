@@ -1,127 +1,107 @@
 #!/usr/bin/env bash
-# MentorKit — Bootstrap (one-liner installer)
+# =============================================================================
+# MentorKit — One-liner bootstrap
 #
 # Uso:
 #   bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/main/bootstrap.sh")
 #
-# Lo que hace (sin que el usuario tenga que saber nada):
-#   1. Descarga mentorkit como tarball desde GitHub
-#   2. Extrae en /tmp
-#   3. Copia al directorio actual del usuario:
-#        .opencode/      (skills, installer, verify, requirements lock)
-#        Makefile        (targets install/verify/clean/ci)
-#        odd/          (workflow ODD y templates)
-#        .mentor/       (template de gobernanza; no contiene datos del repo)
-#        # NO se copian: openspec/ (store legacy local de este repo)
-#        # NO se copian: .specify/ (legacy, deprecated)
-#        
-#   4. Corre el installer: crea venv, instala 60 deps desde lock, verifica
-#   5. Reporta éxito
+# Probar una rama:
+#   MENTORKIT_BRANCH=feature/odd-migration \
+#   bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.sh")
 #
-# El usuario corre UN comando y obtiene mentorkit funcionando. No necesita
-# make, jq, ni correr `make install` después. Toda la gestión de dependencias
-# (Python 3.12.13 pin, lock con SHA256, cobertura cross-platform, idempotencia)
-# ocurre DENTRO del installer — el usuario no la ve.
+# El bootstrap solo descarga el release del repo, copia los artefactos y delega
+# la preparación del runtime al instalador local. No contiene credenciales.
+# =============================================================================
 
-set -uo pipefail
+set -euo pipefail
 
 REPO="thewild001/MentorKit"
-BRANCH="main"
+BRANCH="${MENTORKIT_BRANCH:-main}"
 GITHUB_CODELOAD_HOST="https://codeload.github.com"
 
 CYAN='\033[0;36m'; DIM='\033[2m'; GREEN='\033[0;32m'; RED='\033[0;31m'; RESET='\033[0m'
-[[ ! -t 1 ]] && CYAN=''; DIM=''; GREEN=''; RED=''; RESET=''
+[[ ! -t 1 ]] && CYAN='' DIM='' GREEN='' RED='' RESET=''
 
-# ─── Validaciones tempranas ────────────────────────────────────────────
-
-if [[ -d ".opencode" ]] && [[ -f ".opencode/install-mentorkit.sh" ]]; then
-    echo -e "  ${RED}x${RESET}  .opencode/ ya existe en $(pwd)"
-    echo "     Para reinstalar, primero borra la carpeta .opencode/ (backup si lo necesitas)"
+fail() {
+    echo -e "  ${RED}x${RESET} $*" >&2
     exit 1
+}
+
+echo -e "\n  ${CYAN}MentorKit${RESET}  ${DIM}ODD — One-liner installer${RESET}"
+echo -e "  ${DIM}GitHub: ${REPO} @ ${BRANCH}${RESET}\n"
+
+# ---------------------------------------------------------------------------
+# Preconditions
+# ---------------------------------------------------------------------------
+
+command -v curl >/dev/null 2>&1 || fail "Se requiere curl."
+command -v tar  >/dev/null 2>&1 || fail "Se requiere tar."
+command -v bash >/dev/null 2>&1 || fail "Se requiere bash."
+
+if [[ -e ".opencode" ]]; then
+    fail ".opencode/ ya existe en $(pwd). Para evitar sobreescribir configuración existente, instala en un proyecto limpio o haz backup."
 fi
 
-# ─── Setup temporal ────────────────────────────────────────────────────
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
 
-TMP=$(mktemp -d)
-trap "rm -rf $TMP" EXIT
-
-echo -e "\n  ${CYAN}MentorKit${RESET}  ${DIM}ODD workflow — Instalador one-liner${RESET}\n"
-
-# ─── 1) Descargar tarball ────────────────────────────────────────────────
 TARBALL_URL="${GITHUB_CODELOAD_HOST}/${REPO}/tar.gz/refs/heads/${BRANCH}"
-echo -e "  ${DIM}1/4${RESET}  Descargando mentorkit (tarball)..."
+ARCHIVE="${TMP}/mentorkit.tar.gz"
 
-if ! curl -fsSL --max-time 180 \
-        "$TARBALL_URL" -o "${TMP}/repo.tar.gz"; then
-    echo -e "  ${RED}x${RESET}  Error descargando tarball desde GitHub"
-    echo "     URL: $TARBALL_URL"
-    echo "     ¿Tienes acceso a la red?"
-    exit 1
-fi
+# ---------------------------------------------------------------------------
+# Download
+# ---------------------------------------------------------------------------
 
-# ─── 2) Extraer ────────────────────────────────────────────────────────
+echo -e "  ${DIM}1/3${RESET}  Descargando release..."
+curl -fsSL --retry 3 --retry-delay 2 --max-time 180 "$TARBALL_URL" -o "$ARCHIVE" ||
+    fail "No se pudo descargar MentorKit desde GitHub."
 
-echo -e "  ${DIM}2/4${RESET}  Extrayendo..."
-if ! tar -xzf "${TMP}/repo.tar.gz" -C "$TMP"; then
-    echo -e "  ${RED}x${RESET}  Error extrayendo tarball"
-    echo "     ¿Está completo el archivo? Tamaño: $(stat -c %s "${TMP}/repo.tar.gz" 2>/dev/null || echo "?") bytes"
-    exit 1
-fi
+[[ -s "$ARCHIVE" ]] || fail "GitHub devolvió un archivo vacío."
 
-# El tarball de GitHub extrae a '<repo>-<branch>/'
-REPO_DIR=$(find "$TMP" -maxdepth 1 -mindepth 1 -type d | while read -r d; do
-    [[ -d "$d/.opencode" ]] && { echo "$d"; break; }
-done)
-if [[ -z "$REPO_DIR" ]] || [[ ! -d "$REPO_DIR/.opencode" ]]; then
-    echo -e "  ${RED}x${RESET}  Tarball extraído no contiene .opencode/"
-    echo "     Contenido extraído:"
-    ls -la "$TMP" | sed 's/^/       /'
-    exit 1
-fi
+# ---------------------------------------------------------------------------
+# Extract
+# ---------------------------------------------------------------------------
 
-# ─── 3) Copiar al PWD del usuario ──────────────────────────────────────
+echo -e "  ${DIM}2/3${RESET}  Extrayendo..."
+tar -xzf "$ARCHIVE" -C "$TMP" || fail "No se pudo extraer el tarball."
 
-echo -e "  ${DIM}3/4${RESET}  Instalando en $(pwd)..."
+REPO_DIR=""
+while IFS= read -r d; do
+    if [[ -d "$d/.opencode" && -f "$d/.opencode/install-mentorkit.sh" ]]; then
+        REPO_DIR="$d"
+        break
+    fi
+done < <(find "$TMP" -mindepth 1 -maxdepth 1 -type d -print)
 
-# .opencode/ — el producto en sí (skills, installer, verify, lock)
-if ! cp -r "$REPO_DIR/.opencode" "./"; then
-    echo -e "  ${RED}x${RESET}  Error copiando .opencode/"
-    exit 1
-fi
+[[ -n "$REPO_DIR" ]] || fail "El release no contiene un instalador MentorKit válido."
 
-# ODD workflow — parte del producto instalado
-if [[ -d "$REPO_DIR/odd" ]]; then
-    cp -r "$REPO_DIR/odd" "./"
-fi
+# ---------------------------------------------------------------------------
+# Install files
+# ---------------------------------------------------------------------------
 
-# Governance template — no se copia una constitution concreta
-if [[ -d "$REPO_DIR/.mentor" ]]; then
-    cp -r "$REPO_DIR/.mentor" "./"
-fi
+echo -e "  ${DIM}3/3${RESET}  Instalando en $(pwd)..."
 
-# Makefile — opcional pero útil
-if [[ -f "$REPO_DIR/Makefile" ]]; then
+cp -R "$REPO_DIR/.opencode" "./" || fail "No se pudo copiar .opencode/."
+
+[[ -d "$REPO_DIR/odd" ]] &&
+    cp -R "$REPO_DIR/odd" "./"
+
+[[ -d "$REPO_DIR/.mentor" ]] &&
+    cp -R "$REPO_DIR/.mentor" "./"
+
+[[ -f "$REPO_DIR/Makefile" ]] &&
     cp "$REPO_DIR/Makefile" "./"
-fi
 
-# ─── 4) Install end-to-end (lo que el usuario NO ve) ──────────────────
-
-echo -e "  ${DIM}4/4${RESET}  Configurando entorno Python (esto puede tardar 30s la primera vez)..."
-if ! bash ".opencode/install-mentorkit.sh" --fix; then
-    echo -e "  ${RED}x${RESET}  El installer falló. Tu .opencode/ quedó parcialmente instalado."
-    echo "     Diagnóstico: bash .opencode/install-mentorkit.sh --verify"
-    echo "     Reparar:     bash .opencode/install-mentorkit.sh --fix"
-    exit 1
-fi
-
-# ─── Done ──────────────────────────────────────────────────────────────
+bash ".opencode/install-mentorkit.sh" --fix ||
+    fail "El instalador no pudo completar la preparación del entorno."
 
 echo ""
-echo -e "  ${GREEN}✓${RESET}  ${GREEN}MentorKit instalado en${RESET} $(pwd)"
+echo -e "  ${GREEN}+${RESET} ${GREEN}MentorKit instalado correctamente${RESET}"
+echo -e "  ${DIM}Workflow: ODD (SMALL / SUBSTANTIAL)${RESET}"
+echo -e "  ${DIM}Proyecto: $(pwd)${RESET}"
 echo ""
-echo "  ${DIM}Próximos pasos (todos opcionales):${RESET}"
-echo "     make verify    # confirmar que el venv está OK"
-echo "     make ci        # simular el pipeline de GitLab localmente"
-echo ""
-echo "  ${DIM}Para usar mentorkit:${RESET} abre OpenCode en este proyecto y selecciona el agente MentorKit5.0; ODD decidirá si la tarea es SMALL o SUBSTANTIAL"
+echo "  Siguiente:"
+echo "    1. Abre OpenCode en este proyecto."
+echo "    2. Selecciona el agente MentorKit5.0."
+echo "    3. MentorKit determinará si el cambio requiere flujo SMALL o SUBSTANTIAL."
 echo ""
