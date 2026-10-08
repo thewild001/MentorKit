@@ -2,13 +2,14 @@
 
 ## Source
 
-- PRD: <filename>
-- PRD format: <pdf|docx|doc|odt>
-- Analysis status: <complete|needs-clarification>
+- User request: <summary>
+- PRD: <filename or none>
+- PRD format: <pdf|docx|doc|odt|none>
+- Analysis status: <complete|needs-clarification|not-applicable>
 
 ## Objective
 
-<What the feature is intended to achieve.>
+<What the user is authorized to achieve.>
 
 ## Scope
 
@@ -20,11 +21,13 @@
 
 - <item>
 
-## PRD Requirements Traceability
+## Requirements Traceability
 
-| Requirement | Summary | Acceptance | Plan Section |
+> When a PRD exists, trace PRD requirements. Otherwise trace the relevant user-request requirement or acceptance statement.
+
+| Requirement | Source | Summary | Acceptance | Plan Section |
 |---|---|---|---|
-| R1 | <...> | <...> | <...> |
+| R1 | User request / PRD | <...> | <...> | <...> |
 
 ## Existing Repository Context
 
@@ -39,6 +42,12 @@
 ### Policies / Constitution
 
 <Confirmed project rules and constraints.>
+
+### Codebase Knowledge
+
+- Provider: <codebase-memory-mcp|Graphify|fingerprinting|direct-inspection>
+- Freshness: <current|stale|refreshed|not-applicable>
+- Evidence: <summary>
 
 ### Blast Radius
 
@@ -73,6 +82,7 @@
 ### Tasks
 
 - T1 — <work unit>
+  - Source: <request|PRD requirement R#>
   - Spec: S1
   - Route: <path/module>
   - Depends on: —
