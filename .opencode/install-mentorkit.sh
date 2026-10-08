@@ -1,62 +1,46 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  MentorKit — Instalador para cualquier proyecto
-#  Uso desde la raíz de TU PROYECTO:
+# MentorKit — Instalador autónomo para cualquier proyecto
 #
-#    bash <(curl -fsSLk https://gitlab.prod.uci.cu/fortes/mentorkit/-/raw/main/.opencode/install-mentorkit.sh)
+# Uso recomendado:
+#   bash .opencode/install-mentorkit.sh
 #
-#  Garantías (verificadas al final con verify_install):
-#    1. Python 3.12.x LTS (descargado por uv si el sistema no lo tiene)
-#    2. Dependencias pinneadas con SHA256 (mismas versiones, mismos hashes)
-#    3. Re-install idempotente (<1s) — uv detecta que todo está al día
-#    4. Verificación post-install: import test de markitdown, firecrawl-anydoc, striprtf, graphifyy, uv
+# Bootstrap directo desde GitHub:
+#   bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/main/.opencode/install-mentorkit.sh")
 #
-#  Comandos:
-#    bash install-mentorkit.sh            # install/repair (default)
-#    bash install-mentorkit.sh --verify   # solo verifica, no modifica nada
-#    bash install-mentorkit.sh --fix      # verifica y repara lo que falle
+# Para probar una rama:
+#   MENTORKIT_BRANCH=feature/odd-migration \
+#   bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/.opencode/install-mentorkit.sh")
+#
+# El instalador:
+#   1. Usa los archivos locales cuando existen.
+#   2. Si faltan archivos, los recupera desde GitHub.
+#   3. Prepara uv + Python 3.12.13.
+#   4. Crea/repara .opencode/.mentorkit/venv.
+#   5. Instala requirements.lock.
+#   6. Verifica dependencias y MCP.
+#
+# No contiene credenciales ni depende de GitLab privado.
 # =============================================================================
 
 set -uo pipefail
 
-# ─── Configuración ────────────────────────────────────────────────────────────
-
-GITLAB_URL="${MENTORKIT_GITLAB_URL:-https://gitlab.prod.uci.cu}"
-GITLAB_NAMESPACE="${MENTORKIT_NAMESPACE:-fortes/mentorkit}"
-GITLAB_PROJECT_ID="${MENTORKIT_PROJECT_ID:-2707}"
+REPO="thewild001/MentorKit"
+GITHUB_RAW_HOST="https://raw.githubusercontent.com"
 BRANCH="${MENTORKIT_BRANCH:-main}"
-# TOKEN: distinguir "unset" (usar default) de "set explícitamente a string
-# vacío" (fallar claro). ${VAR-default} hace lo primero; ${VAR:-default} colapsa
-# ambos casos, lo que oculta bugs cuando el usuario exporta MENTORKIT_TOKEN=
-# por error y obtiene el token de lectura del repo en vez de un error.
-TOKEN="${MENTORKIT_TOKEN-glpat-RhMcJxUMWSx5N0tkYKStlm86MQp1OjI2bAk.01.0z1ay31li}"
-if [[ -z "$TOKEN" ]]; then
-    # echo directo (no err()): las utilidades se definen más abajo.
-    echo "  x  MENTORKIT_TOKEN está seteado a string vacío." >&2
-    echo "     Si quieres usar el token default, haz: unset MENTORKIT_TOKEN" >&2
-    echo "     Si quieres usar tu propio token, expórtalo con un valor real:" >&2
-    echo "         export MENTORKIT_TOKEN=glpat-xxxxx" >&2
-    exit 1
-fi
-export MENTORKIT_TOKEN="$TOKEN"
 
-# ─── Garantías (constantes) ──────────────────────────────────────────────────
-
-# Python LTS pin (Ubuntu 24.04, Debian 12, RHEL 9 default)
 PYTHON_VERSION="3.12"
-# 3.12.13 es la última 3.12.x estable al 2026-06-04 (pinned para reproducibilidad)
 PYTHON_PATCH="3.12.13"
-
 VENV_DIR=".opencode/.mentorkit/venv"
 VENV_PYTHON=""
 LOCK_FILE="${PWD}/.opencode/requirements.lock"
-IN_FILE="${PWD}/.opencode/requirements.in"
 
-MODE="install"   # install | verify | fix
+MODE="install"
 
-# ─── Archivos a descargar ────────────────────────────────────────────────────
-
-FILES=(
+# Archivos mínimos para que el runtime ODD quede operativo.
+# Las demás skills pueden mantenerse/copiarse mediante bootstrap.sh.
+REQUIRED_FILES=(
+    ".opencode/skills/odd-orchestrator/SKILL.md"
     ".opencode/skills/codebase-conformist/SKILL.md"
     ".opencode/skills/codebase-graph/SKILL.md"
     ".opencode/skills/spec-writer/SKILL.md"
@@ -68,69 +52,17 @@ FILES=(
     ".opencode/mentorkit-verify.sh"
     ".opencode/requirements.in"
     ".opencode/requirements.lock"
-
-    # ─── Superpowers ─────────────────────────────────────────────────────────────
-    ".opencode/skills/superpowers/brainstorming/SKILL.md"
-    ".opencode/skills/superpowers/brainstorming/spec-document-reviewer-prompt.md"
-    ".opencode/skills/superpowers/brainstorming/visual-companion.md"
-    ".opencode/skills/superpowers/brainstorming/scripts/frame-template.html"
-    ".opencode/skills/superpowers/brainstorming/scripts/helper.js"
-    ".opencode/skills/superpowers/brainstorming/scripts/server.cjs"
-    ".opencode/skills/superpowers/brainstorming/scripts/start-server.sh"
-    ".opencode/skills/superpowers/brainstorming/scripts/stop-server.sh"
-    ".opencode/skills/superpowers/dispatching-parallel-agents/SKILL.md"
-    ".opencode/skills/superpowers/executing-plans/SKILL.md"
-    ".opencode/skills/superpowers/finishing-a-development-branch/SKILL.md"
-    ".opencode/skills/superpowers/receiving-code-review/SKILL.md"
-    ".opencode/skills/superpowers/requesting-code-review/SKILL.md"
-    ".opencode/skills/superpowers/requesting-code-review/code-reviewer.md"
-    ".opencode/skills/superpowers/subagent-driven-development/SKILL.md"
-    ".opencode/skills/superpowers/subagent-driven-development/code-quality-reviewer-prompt.md"
-    ".opencode/skills/superpowers/subagent-driven-development/implementer-prompt.md"
-    ".opencode/skills/superpowers/subagent-driven-development/spec-reviewer-prompt.md"
-    ".opencode/skills/superpowers/systematic-debugging/SKILL.md"
-    ".opencode/skills/superpowers/systematic-debugging/CREATION-LOG.md"
-    ".opencode/skills/superpowers/systematic-debugging/condition-based-waiting.md"
-    ".opencode/skills/superpowers/systematic-debugging/condition-based-waiting-example.ts"
-    ".opencode/skills/superpowers/systematic-debugging/defense-in-depth.md"
-    ".opencode/skills/superpowers/systematic-debugging/find-polluter.sh"
-    ".opencode/skills/superpowers/systematic-debugging/root-cause-tracing.md"
-    ".opencode/skills/superpowers/systematic-debugging/test-academic.md"
-    ".opencode/skills/superpowers/systematic-debugging/test-pressure-1.md"
-    ".opencode/skills/superpowers/systematic-debugging/test-pressure-2.md"
-    ".opencode/skills/superpowers/systematic-debugging/test-pressure-3.md"
-    ".opencode/skills/superpowers/test-driven-development/SKILL.md"
-    ".opencode/skills/superpowers/test-driven-development/testing-anti-patterns.md"
-    ".opencode/skills/superpowers/using-git-worktrees/SKILL.md"
-    ".opencode/skills/superpowers/using-superpowers/SKILL.md"
-    ".opencode/skills/superpowers/using-superpowers/references/codex-tools.md"
-    ".opencode/skills/superpowers/using-superpowers/references/copilot-tools.md"
-    ".opencode/skills/superpowers/using-superpowers/references/gemini-tools.md"
-    ".opencode/skills/superpowers/verification-before-completion/SKILL.md"
-    ".opencode/skills/superpowers/writing-plans/SKILL.md"
-    ".opencode/skills/superpowers/writing-plans/plan-document-reviewer-prompt.md"
-    ".opencode/skills/superpowers/writing-skills/SKILL.md"
-    ".opencode/skills/superpowers/writing-skills/anthropic-best-practices.md"
-    ".opencode/skills/superpowers/writing-skills/examples/CLAUDE_MD_TESTING.md"
-    ".opencode/skills/superpowers/writing-skills/graphviz-conventions.dot"
-    ".opencode/skills/superpowers/writing-skills/persuasion-principles.md"
-    ".opencode/skills/superpowers/writing-skills/render-graphs.js"
-    ".opencode/skills/superpowers/writing-skills/testing-skills-with-subagents.md"
 )
-
-# ─── Utilidades ───────────────────────────────────────────────────────────────
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'
 CYAN='\033[0;36m'; BOLD='\033[1m'; DIM='\033[2m'; RESET='\033[0m'
-[[ ! -t 1 ]] && RED=''; GREEN=''; YELLOW=''; CYAN=''; BOLD=''; DIM=''; RESET=''
+[[ ! -t 1 ]] && RED='' GREEN='' YELLOW='' CYAN='' BOLD='' DIM='' RESET=''
 
-ok()   { echo -e "  ${GREEN}+${RESET}  $*"; }
-warn() { echo -e "  ${YELLOW}!${RESET}  $*"; }
-err()  { echo -e "  ${RED}x${RESET}  $*" >&2; }
+ok()   { echo -e "  ${GREEN}+ ${RESET} $*"; }
+warn() { echo -e "  ${YELLOW}! ${RESET} $*"; }
+err()  { echo -e "  ${RED}x ${RESET} $*" >&2; }
 info() { echo -e "     ${DIM}$*${RESET}"; }
 step() { echo -e "\n${BOLD}-- $1${RESET}\n"; }
-
-# ─── Localización de ejecutables ──────────────────────────────────────────────
 
 find_first_executable() {
     local p
@@ -142,25 +74,12 @@ find_first_executable() {
 
 find_venv_python() {
     local base="${PWD}/${VENV_DIR}"
-    find_first_executable \
-        "$base/bin/python" \
-        "$base/bin/python3" \
-        "$base/Scripts/python.exe"
+    find_first_executable "$base/bin/python" "$base/bin/python3" "$base/Scripts/python.exe"
 }
 
 find_venv_uv() {
     local base="${PWD}/${VENV_DIR}"
-    find_first_executable \
-        "$base/bin/uv" \
-        "$base/Scripts/uv.exe"
-}
-
-find_venv_pip() {
-    local base="${PWD}/${VENV_DIR}"
-    find_first_executable \
-        "$base/bin/pip" \
-        "$base/bin/pip3" \
-        "$base/Scripts/pip.exe"
+    find_first_executable "$base/bin/uv" "$base/Scripts/uv.exe"
 }
 
 find_system_python() {
@@ -171,219 +90,90 @@ find_system_python() {
     return 1
 }
 
-# ─── Descarga ─────────────────────────────────────────────────────────────────
-
 download_file() {
-    local path="$1" dest="${PWD}/$1"
-    local encoded_path="${path//\//%2F}"
-    local url="${GITLAB_URL}/api/v4/projects/${GITLAB_PROJECT_ID}/repository/files/${encoded_path}/raw?ref=${BRANCH}"
+    local path="$1"
+    local dest="${PWD}/$path"
+    local url="${GITHUB_RAW_HOST}/${REPO}/${BRANCH}/$path"
+
     mkdir -p "$(dirname "$dest")"
 
     if command -v curl &>/dev/null; then
-        local args=(-fsSLk --retry 3 --retry-delay 2)
-        [[ -n "$TOKEN" ]] && args+=(-H "PRIVATE-TOKEN: $TOKEN")
-        curl "${args[@]}" "$url" -o "$dest" 2>/dev/null || { err "Fallo: $path"; return 1; }
+        curl -fsSL --retry 3 --retry-delay 2 --max-time 180 "$url" -o "$dest" 2>/dev/null ||
+            { err "Fallo descargando: $path"; return 1; }
     elif command -v wget &>/dev/null; then
-        local args=(-q --tries=3 --no-check-certificate -O "$dest")
-        [[ -n "$TOKEN" ]] && args+=(--header "PRIVATE-TOKEN: $TOKEN")
-        wget "${args[@]}" "$url" -o "$dest" 2>/dev/null || { err "Fallo: $path"; return 1; }
+        wget -q --tries=3 --timeout=60 -O "$dest" "$url" 2>/dev/null ||
+            { err "Fallo descargando: $path"; return 1; }
     else
-        err "Se requiere curl o wget"; return 1
+        err "Se requiere curl o wget"
+        return 1
     fi
 
     [[ ! -s "$dest" ]] && { err "Archivo vacío: $path"; rm -f "$dest"; return 1; }
-    head -1 "$dest" 2>/dev/null | grep -qi "<!DOCTYPE\|<html" && {
-        err "Acceso denegado: $path"
-        [[ -z "$TOKEN" ]] && info "¿Repo privado? Usa: export MENTORKIT_TOKEN=glpat-xxxx"
-        rm -f "$dest"; return 1; }
+
+    if head -5 "$dest" 2>/dev/null | grep -qiE "<!DOCTYPE|<html"; then
+        err "GitHub devolvió contenido HTML en lugar de: $path"
+        rm -f "$dest"
+        return 1
+    fi
 
     ok "$path"
 }
 
-# ─── Configuración global de OpenCode (MCP codebase-memory-mcp) ─────────────
+ensure_runtime_files() {
+    step "Archivos MentorKit"
 
-# Verifica si codebase-memory-mcp está configurado en el config global de OpenCode
-# Soporta Linux, macOS, Windows (Git Bash/WSL2) — XDG + APPDATA + defaults
-# Si no existe, lo agrega. Retorna 0 si OK, 1 si falla.
-ensure_opencode_mcp_config() {
-    step "Configuración MCP (codebase-memory-mcp) en OpenCode global"
+    local missing=0
+    local f
 
-    # 1. Detectar binary MCP multiplataforma
-    local mcp_binary=""
-    local mcp_name="codebase-memory-mcp"
+    for f in "${REQUIRED_FILES[@]}"; do
+        if [[ -f "${PWD}/$f" ]]; then
+            ok "local: $f"
+        else
+            info "faltante: $f — descargando desde GitHub (${BRANCH})"
+            download_file "$f" || missing=$((missing + 1))
+        fi
+    done
 
-    # Primero: PATH
-    if command -v codebase-memory-mcp &>/dev/null; then
-        mcp_binary="$(command -v codebase-memory-mcp)"
-    fi
-
-    # Fallbacks comunes por plataforma
-    if [[ -z "$mcp_binary" ]]; then
-        for candidate in \
-            "${HOME}/.local/bin/codebase-memory-mcp" \
-            "${HOME}/.cargo/bin/codebase-memory-mcp" \
-            "/usr/local/bin/codebase-memory-mcp" \
-            "/opt/homebrew/bin/codebase-memory-mcp" \
-            "${PWD}/.opencode/node_modules/.bin/codebase-memory-mcp"; do
-            [[ -x "$candidate" ]] && { mcp_binary="$candidate"; break; }
-        done
-    fi
-
-    # Windows/Git Bash/WSL2: APPDATA, LOCALAPPDATA
-    if [[ -z "$mcp_binary" && -n "${APPDATA:-}" ]]; then
-        for candidate in \
-            "${APPDATA}/npm/codebase-memory-mcp.cmd" \
-            "${APPDATA}/npm/codebase-memory-mcp" \
-            "${LOCALAPPDATA}/Programs/codebase-memory-mcp/codebase-memory-mcp.exe"; do
-            [[ -x "$candidate" ]] && { mcp_binary="$candidate"; break; }
-        done
-    fi
-
-    if [[ -z "$mcp_binary" ]]; then
-        warn "Binary MCP 'codebase-memory-mcp' no encontrado en PATH ni ubicaciones estándar"
-        info "Instala con: npm install -g codebase-memory-mcp"
-        info "O desde source: cargo install codebase-memory-mcp"
-        info "O descarga release: https://github.com/DeusData/codebase-memory-mcp/releases"
+    if (( missing > 0 )); then
+        err "$missing archivo(s) requeridos no pudieron recuperarse"
+        info "Repositorio: https://github.com/${REPO}"
+        info "Rama: ${BRANCH}"
         return 1
     fi
 
-    ok "Binary MCP detectado: $mcp_binary"
-
-    # 2. Detectar directorio de config OpenCode multiplataforma
-    local opencode_config_dir=""
-    local opencode_config_file=""
-
-    # XDG Base Directory Spec (Linux/macOS)
-    if [[ -n "${XDG_CONFIG_HOME:-}" ]]; then
-        opencode_config_dir="${XDG_CONFIG_HOME}/opencode"
-    # macOS default
-    elif [[ "$(uname -s)" == "Darwin" ]]; then
-        opencode_config_dir="${HOME}/Library/Application Support/opencode"
-    # Windows (Git Bash/WSL2 detecta APPDATA)
-    elif [[ -n "${APPDATA:-}" ]]; then
-        opencode_config_dir="${APPDATA}/opencode"
-    # Linux/Unix default
-    else
-        opencode_config_dir="${HOME}/.config/opencode"
-    fi
-
-    opencode_config_file="${opencode_config_dir}/opencode.json"
-
-    # 3. Crear directorio config si no existe
-    if [[ ! -d "$opencode_config_dir" ]]; then
-        info "Creando directorio config: $opencode_config_dir"
-        mkdir -p "$opencode_config_dir" || {
-            err "No se pudo crear $opencode_config_dir"
-            return 1
-        }
-    fi
-
-    # 4. Leer config existente o crear nueva
-    local config_json="{}"
-    if [[ -f "$opencode_config_file" ]]; then
-        config_json="$(cat "$opencode_config_file" 2>/dev/null || echo '{}')"
-        ok "Config OpenCode existente: $opencode_config_file"
-    else
-        info "No hay config OpenCode global — creando nueva en $opencode_config_file"
-    fi
-
-    # 5. Verificar si MCP ya está configurado correctamente
-    local mcp_configured_correctly="false"
-    mcp_configured_correctly=$(echo "$config_json" | python3 -c "
-import sys, json, os
-try:
-    data = json.load(sys.stdin)
-    mcp = data.get('mcp', {}).get('codebase-memory-mcp', {})
-    cmd = mcp.get('command', [])
-    if isinstance(cmd, str):
-        cmd = [cmd]
-    binary_path = os.path.realpath('$mcp_binary') if os.path.exists('$mcp_binary') else '$mcp_binary'
-    cmd_resolved = [os.path.realpath(c) if os.path.exists(c) else c for c in cmd]
-    if mcp.get('enabled') == True and cmd_resolved == [binary_path]:
-        print('true')
-    else:
-        print('false')
-except Exception as e:
-    print('false')
-" 2>/dev/null)
-
-    if [[ "$mcp_configured_correctly" == "true" ]]; then
-        ok "MCP '$mcp_name' ya configurado correctamente en $opencode_config_file"
-        return 0
-    else
-        info "MCP '$mcp_name' no configurado o desactualizado — actualizando"
-    fi
-
-    # 6. Actualizar config con MCP (usando python para JSON seguro)
-    local new_config
-    new_config=$(echo "$config_json" | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-if 'mcp' not in data:
-    data['mcp'] = {}
-data['mcp']['codebase-memory-mcp'] = {
-    'enabled': True,
-    'type': 'local',
-    'command': ['$mcp_binary']
-}
-json.dump(data, sys.stdout, indent=2, ensure_ascii=False)
-" 2>/dev/null)
-
-    if [[ -z "$new_config" ]]; then
-        err "Error generando nueva config JSON"
-        return 1
-    fi
-
-    # 7. Escribir config actualizada
-    echo "$new_config" > "$opencode_config_file"
-    ok "Config OpenCode actualizada: $opencode_config_file"
     return 0
 }
 
-# ─── uv: detección + bootstrap ───────────────────────────────────────────────
-
-# Encuentra un uv utilizable. Orden de prioridad:
-#   1. uv en PATH
-#   2. uv dentro del venv existente (de un install previo, autocontenido)
-#   3. uv auto-instalado via curl | bash desde astral.sh
-#   4. uv instalado via pip en un venv temporal (Python del sistema)
-# Retorna 0 si uv quedó disponible, 1 si no.
 ensure_uv() {
     if command -v uv &>/dev/null; then
         ok "uv en PATH: $(uv --version 2>/dev/null)"
         return 0
     fi
 
-    # Venv existente con uv (autocontención)
     local venv_uv
     if venv_uv="$(find_venv_uv 2>/dev/null)"; then
         export PATH="$(dirname "$venv_uv"):$PATH"
-        ok "uv del venv (autocontenido): $(uv --version 2>/dev/null)"
+        ok "uv del venv: $(uv --version 2>/dev/null)"
         return 0
     fi
 
-    # Auto-instalar via curl (preferido: trae un binario optimizado)
     info "uv no detectado — instalando desde astral.sh..."
-    if INSTALLER_NO_MODIFY_PATH=1 curl -LsSf --max-time 60 \
-            https://astral.sh/uv/install.sh 2>/dev/null | bash 2>/dev/null; then
+    if INSTALLER_NO_MODIFY_PATH=1 curl -LsSf --max-time 60         https://astral.sh/uv/install.sh 2>/dev/null | bash 2>/dev/null; then
         [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
         [[ -d "$HOME/.cargo/bin" ]] && export PATH="$HOME/.cargo/bin:$PATH"
-        if command -v uv &>/dev/null; then
+        command -v uv &>/dev/null && {
             ok "uv instalado: $(uv --version 2>/dev/null)"
             return 0
-        fi
-        warn "uv instalado pero no en PATH"
-    else
-        warn "Falló instalación de uv desde astral.sh"
+        }
     fi
 
-    # Último recurso: pip install uv en venv temporal con Python del sistema
     local system_python
     if system_python="$(find_system_python 2>/dev/null)"; then
         info "Bootstrap alternativo: pip install uv en venv temporal"
         local tmp_root tmpv tmp_pip tmp_uv
         tmp_root="$(mktemp -d)"
         tmpv="$tmp_root/uv-bootstrap"
+
         if "$system_python" -m venv "$tmpv" 2>/dev/null; then
             tmp_pip="$(find_first_executable "$tmpv/bin/pip" "$tmpv/bin/pip3" "$tmpv/Scripts/pip.exe" 2>/dev/null || true)"
             if [[ -n "$tmp_pip" ]] && "$tmp_pip" install --quiet uv 2>/dev/null; then
@@ -398,220 +188,149 @@ ensure_uv() {
         rm -rf "$tmp_root"
     fi
 
-    err "No se pudo obtener uv (prueba instalarlo manualmente: https://docs.astral.sh/uv/)"
+    err "No se pudo obtener uv"
+    info "Instalación manual: https://docs.astral.sh/uv/"
     return 1
 }
 
-# ─── Python 3.12 garantizado ─────────────────────────────────────────────────
-
-# Garantiza que uv tenga Python 3.12.x disponible. Si no, lo descarga.
 ensure_python_312() {
-    step "Python 3.${PYTHON_VERSION#3.} garantizado"
+    step "Python $PYTHON_PATCH"
 
-    # Chequear si uv ya tiene 3.12 instalado
     if uv python find "$PYTHON_VERSION" &>/dev/null; then
-        local py
+        local py actual_ver
         py="$(uv python find "$PYTHON_VERSION" 2>/dev/null)"
-        local actual_ver
         actual_ver="$("$py" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")' 2>/dev/null)"
         if [[ "$actual_ver" == "$PYTHON_PATCH" ]]; then
-            ok "Python $actual_ver disponible (match exacto)"
+            ok "Python $actual_ver disponible"
         else
-            warn "Python $actual_ver disponible (target: $PYTHON_PATCH — aceptable)"
+            warn "Python $actual_ver disponible; objetivo $PYTHON_PATCH"
         fi
         return 0
     fi
 
-    # Descargar 3.12 via uv
-    info "Descargando Python $PYTHON_PATCH via uv..."
-    if uv python install "$PYTHON_VERSION" 2>&1 | tail -3; then
-        ok "Python $PYTHON_VERSION instalado"
-    else
-        err "Falló descarga de Python $PYTHON_VERSION"
+    info "Descargando Python $PYTHON_VERSION mediante uv..."
+    uv python install "$PYTHON_VERSION" >/dev/null 2>&1 || {
+        err "Falló la instalación de Python $PYTHON_VERSION"
         return 1
-    fi
+    }
+    ok "Python $PYTHON_VERSION instalado"
 }
-
-# ─── Venv con Python 3.12 ────────────────────────────────────────────────────
 
 create_or_repair_venv() {
     step "Entorno virtual"
 
     local need_create=false
-    local need_repair_reason=""
+    local reason=""
+    local actual_ver
 
     if [[ ! -d "${PWD}/${VENV_DIR}" ]]; then
         need_create=true
-        need_repair_reason="no existe"
+        reason="no existe"
     elif ! VENV_PYTHON="$(find_venv_python 2>/dev/null)"; then
         need_create=true
-        need_repair_reason="estructura inválida"
+        reason="estructura inválida"
     else
-        # Chequear versión del Python
-        local actual_ver
         actual_ver="$("$VENV_PYTHON" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null)"
         if [[ "$actual_ver" != "$PYTHON_VERSION" ]]; then
-            warn "Venv tiene Python $actual_ver (target: $PYTHON_VERSION) — recreando"
+            warn "Venv usa Python $actual_ver; recreando con $PYTHON_VERSION"
             rm -rf "${PWD}/${VENV_DIR}"
             need_create=true
-            need_repair_reason="Python version mismatch"
+            reason="versión incompatible"
         else
-            ok "Venv existente OK: ${VENV_DIR}/ (Python $actual_ver)"
+            ok "Venv existente OK: $VENV_DIR"
         fi
     fi
 
     if $need_create; then
-        info "Creando venv con Python $PYTHON_VERSION (razón: $need_repair_reason)"
+        info "Creando venv ($reason)..."
         mkdir -p "${PWD}/.opencode/.mentorkit"
-        if uv venv --python "$PYTHON_VERSION" "${PWD}/${VENV_DIR}" 2>/dev/null; then
-            ok "Venv creado: ${VENV_DIR}/"
-        else
+        uv venv --python "$PYTHON_VERSION" "${PWD}/${VENV_DIR}" >/dev/null 2>&1 || {
             err "uv venv falló"
             return 1
-        fi
+        }
+        ok "Venv creado"
     fi
 
-    # Localizar Python (post-create o reuso)
     VENV_PYTHON="$(find_venv_python)" || {
-        err "No se pudo localizar Python del venv"; return 1; }
+        err "No se pudo localizar Python del venv"
+        return 1
+    }
 
-    # Guardar ruta para skills
     echo "$VENV_PYTHON" > "${PWD}/.opencode/.mentorkit/python-path.txt"
 
-    # .gitignore: ignorar .mentorkit/ (si no está)
     local gi="${PWD}/.opencode/.gitignore"
-    grep -q ".mentorkit" "$gi" 2>/dev/null || echo ".mentorkit/" >> "$gi"
-
-    info "Python: $VENV_PYTHON"
+    grep -q "^\.mentorkit/$" "$gi" 2>/dev/null || echo ".mentorkit/" >> "$gi"
 }
 
-# ─── Instalación de deps desde el lock ───────────────────────────────────────
-
 install_deps_from_lock() {
-    step "Dependencias (lock file)"
+    step "Dependencias"
 
-    if [[ ! -f "$LOCK_FILE" ]]; then
-        err "Lock file no encontrado: $LOCK_FILE"
-        info "Re-ejecuta el installer desde un proyecto con .opencode/ completo"
+    [[ -f "$LOCK_FILE" ]] || {
+        err "No existe $LOCK_FILE"
         return 1
-    fi
+    }
 
     local pkg_count
     pkg_count="$(grep -cE "^[a-zA-Z]" "$LOCK_FILE" 2>/dev/null || echo 0)"
-    info "Lock file: $pkg_count paquetes pinneados con SHA256"
+    info "$pkg_count paquetes pinneados en requirements.lock"
 
-    # uv install con hashes (uv valida hashes por default con --generate-hashes)
-    echo -n "     Instalando desde requirements.lock..."
-    if uv pip install --python "$VENV_PYTHON" -r "$LOCK_FILE" --quiet 2>/dev/null; then
-        echo -e "  ${GREEN}OK${RESET}"
-        # Listar deps principales
-        uv pip list --python "$VENV_PYTHON" --quiet 2>/dev/null \
-            | grep -iE "^(markitdown|firecrawl-anydoc|striprtf|graphifyy|uv)\b" \
-            | while read -r line; do ok "$line"; done
-    else
-        echo -e "  ${RED}Error${RESET}"
-        err "Falló install desde lock file"
-        info "Manual: uv pip install --python $VENV_PYTHON -r $LOCK_FILE"
+    uv pip install --python "$VENV_PYTHON" -r "$LOCK_FILE" --quiet 2>/dev/null || {
+        err "Falló la instalación desde requirements.lock"
+        info "Puedes diagnosticar con: uv pip install --python $VENV_PYTHON -r $LOCK_FILE"
         return 1
-    fi
+    }
+
+    ok "Dependencias instaladas"
 }
 
-# ─── Verificación post-install ───────────────────────────────────────────────
-
-# Verifica que Python 3.12, uv, y todos los deps están OK.
-# Retorna 0 si todo pasa, 1 si algo falla.
 verify_install() {
     step "Verificación"
 
-    if [[ ! -x "$VENV_PYTHON" ]]; then
+    [[ -x "$VENV_PYTHON" ]] || {
         err "Venv no existe o no es ejecutable"
         return 1
-    fi
+    }
 
-    # Verificar versión de Python
     local py_ver
     py_ver="$("$VENV_PYTHON" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")' 2>/dev/null)"
-    if [[ "$py_ver" != "$PYTHON_PATCH" ]]; then
-        warn "Python $py_ver (target: $PYTHON_PATCH)"
-    else
-        ok "Python $py_ver"
-    fi
+    [[ "$py_ver" == "$PYTHON_PATCH" ]] && ok "Python $py_ver" || warn "Python $py_ver (objetivo $PYTHON_PATCH)"
 
-    # Verificar imports
     local fail=0
-    "$VENV_PYTHON" -c "
-import sys, importlib.metadata as md
-
-# (distribution_name, import_name) — algunos paquetes tienen nombres distintos
+    "$VENV_PYTHON" -c '
+import importlib.metadata as md
 deps = [
-    ('markitdown', 'markitdown'),
-    ('firecrawl-anydoc', 'anydoc'),
-    ('striprtf',   'striprtf'),
-    ('graphifyy',  'graphify'),   # PyPI: graphifyy, import: graphify
-    ('uv',         'uv'),
+    ("markitdown", "markitdown"),
+    ("firecrawl-anydoc", "anydoc"),
+    ("striprtf", "striprtf"),
+    ("graphifyy", "graphify"),
+    ("uv", "uv"),
 ]
-
 ok = True
 for name, import_name in deps:
     try:
-        mod = __import__(import_name)
-        ver = md.version(name)
-        print(f'  + {name} {ver}')
-    except ImportError:
-        print(f'  x {name}: NO INSTALADO')
+        __import__(import_name)
+        print(f"  + {name} {md.version(name)}")
+    except Exception as exc:
+        print(f"  x {name}: {type(exc).__name__}: {exc}")
         ok = False
-    except Exception as e:
-        print(f'  x {name}: {type(e).__name__}: {e}')
-        ok = False
+raise SystemExit(0 if ok else 1)
+' || fail=1
 
-sys.exit(0 if ok else 1)
-" 2>/dev/null
-    fail=$?
-
-    # Verificar configuración MCP global (cross-platform)
-    local mcp_binary=""
     if command -v codebase-memory-mcp &>/dev/null; then
-        mcp_binary="$(command -v codebase-memory-mcp)"
-    else
-        for candidate in \
-            "${HOME}/.local/bin/codebase-memory-mcp" \
-            "${HOME}/.cargo/bin/codebase-memory-mcp" \
-            "/usr/local/bin/codebase-memory-mcp" \
-            "/opt/homebrew/bin/codebase-memory-mcp" \
-            "${PWD}/.opencode/node_modules/.bin/codebase-memory-mcp"; do
-            [[ -x "$candidate" ]] && { mcp_binary="$candidate"; break; }
-        done
-        if [[ -z "$mcp_binary" && -n "${APPDATA:-}" ]]; then
-            for candidate in \
-                "${APPDATA}/npm/codebase-memory-mcp.cmd" \
-                "${APPDATA}/npm/codebase-memory-mcp" \
-                "${LOCALAPPDATA}/Programs/codebase-memory-mcp/codebase-memory-mcp.exe"; do
-                [[ -x "$candidate" ]] && { mcp_binary="$candidate"; break; }
-            done
-        fi
-    fi
-
-    if [[ -n "$mcp_binary" && -x "$mcp_binary" ]]; then
-        ok "MCP codebase-memory-mcp: $(codebase-memory-mcp --version 2>/dev/null || echo 'OK')"
+        ok "MCP codebase-memory-mcp: $(codebase-memory-mcp --version 2>/dev/null || echo OK)"
     else
         warn "MCP codebase-memory-mcp no encontrado"
-        info "  Instala con: npm install -g codebase-memory-mcp"
-        fail=1
+        info "Opcional para el flujo ODD: instala codebase-memory-mcp si el proyecto lo utiliza"
     fi
 
-    if [[ $fail -eq 0 ]]; then
-        echo ""
-        ok "Verificación PASS — entorno listo"
-        print_banner
+    if (( fail == 0 )); then
+        ok "Verificación PASS"
         return 0
-    else
-        echo ""
-        err "Verificación FAIL — ejecuta con --fix para reparar"
-        return 1
     fi
-}
 
-# ─── Modos de operación ──────────────────────────────────────────────────────
+    err "Verificación FAIL"
+    return 1
+}
 
 print_banner() {
     echo -e "${CYAN}"
@@ -625,8 +344,8 @@ print_banner() {
   │  | |  | |  __/ | | | || (_) | |  | . \| | |_          │
   │  |_|  |_|\___|_| |_|\__\___/|_|  |_|\_\_|\__|         │
   │                                                       │
-  │           Agentic Mentor for Legacy Code              │
-  │                   Version 5.0                         │
+  │              Agentic Engineering Mentor              │
+  │                       ODD                             │
   │                                                       │
   └───────────────────────────────────────────────────────┘
 
@@ -635,68 +354,20 @@ BANNER
 }
 
 run_install() {
-    echo -e "\n  ${CYAN}MentorKit${RESET}  ${DIM}v5.0 — Agentic Mentor for Legacy Code${RESET}"
-    echo -e "  ${DIM}GitLab: ${GITLAB_URL}/${GITLAB_NAMESPACE} @ ${BRANCH}${RESET}"
-    echo -e "  ${DIM}Garantías: Python 3.${PYTHON_VERSION#3.} pinneado + lock file con hashes${RESET}\n"
+    echo -e "\n  ${CYAN}MentorKit${RESET}  ${DIM}ODD — Agentic Engineering Workflow${RESET}"
+    echo -e "  ${DIM}GitHub: https://github.com/${REPO} @ ${BRANCH}${RESET}\n"
 
-    if [[ ! -d "${PWD}" ]]; then
-        err "Directorio no válido: ${PWD}"; exit 1
-    fi
-
-    # Descargar .opencode/ si no existe
-    if [[ -d "${PWD}/.opencode" ]]; then
-        ok ".opencode/ ya existe — usando archivos locales"
-    else
-        step "Descargando .opencode/ desde GitLab"
-        local errors=0
-        for f in "${FILES[@]}"; do
-            download_file "$f" || ((errors++)) || true
-        done
-        [[ $errors -gt 0 ]] && {
-            err "$errors archivo(s) fallaron. Verifica URL y token."
-            exit 1
-        }
-    fi
-
-    # Verificar que lock file existe (prerrequisito)
-    if [[ ! -f "$LOCK_FILE" ]]; then
-        err "Lock file no encontrado: $LOCK_FILE"
-        exit 1
-    fi
-
-    # Bootstrap uv
+    ensure_runtime_files || exit 1
     ensure_uv || exit 1
-
-    # Configurar MCP codebase-memory-mcp en OpenCode global
-    ensure_opencode_mcp_config || exit 1
-
-    # Garantizar Python 3.12
     ensure_python_312 || exit 1
-
-    # Crear/reparar venv
     create_or_repair_venv || exit 1
-
-    # Instalar deps desde lock
     install_deps_from_lock || exit 1
 
-    # Resumen
     step "Instalación completada"
-    echo -e "  ${GREEN}+${RESET}  ${BOLD}MentorKit listo${RESET}\n"
-    echo -e "  ${DIM}.opencode/${RESET}"
-    echo -e "  ${DIM}+-- skills/codebase-conformist/SKILL.md${RESET}"
-    echo -e "  ${DIM}+-- skills/codebase-graph/SKILL.md${RESET}"
-    echo -e "  ${DIM}+-- skills/spec-writer/SKILL.md${RESET}"
-    echo -e "  ${DIM}+-- skills/prd-reader/SKILL.md${RESET}"
-    echo -e "  ${DIM}+-- skills/document-extractor/SKILL.md${RESET}"
-    echo -e "  ${DIM}+-- skills/llm-council/SKILL.md${RESET}"
-    echo -e "  ${DIM}+-- agents/MentorKit4.0.md${RESET}"
-    echo -e "  ${DIM}+-- requirements.in${RESET}"
-    echo -e "  ${DIM}+-- requirements.lock${RESET}  (${pkg_count:-53} pkgs, SHA256 pinneados)"
-    echo -e "  ${DIM}+-- mentorkit-python.sh${RESET}  (wrapper para skills)"
-    echo -e "  ${DIM}+-- mentorkit-verify.sh${RESET}  (verificación standalone)"
-    echo -e "  ${DIM}\`-- .mentorkit/venv/${RESET}  (gitignored, Python $PYTHON_PATCH)\n"
-    echo -e "  ${DIM}Próximo: inicia OpenCode y selecciona MentorKit4.0 con Tab${RESET}\n"
-
+    echo -e "  ${GREEN}+ ${RESET} ${BOLD}MentorKit listo${RESET}"
+    echo -e "  ${DIM}Workflow: ODD (SMALL / SUBSTANTIAL)${RESET}"
+    echo -e "  ${DIM}Runtime: .opencode/.mentorkit/venv/${RESET}"
+    echo -e "  ${DIM}Siguiente: abre OpenCode en este proyecto y selecciona MentorKit5.0${RESET}\n"
     print_banner
 }
 
@@ -711,44 +382,35 @@ run_verify() {
 
 run_fix() {
     echo -e "\n  ${CYAN}MentorKit — fix${RESET}\n"
+    ensure_runtime_files || exit 1
     ensure_uv || exit 1
-    VENV_PYTHON="$(find_venv_python 2>/dev/null)" || {
-        warn "Venv no existe — creando..."
-    }
-
-    if [[ -z "$VENV_PYTHON" ]]; then
-        ensure_python_312 || exit 1
-        create_or_repair_venv || exit 1
-    else
-        # Verificar versión
-        local actual_ver
-        actual_ver="$("$VENV_PYTHON" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null)"
-        if [[ "$actual_ver" != "$PYTHON_VERSION" ]]; then
-            warn "Python $actual_ver ≠ $PYTHON_VERSION — recreando venv"
-            ensure_python_312 || exit 1
-            create_or_repair_venv || exit 1
-        fi
-    fi
-
+    ensure_python_312 || exit 1
+    create_or_repair_venv || exit 1
     install_deps_from_lock || exit 1
     verify_install
 }
 
-# ─── Main ─────────────────────────────────────────────────────────────────────
-
-# Parse args
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --verify|-v)  MODE="verify" ;;
-        --fix|-f)     MODE="fix" ;;
+        --verify|-v) MODE="verify" ;;
+        --fix|-f) MODE="fix" ;;
         --help|-h)
-            echo "Uso: bash install-mentorkit.sh [opción]"
-            echo ""
-            echo "Opciones:"
-            echo "  (sin args)  Install o repair (default)"
-            echo "  --verify    Solo verifica, no modifica nada"
-            echo "  --fix       Verifica y repara lo que falle"
-            echo "  --help      Muestra esta ayuda"
+            cat <<'HELP'
+Uso: bash install-mentorkit.sh [opción]
+
+Opciones:
+  (sin args)  Instala o repara MentorKit.
+  --verify    Verifica el entorno sin instalar dependencias.
+  --fix       Recupera archivos faltantes y repara el entorno.
+  --help      Muestra esta ayuda.
+
+Variables:
+  MENTORKIT_BRANCH=main|<branch>
+      Rama de MentorKit desde la que recuperar archivos faltantes.
+
+Ejemplo de prueba de una rama:
+  MENTORKIT_BRANCH=feature/odd-migration bash install-mentorkit.sh
+HELP
             exit 0
             ;;
         *) err "Opción desconocida: $1 (usa --help)"; exit 1 ;;
@@ -758,6 +420,6 @@ done
 
 case "$MODE" in
     install) run_install ;;
-    verify)  run_verify ;;
-    fix)     run_fix ;;
+    verify) run_verify ;;
+    fix) run_fix ;;
 esac
