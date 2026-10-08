@@ -20,14 +20,17 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v4
-      - name: Bootstrap and verify
+      - name: Bootstrap in clean project
         shell: bash
         run: |
+          TEST_DIR="$(mktemp -d)"
+          echo "MENTORKIT_TEST_DIR=$TEST_DIR" >> "$GITHUB_ENV"
           if [ "$RUNNER_OS" = "Windows" ]; then
-            pwsh -NoProfile -ExecutionPolicy Bypass -File ./bootstrap.ps1
+            pwsh -NoProfile -ExecutionPolicy Bypass -Command "$env:MENTORKIT_BRANCH='feature/odd-migration'; & '$PWD/bootstrap.ps1'" 
           else
-            bash ./bootstrap.sh
+            MENTORKIT_BRANCH=feature/odd-migration bash "$PWD/bootstrap.sh"
           fi
+        working-directory: ${{ env.MENTORKIT_TEST_DIR }}
       - name: Verify native runtime
         shell: bash
         run: |
@@ -36,6 +39,7 @@ jobs:
           else
             bash ./.opencode/mentorkit-verify.sh
           fi
+        working-directory: ${{ env.MENTORKIT_TEST_DIR }}
       - name: Verify ODD task creation
         shell: bash
         run: |
@@ -45,3 +49,4 @@ jobs:
             bash ./.opencode/mentorkit-odd-task.sh platform-smoke "Validate native $RUNNER_OS runtime"
           fi
           test -f odd/tasks/platform-smoke.md
+        working-directory: ${{ env.MENTORKIT_TEST_DIR }}
