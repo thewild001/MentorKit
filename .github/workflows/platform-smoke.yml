@@ -1,0 +1,47 @@
+name: Platform Smoke Test
+
+on:
+  push:
+    branches: ["feature/odd-migration"]
+  pull_request:
+    branches: ["feature/odd-migration", "main"]
+  workflow_dispatch:
+
+jobs:
+  install:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bootstrap and verify
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            pwsh -NoProfile -ExecutionPolicy Bypass -File ./bootstrap.ps1
+          else
+            bash ./bootstrap.sh
+          fi
+      - name: Verify native runtime
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            pwsh -NoProfile -ExecutionPolicy Bypass -File ./.opencode/mentorkit-verify.ps1
+          else
+            bash ./.opencode/mentorkit-verify.sh
+          fi
+      - name: Verify ODD task creation
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            pwsh -NoProfile -ExecutionPolicy Bypass -File ./.opencode/mentorkit-odd-task.ps1 platform-smoke "Validate native $RUNNER_OS runtime"
+          else
+            bash ./.opencode/mentorkit-odd-task.sh platform-smoke "Validate native $RUNNER_OS runtime"
+          fi
+          test -f odd/tasks/platform-smoke.md
