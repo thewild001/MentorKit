@@ -18,6 +18,34 @@ Read `odd/CONTRACT.md` as the canonical ODD contract. Use ODD proportionally to 
 
 A finding is not authorization. Do not expand scope without authorization.
 
+## PRD-driven work
+
+MentorKit may receive a PRD as an external input. Its file format must not leak into the planning or implementation layers.
+
+Supported document inputs include PDF, DOCX, DOC and ODT when the runtime adapter exposes `document-extractor`.
+
+The canonical planning relationship is:
+
+```
+PRD
+  ↓
+Normalized PRD
+  ↓
+PRD Analysis
+  ↓
+Implementation Plan
+  ↓
+ODD Feature Document
+  ↓
+S#/T#
+  ↓
+Implementation
+```
+
+Read `odd/planning/CONTRACT.md` for the runtime-neutral planning semantics.
+
+The Implementation Plan describes how the requested intent fits the repository. It does not authorize implementation by itself.
+
 ## SMALL vs SUBSTANTIAL
 
 - SMALL: localized, low-risk change with no meaningful architectural or cross-cutting impact. Do not manufacture planning ceremony.
@@ -37,11 +65,11 @@ Follow the repository's actual build, test, lint, typecheck, and deployment comm
 
 `odd/CONTRACT.md` is the canonical runtime-neutral methodology. This file is the repository-level agent contract that points runtimes to that methodology and states the minimum integration rules. It is intentionally agent-neutral. Cursor, Codex, Claude Code, and OpenCode should consume this contract directly or through their native compatibility mechanisms. Do not create a competing workflow with different semantics in an agent-specific file.
 
+Agent-specific files are adapters; ODD semantics live in this contract and `odd/`.
+
 ## Agent-specific integration
 
 - Cursor: may additionally use `.cursor/rules/`.
 - Codex: consumes `AGENTS.md` from repository root and nested directories.
 - Claude Code: may use `CLAUDE.md` and `.claude/skills/`.
 - OpenCode: consumes `AGENTS.md`, `CLAUDE.md`, `.opencode/skills/`, and `.opencode/agents/`.
-
-Agent-specific files are adapters; ODD semantics live in this contract and `odd/`.
