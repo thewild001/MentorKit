@@ -2,22 +2,20 @@
 name: odd-orchestrator
 description: >
   Orquestador Organic Driven Development para MentorKit. Decide proporcionalmente
-  cuánto proceso necesita cada cambio: autorización, exploración, clasificación
-  SMALL/SUBSTANTIAL, persistencia recuperable, ejecución por unidades de trabajo,
-  verificación y cierre. Sustituye el workflow obligatorio centrado en OpenSpec
-  sin eliminar las capacidades de fingerprinting, investigación, TDD, council,
-  revisión y Git.
+  cuánto proceso necesita cada cambio: autorización, detección opcional de PRD,
+  exploración, clasificación SMALL/SUBSTANTIAL, persistencia recuperable,
+  planificación, ejecución por unidades de trabajo, verificación y cierre.
 compatibility: opencode
 metadata:
-  version: "1.0"
+  version: "1.1"
   workflow: "organic-driven-development"
 ---
 
 # ODD Orchestrator — OpenCode Adapter
 
-The runtime-neutral ODD semantics live in `odd/CONTRACT.md`. This skill is the OpenCode adapter that exposes those semantics through OpenCode's native skill/runtime mechanisms. It may add execution details, but must not redefine the contract.
+The runtime-neutral ODD semantics live in `odd/CONTRACT.md`. PRD-driven planning semantics live in `odd/planning/CONTRACT.md`.
 
-ODD no es un formato de spec alternativo. Es la capa que decide **cuándo hace falta una spec, un plan, un documento persistente o ninguno**.
+This skill adapts those runtime-neutral contracts to OpenCode and must not redefine them.
 
 ## 1. Authorization Gate
 
@@ -34,8 +32,7 @@ No modifica archivos cuando el usuario pide:
 - diagnosticar
 - comparar
 - estimar
-
-Puede leer, buscar, inspeccionar y ejecutar comprobaciones no destructivas.
+- generar un plan sin autorización de implementación
 
 ### Authorized change
 
@@ -52,9 +49,22 @@ Una solicitud explícita de:
 
 autoriza el cambio dentro del alcance indicado.
 
-Si existe una decisión material que no puede inferirse con seguridad, pregunta antes de escribir. No confundas una pregunta de diseño con una autorización general.
+Generar un Implementation Plan **no implica autorización de implementación**.
 
-## 2. Explore
+## 2. PRD Detection
+
+Cuando el mensaje contiene un documento adjunto candidato a PRD, detecta silenciosamente:
+
+- `.pdf`
+- `.docx`
+- `.doc`
+- `.odt`
+
+Invoca `prd-reader`, que delega la extracción a `document-extractor`.
+
+Si no hay PRD, continúa con el flujo ODD normal.
+
+## 3. Explore
 
 Antes de implementar:
 
@@ -78,11 +88,9 @@ Compatibilidad legacy:
 openspec/memory/constitution.md
 ```
 
-No inicialices una constitución solo para completar el ritual. Si no existe, continúa con defaults seguros y ofrece crearla cuando el proyecto lo necesite.
+No inicialices una constitución solo para completar el ritual.
 
-## 3. Classify
-
-Clasifica después de explorar.
+## 4. Classify
 
 ### SMALL
 
@@ -92,42 +100,58 @@ Usa SMALL cuando:
 - el alcance es contenido;
 - existe un patrón claro;
 - el blast radius es bajo;
-- el contexto puede recuperarse razonablemente desde la solicitud + git diff;
 - no hay decisiones abiertas relevantes.
 
-Ejemplos: typo, ajuste localizado, test de regresión simple, cambio de configuración pequeño.
-
-**Ruta:**
+Ruta:
 
 ```
 Implement → Verify → Commit → Close
 ```
 
-No crees `odd/tasks/*.md` por defecto.
+Un PRD puede describir un cambio pequeño. No fuerces un plan persistente solo por existir un PRD.
 
 ### SUBSTANTIAL
 
-Usa SUBSTANTIAL cuando una o más condiciones impliquen pérdida de contexto o riesgo:
+Usa SUBSTANTIAL cuando:
 
 - cruza varios módulos;
-- tiene lógica de negocio no trivial;
+- tiene lógica no trivial;
 - requiere múltiples tareas;
 - requiere investigación;
 - necesita decisiones de arquitectura;
 - tiene blast radius significativo;
-- debe sobrevivir a una interrupción/sesión nueva;
+- debe sobrevivir a una interrupción;
 - una revisión útil necesita una unidad de trabajo explícita.
 
-**Ruta:**
+## 5. PRD → Implementation Plan
+
+Cuando exista PRD y el trabajo sea lo bastante complejo como para beneficiarse de planificación:
 
 ```
-Create feature document → Specs → Tasks → Implement task-by-task
-→ Verify → Work-unit commit → Review/PR → Close
+prd-reader
+   ↓
+PRD Analysis
+   ↓
+codebase-conformist
+   +
+codebase-graph
+   ↓
+Implementation Plan
 ```
 
-El heurístico de tamaño es orientativo, no una regla rígida.
+El plan debe seguir `odd/planning/CONTRACT.md`.
 
-## 4. Feature Document
+Para trabajo SUBSTANTIAL persiste:
+
+```
+odd/planning/<feature-name>.md
+```
+
+El plan debe ser revisable antes de comenzar la implementación.
+
+Si el usuario pidió solo el plan, el proceso termina en el plan y permanece read-only.
+
+## 6. Feature Document
 
 Para SUBSTANTIAL crea **antes del primer source write**:
 
@@ -135,53 +159,29 @@ Para SUBSTANTIAL crea **antes del primer source write**:
 odd/tasks/<feature-name>.md
 ```
 
-Debe contener:
+El feature document contiene:
 
-- `## Objective`
-- `## Specs`
-- `## Tasks`
-- `## Verification`
-- `## Log`
-- `## Delivery`
+- Objective
+- Specs
+- Tasks
+- Verification
+- Log
+- Delivery
 
 ### Specs
 
-Usa IDs estables `S1`, `S2`, etc.
-
-Cada S# debe expresar comportamiento verificable. Conserva literalmente strings de error, ejemplos y restricciones que formen parte del contrato.
+Usa IDs estables S1, S2, etc.
 
 ### Tasks
 
-Usa IDs estables `T1`, `T2`, etc.
+Usa IDs estables T1, T2, etc.
 
-Cada tarea referencia uno o más S# y define una ruta concreta de implementación.
+Cuando exista Implementation Plan, S#/T# deben poder trazarse a sus requisitos
+y a las decisiones relevantes del plan.
 
-### Log
-
-`L1` debe conservar la solicitud original literalmente.
-
-Las correcciones, decisiones, hallazgos y evidencias se agregan como nuevas entradas. No reescribas la historia.
-
-## 5. Spec Writer
-
-`spec-writer` deja de producir obligatoriamente `openspec/.../spec.md`.
-
-Para ODD:
-
-- resuelve ambigüedades;
-- propone S#;
-- agrega criterios de aceptación;
-- devuelve el contenido para `odd/tasks/<feature>.md`;
-- no crea un system-spec;
-- no requiere delta ADDED/MODIFIED/REMOVED.
-
-Solo usa OpenSpec si el usuario pide explícitamente compatibilidad con el workflow legacy.
-
-## 6. Execution
+## 7. Execution
 
 `TodoWrite` puede representar el estado de ejecución, pero el documento ODD es la persistencia durable.
-
-Ejecuta las tareas en el orden necesario. Paraleliza solo tareas realmente independientes.
 
 Superpowers siguen siendo capacidades de ejecución:
 
@@ -194,62 +194,30 @@ Superpowers siguen siendo capacidades de ejecución:
 - verification-before-completion
 - finishing-a-development-branch
 
-ODD decide **cuándo** usarlas; no las reemplaza.
+ODD decide **cuándo** usarlas.
 
-## 7. Test-first
+## 8. Verification
 
-Cuando exista un test determinista con resultado esperado claro:
-
-```
-RED → GREEN → REFACTOR
-```
-
-Si no aplica, explica por qué y ejecuta las comprobaciones funcionales pertinentes.
-
-## 8. Work-unit Commit
-
-Cada unidad sustancial completada debe terminar con:
-
-1. implementación;
-2. verificación;
-3. commit atómico Conventional Commit;
-4. identidad del commit registrada en el T# correspondiente.
-
-El commit es candidato natural de revisión. No uses un checkbox TODO como frontera de revisión.
-
-Push, PR y merge requieren una decisión independiente.
+Nunca declares completado sin evidencia.
 
 ## 9. Scope Control
 
 Un hallazgo no equivale a autorización.
-
-Si descubres:
-
-- otro bug;
-- deuda técnica;
-- una refactorización conveniente;
-- una mejora fuera del objetivo;
-
-regístralo y no lo implementes salvo que el usuario amplíe el alcance.
-
-Si el usuario cambia el alcance, actualiza los S#/T# afectados y preserva el trabajo válido ya completado.
 
 ## 10. Resume / Handoff
 
 Para continuar una sesión:
 
 1. lee el documento local completo;
-2. inspecciona el código y git diff reales;
-3. si existe espejo Engram, recupera el documento completo;
-4. reconcilia ambos contra el estado observado;
-5. nunca trates una memoria faltante como éxito;
+2. si existe Implementation Plan, léelo completo;
+3. inspecciona el código y git diff reales;
+4. si existe espejo Engram, recupera el documento completo;
+5. reconcilia ambos contra el estado observado;
 6. continúa desde el siguiente T# incompleto.
 
-La memoria nunca sobreescribe la realidad observada del repositorio.
+La memoria nunca sobreescribe la realidad observada.
 
-## 11. Persistence Adapter
-
-Conceptualmente:
+## 11. Persistence
 
 ```
 ODD Persistence
@@ -257,8 +225,6 @@ ODD Persistence
 ├── Engram      ← opcional
 └── Future      ← extensible
 ```
-
-Si Engram no está disponible, marca el espejo como pendiente y continúa con el archivo local.
 
 ## 12. Close
 
@@ -271,13 +237,3 @@ Una feature queda cerrada cuando:
 - el siguiente paso de delivery está explícito.
 
 El cierre no implica merge automático.
-
-## Anti-patrones
-
-- Crear specs persistentes para cada cambio pequeño.
-- Pedir confirmación para cada typo o cambio trivial ya autorizado.
-- Escribir código antes de crear el feature document de trabajo sustancial.
-- Tratar Engram como fuente de verdad superior al repositorio.
-- Expandir scope por iniciativa propia.
-- Convertir ODD en otro sistema rígido de plantillas.
-- Eliminar OpenSpec de golpe durante la migración experimental.
