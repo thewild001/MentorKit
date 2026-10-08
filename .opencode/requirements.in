@@ -10,7 +10,7 @@
 # uv itself: shipped inside the venv for self-contained re-installs
 uv>=0.11,<0.12
 
-# Document extraction (PDF, ODT, DOCX)
+# Document extraction (PDF, ODT, DOCX, DOC)
 markitdown>=0.1
 firecrawl-anydoc>=0.2
 striprtf>=0.0.10
