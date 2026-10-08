@@ -50,6 +50,26 @@ jobs:
             bash ./.opencode/mentorkit-odd-task.sh platform-smoke "Validate native $RUNNER_OS runtime"
           fi
           test -f odd/tasks/platform-smoke.md
+      - name: Verify ODD planning contracts
+        shell: bash
+        run: |
+          cd "$MENTORKIT_TEST_DIR"
+          test -f odd/CONTRACT.md
+          test -f odd/planning/CONTRACT.md
+          test -f odd/planning/README.md
+          test -f odd/planning/templates/implementation-plan.md
+          grep -q "PRD Analysis" odd/planning/CONTRACT.md
+          grep -q "Implementation Plan" odd/planning/CONTRACT.md
+          grep -q "odd/tasks/<feature-name>.md" odd/planning/CONTRACT.md
+      - name: Verify multi-format PRD contracts
+        shell: bash
+        run: |
+          cd "$MENTORKIT_TEST_DIR"
+          grep -q "PDF" .opencode/skills/document-extractor/SKILL.md
+          grep -q "DOCX" .opencode/skills/document-extractor/SKILL.md
+          grep -q "DOC" .opencode/skills/document-extractor/SKILL.md
+          grep -q "anydoc.to_markdown(file_path)" .opencode/skills/document-extractor/SKILL.md
+          grep -q "odd/planning/<feature-name>.md" .opencode/skills/prd-reader/SKILL.md
       - name: Verify agent compatibility contract
         shell: bash
         run: |
