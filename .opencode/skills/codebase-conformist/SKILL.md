@@ -91,7 +91,8 @@ odd/planning/CONTRACT.md
 
 El plan debe combinar:
 
-- requisitos del PRD;
+- intención y requisitos del usuario;
+- requisitos estructurados del PRD, cuando existe;
 - arquitectura observada;
 - políticas/constitution;
 - patrones existentes;
@@ -99,11 +100,7 @@ El plan debe combinar:
 - estrategia de verificación;
 - riesgos y decisiones abiertas.
 
-Para trabajo SUBSTANTIAL persiste:
-
-```
-odd/planning/<feature-name>.md
-```
+Para trabajo SUBSTANTIAL persiste `odd/planning/<feature-name>.md` cuando el plan sea material o explícitamente solicitado.
 
 Después usa el plan para alimentar `spec-writer` y producir S#/T# en:
 
@@ -114,6 +111,8 @@ odd/tasks/<feature-name>.md
 ### SMALL
 
 No generes planificación persistente salvo que el usuario la solicite.
+
+La ausencia de PRD no cambia esta regla.
 
 Ruta:
 
