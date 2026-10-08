@@ -27,7 +27,7 @@ jobs:
           echo "MENTORKIT_TEST_DIR=$TEST_DIR" >> "$GITHUB_ENV"
           cd "$TEST_DIR"
           if [ "$RUNNER_OS" = "Windows" ]; then
-            pwsh -NoProfile -ExecutionPolicy Bypass -Command "$env:MENTORKIT_BRANCH='feature/odd-migration'; & \"$env:GITHUB_WORKSPACE\\bootstrap.ps1\""
+            pwsh -NoProfile -ExecutionPolicy Bypass -Command '$env:MENTORKIT_BRANCH="feature/odd-migration"; & "$env:GITHUB_WORKSPACE\bootstrap.ps1"'
           else
             MENTORKIT_BRANCH=feature/odd-migration bash "$GITHUB_WORKSPACE/bootstrap.sh"
           fi
