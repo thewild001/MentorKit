@@ -113,13 +113,37 @@ done
 bash ".opencode/install-mentorkit.sh" ||
     fail "El instalador no pudo completar la preparación del entorno."
 
-echo ""
-echo -e "  ${GREEN}+${RESET} ${GREEN}MentorKit instalado correctamente${RESET}"
-echo -e "  ${DIM}Workflow: ODD (SMALL / SUBSTANTIAL)${RESET}"
-echo -e "  ${DIM}Proyecto: $(pwd)${RESET}"
-echo ""
-echo "  Siguiente:"
-echo "    1. Abre OpenCode en este proyecto."
-echo "    2. Selecciona el agente MentorKit5.0."
-echo "    3. MentorKit determinará si el cambio requiere flujo SMALL o SUBSTANTIAL."
-echo ""
+# ---------------------------------------------------------------------------
+# Welcome splash — only reached after every installation step succeeds.
+# ---------------------------------------------------------------------------
+
+show_success_splash() {
+    local project
+    project="$(pwd)"
+    echo ""
+    echo -e "  ${CYAN}╭──────────────────────────────────────────────────────────────────╮${RESET}"
+    echo -e "  ${CYAN}│${RESET}                                                                  ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}   ${GREEN}███╗   ███╗███████╗███╗   ██╗████████╗ ██████╗ ██████╗ ${RESET}       ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}   ${GREEN}████╗ ████║██╔════╝████╗  ██║╚══██╔══╝██╔═══██╗██╔══██╗${RESET}       ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}   ${GREEN}██╔████╔██║█████╗  ██╔██╗ ██║   ██║   ██║   ██║██████╔╝${RESET}       ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}   ${GREEN}██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║   ██║   ██║██╔══██╗${RESET}       ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}   ${GREEN}██║ ╚═╝ ██║███████╗██║ ╚████║   ██║   ╚██████╔╝██║  ██║${RESET}       ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}   ${GREEN}╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝${RESET}       ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}                                                                  ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}                ${DIM}ORGANIC-DRIVEN DEVELOPMENT · ODD${RESET}                 ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}├──────────────────────────────────────────────────────────────────┤${RESET}"
+    echo -e "  ${CYAN}│${RESET}  ${GREEN}✓${RESET}  Instalación completada                                      ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}  ${DIM}Proyecto:${RESET} ${project}"
+    echo -e "  ${CYAN}│${RESET}  ${DIM}Rama:${RESET}     ${BRANCH}"
+    echo -e "  ${CYAN}│${RESET}                                                                  ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}  ${GREEN}PARA COMENZAR${RESET}                                                ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}  1. Abre OpenCode en este proyecto.                              ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}  2. Selecciona el agente MentorKit5.0.                           ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}  3. Describe tu tarea; MentorKit evaluará el alcance del cambio. ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}                                                                  ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}  ${DIM}Docs: github.com/thewild001/MentorKit${RESET}                        ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}╰──────────────────────────────────────────────────────────────────╯${RESET}"
+    echo ""
+}
+
+show_success_splash
