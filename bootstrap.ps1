@@ -30,7 +30,14 @@ try {
   Write-Host "  ╭──────────────────────────────────────────────────────────────────╮" -ForegroundColor Cyan
   Write-Host "  │                                                                  │" -ForegroundColor Cyan
   Write-Host "  │                                                                  │" -ForegroundColor Cyan
-  Write-Host "  │                         MentorKit                               │" -ForegroundColor Green
+  Write-Host "  │                                                                  │" -ForegroundColor Cyan
+  Write-Host "  │             ███╗   ███╗███████╗███╗   ██╗████████╗               │" -ForegroundColor Green
+  Write-Host "  │             ████╗ ████║██╔════╝████╗  ██║╚══██╔══╝               │" -ForegroundColor Green
+  Write-Host "  │             ██╔████╔██║█████╗  ██╔██╗ ██║   ██║                  │" -ForegroundColor Green
+  Write-Host "  │             ██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║                  │" -ForegroundColor Green
+  Write-Host "  │             ██║ ╚═╝ ██║███████╗██║ ╚████║   ██║                  │" -ForegroundColor Green
+  Write-Host "  │             ╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝                  │" -ForegroundColor Green
+  Write-Host "  │                    MENTOR                                      │" -ForegroundColor Green
   Write-Host "  │             ORGANIC-DRIVEN DEVELOPMENT · ODD                    │" -ForegroundColor DarkGray
   Write-Host "  ├──────────────────────────────────────────────────────────────────┤" -ForegroundColor Cyan
   Write-Host "  │  ✓  Instalación completada                                       │" -ForegroundColor Green
