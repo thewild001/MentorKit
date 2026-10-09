@@ -118,30 +118,31 @@ bash ".opencode/install-mentorkit.sh" ||
 # ---------------------------------------------------------------------------
 
 show_success_splash() {
-    local project
+    local project project_line left_pad
     project="$(pwd)"
     if (( ${#project} > 48 )); then project="…${project: -47}"; fi
+    project_line="Project: ${project}"
     echo ""
     echo -e "  ${CYAN}╭──────────────────────────────────────────────────────────────────────╮${RESET}"
-    echo -e "  ${CYAN}│                                                                      │${RESET}"
     printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █               █               █   █   █     █           '
     printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        ██ ██  ███  ████  █████  ███  █ ██  █  █        █████         '
-    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █ █ █ █   █ █   █   █   █   █ ██  █ ███    ██     █           '
-    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █ █████ █   █   █   █   █ █     █  █    █     █           '
-    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █  ████ █   █   ██   ███  █     █   █  ███    ██          '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █ █ █ █   █ █   █   █   █   █ ██  █ █ █    ██     █           '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █ █ █ █████ █   █   █   █   █ █     ██      █     █           '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █ █     █   █   █   █   █ █     █ █     █     █           '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █ █   █ █   █   █ █ █   █ █     █  █    █     █ █         '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █  ███  █   █    █   ███  █     █   █  ███     █          '
     echo -e "  ${CYAN}│                   ORGANIC-DRIVEN DEVELOPMENT · ODD                   │${RESET}"
     echo -e "  ${CYAN}├──────────────────────────────────────────────────────────────────────┤${RESET}"
-    echo -e "  ${CYAN}│                      ✓  Instalación completada                       │${RESET}"
-    local project_line="Proyecto: ${project}"
-    local left_pad=$(( (70 - ${#project_line}) / 2 ))
+    echo -e "  ${CYAN}│                       ✓  INSTALLATION COMPLETE                       │${RESET}"
+    left_pad=$(( (70 - ${#project_line}) / 2 ))
     printf "  ${CYAN}│%*s%s%*s│${RESET}\n" "$left_pad" "" "$project_line" "$((70 - left_pad - ${#project_line}))" ""
     echo -e "  ${CYAN}│                                                                      │${RESET}"
-    echo -e "  ${CYAN}│                            PARA COMENZAR                             │${RESET}"
-    echo -e "  ${CYAN}│             1. Define el objetivo que quieres alcanzar.              │${RESET}"
-    echo -e "  ${CYAN}│         2. Describe la tarea y aporta el contexto necesario.         │${RESET}"
-    echo -e "  ${CYAN}│          3. Revisa las propuestas y valida los resultados.           │${RESET}"
+    echo -e "  ${CYAN}│                           GETTING STARTED                            │${RESET}"
+    echo -e "  ${CYAN}│               1. Define the goal you want to achieve.                │${RESET}"
+    echo -e "  ${CYAN}│          2. Describe the task and provide relevant context.          │${RESET}"
+    echo -e "  ${CYAN}│           3. Review suggestions and validate the results.            │${RESET}"
     echo -e "  ${CYAN}│                                                                      │${RESET}"
-    echo -e "  ${CYAN}│                Docs: github.com/thewild001/MentorKit                 │${RESET}"
+    echo -e "  ${CYAN}│                   github.com/thewild001/MentorKit                    │${RESET}"
     echo -e "  ${CYAN}╰──────────────────────────────────────────────────────────────────────╯${RESET}"
     echo ""
 }
