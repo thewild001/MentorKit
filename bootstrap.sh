@@ -124,7 +124,7 @@ show_success_splash() {
     echo -e "  ${CYAN}╭──────────────────────────────────────────────────────────────────╮${RESET}"
     echo -e "  ${CYAN}│${RESET}                                                   ${CYAN}│${RESET}"
     echo -e "  ${CYAN}│${RESET}                                                                  ${CYAN}│${RESET}"
-    echo -e "  ${CYAN}│${RESET}                  ${GREEN}M E N T O R K I T${RESET}                           ${CYAN}│${RESET}"
+    echo -e "  ${CYAN}│${RESET}                  ${GREEN}MentorKit${RESET}                           ${CYAN}│${RESET}"
     echo -e "  ${CYAN}│${RESET}                ${DIM}ORGANIC-DRIVEN DEVELOPMENT · ODD${RESET}               ${CYAN}│${RESET}"
     echo -e "  ${CYAN}├──────────────────────────────────────────────────────────────────┤${RESET}"
     echo -e "  ${CYAN}│${RESET}  ${GREEN}✓${RESET}  Instalación completada                      ${CYAN}│${RESET}"
