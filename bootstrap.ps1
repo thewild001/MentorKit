@@ -25,7 +25,7 @@ try {
   if (Test-Path $make) { Copy-Item $make "." -Force }
   & (Join-Path ".opencode" "install-mentorkit.ps1")
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-  # One final, fixed-width splash. Long paths are shortened to preserve the frame.
+  # One final, fixed-width splash. Generic usage guidance, independent of any editor.
   $project = (Get-Location).Path
   if ($project.Length -gt 48) { $project = "…" + $project.Substring($project.Length - 47) }
   $frameWidth = 70
@@ -37,20 +37,20 @@ try {
   Write-Host ""
   Write-Host "  ╭──────────────────────────────────────────────────────────────────────╮" -ForegroundColor Cyan
   Write-Host ("  │" + (" " * $frameWidth) + "│") -ForegroundColor Cyan
-  Write-Host ("  │" + (Center-Line "█   █ █████ █   █ █████ █████ ████  █   █ █████ █████") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "██ ██ █     ██  █   █   █   █ █   █ █  █    █     █  ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "█ █ █ ████  █ █ █   █   █   █ ████  ███     █     █  ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "█   █ █     █  ██   █   █   █ █ █   █  █    █     █  ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "█   █ █████ █   █   █   █████ █  ██ █   █ █████   █  ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "        █   █               █               █   █   █     █           ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "        ██ ██  ███  ████  █████  ███  █ ██  █  █        █████         ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "        █ █ █ █   █ █   █   █   █   █ ██  █ ███    ██     █           ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "        █   █ █████ █   █   █   █   █ █     █  █    █     █           ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "        █   █  ████ █   █   ██   ███  █     █   █  ███    ██          ") + "│") -ForegroundColor Green
   Write-Host ("  │" + (Center-Line "ORGANIC-DRIVEN DEVELOPMENT · ODD") + "│") -ForegroundColor DarkCyan
   Write-Host "  ├──────────────────────────────────────────────────────────────────────┤" -ForegroundColor Cyan
   Write-Host ("  │" + (Center-Line "✓  Instalación completada") + "│") -ForegroundColor Green
   Write-Host ("  │" + (Center-Line "Proyecto: $project") + "│")
   Write-Host ("  │" + (" " * $frameWidth) + "│") -ForegroundColor Cyan
   Write-Host ("  │" + (Center-Line "PARA COMENZAR") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "1. Abre OpenCode en este proyecto.") + "│")
-  Write-Host ("  │" + (Center-Line "2. Selecciona el agente MentorKit5.0.") + "│")
-  Write-Host ("  │" + (Center-Line "3. Describe tu tarea; MentorKit evaluará el alcance del cambio.") + "│")
+  Write-Host ("  │" + (Center-Line "1. Define el objetivo que quieres alcanzar.") + "│")
+  Write-Host ("  │" + (Center-Line "2. Describe la tarea y aporta el contexto necesario.") + "│")
+  Write-Host ("  │" + (Center-Line "3. Revisa las propuestas y valida los resultados.") + "│")
   Write-Host ("  │" + (" " * $frameWidth) + "│") -ForegroundColor Cyan
   Write-Host ("  │" + (Center-Line "Docs: github.com/thewild001/MentorKit") + "│") -ForegroundColor DarkCyan
   Write-Host "  ╰──────────────────────────────────────────────────────────────────────╯" -ForegroundColor Cyan
