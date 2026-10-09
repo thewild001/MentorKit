@@ -37,11 +37,11 @@ try {
   Write-Host ""
   Write-Host "  ╭──────────────────────────────────────────────────────────────────────╮" -ForegroundColor Cyan
   Write-Host ("  │" + (" " * $frameWidth) + "│") -ForegroundColor Cyan
-  Write-Host ("  │" + (Center-Line "█   █ █████ █   █ █████ █████ █   █ █   █ █████") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "██ ██ █     ██  █   █     █   ██  █ █   █     █") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "█ █ █ ████  █ █ █   █     █   █ █ █ █   █    █ ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "█   █ █     █  ██   █     █   █  ██ █   █   █  ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "█   █ █████ █   █ █████ █████ █   █ █████ █████") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "█   █ █████ █   █ █████ █████ ████  █   █ █████ █████") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "██ ██ █     ██  █   █   █   █ █   █ █  █    █     █  ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "█ █ █ ████  █ █ █   █   █   █ ████  ███     █     █  ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "█   █ █     █  ██   █   █   █ █ █   █  █    █     █  ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "█   █ █████ █   █   █   █████ █  ██ █   █ █████   █  ") + "│") -ForegroundColor Green
   Write-Host ("  │" + (Center-Line "ORGANIC-DRIVEN DEVELOPMENT · ODD") + "│") -ForegroundColor DarkCyan
   Write-Host "  ├──────────────────────────────────────────────────────────────────────┤" -ForegroundColor Cyan
   Write-Host ("  │" + (Center-Line "✓  Instalación completada") + "│") -ForegroundColor Green
