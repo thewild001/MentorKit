@@ -25,7 +25,7 @@ try {
   if (Test-Path $make) { Copy-Item $make "." -Force }
   & (Join-Path ".opencode" "install-mentorkit.ps1")
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-  # One final, fixed-width splash. Generic usage guidance, independent of any editor.
+  # Single premium splash with consistent fixed-width alignment.
   $project = (Get-Location).Path
   if ($project.Length -gt 48) { $project = "…" + $project.Substring($project.Length - 47) }
   $frameWidth = 70
@@ -36,23 +36,24 @@ try {
   }
   Write-Host ""
   Write-Host "  ╭──────────────────────────────────────────────────────────────────────╮" -ForegroundColor Cyan
-  Write-Host ("  │" + (" " * $frameWidth) + "│") -ForegroundColor Cyan
-  Write-Host ("  │" + (Center-Line "        █   █               █               █   █   █     █           ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "        ██ ██  ███  ████  █████  ███  █ ██  █  █        █████         ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "        █ █ █ █   █ █   █   █   █   █ ██  █ ███    ██     █           ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "        █   █ █████ █   █   █   █   █ █     █  █    █     █           ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "        █   █  ████ █   █   ██   ███  █     █   █  ███    ██          ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "█   █               █               █   █   █     █  ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "██ ██  ███  ████  █████  ███  █ ██  █  █        █████") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "█ █ █ █   █ █   █   █   █   █ ██  █ █ █    ██     █  ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "█ █ █ █████ █   █   █   █   █ █     ██      █     █  ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "█   █ █     █   █   █   █   █ █     █ █     █     █  ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "█   █ █   █ █   █   █ █ █   █ █     █  █    █     █ █") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "█   █  ███  █   █    █   ███  █     █   █  ███     █ ") + "│") -ForegroundColor Green
   Write-Host ("  │" + (Center-Line "ORGANIC-DRIVEN DEVELOPMENT · ODD") + "│") -ForegroundColor DarkCyan
   Write-Host "  ├──────────────────────────────────────────────────────────────────────┤" -ForegroundColor Cyan
-  Write-Host ("  │" + (Center-Line "✓  Instalación completada") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "Proyecto: $project") + "│")
+  Write-Host ("  │" + (Center-Line "✓  INSTALLATION COMPLETE") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "Project: $project") + "│")
   Write-Host ("  │" + (" " * $frameWidth) + "│") -ForegroundColor Cyan
-  Write-Host ("  │" + (Center-Line "PARA COMENZAR") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "1. Define el objetivo que quieres alcanzar.") + "│")
-  Write-Host ("  │" + (Center-Line "2. Describe la tarea y aporta el contexto necesario.") + "│")
-  Write-Host ("  │" + (Center-Line "3. Revisa las propuestas y valida los resultados.") + "│")
+  Write-Host ("  │" + (Center-Line "GETTING STARTED") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "1. Define the goal you want to achieve.") + "│")
+  Write-Host ("  │" + (Center-Line "2. Describe the task and provide relevant context.") + "│")
+  Write-Host ("  │" + (Center-Line "3. Review suggestions and validate the results.") + "│")
   Write-Host ("  │" + (" " * $frameWidth) + "│") -ForegroundColor Cyan
-  Write-Host ("  │" + (Center-Line "Docs: github.com/thewild001/MentorKit") + "│") -ForegroundColor DarkCyan
+  Write-Host ("  │" + (Center-Line "github.com/thewild001/MentorKit") + "│") -ForegroundColor DarkCyan
   Write-Host "  ╰──────────────────────────────────────────────────────────────────────╯" -ForegroundColor Cyan
   Write-Host ""
 }
