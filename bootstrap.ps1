@@ -30,7 +30,7 @@ try {
   Write-Host "  ╭──────────────────────────────────────────────────────────────────╮" -ForegroundColor Cyan
   Write-Host "  │                                                                  │" -ForegroundColor Cyan
   Write-Host "  │                                                                  │" -ForegroundColor Cyan
-  Write-Host "  │                  M E N T O R K I T                               │" -ForegroundColor Green
+  Write-Host "  │                  MentorKit                               │" -ForegroundColor Green
   Write-Host "  │                ORGANIC-DRIVEN DEVELOPMENT · ODD                  │" -ForegroundColor DarkGray
   Write-Host "  ├──────────────────────────────────────────────────────────────────┤" -ForegroundColor Cyan
   Write-Host "  │  ✓  Instalación completada                                       │" -ForegroundColor Green
