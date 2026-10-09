@@ -45,13 +45,13 @@ try {
   Write-Host ("  │" + (Center-Line "█   █  ███  █   █    █   ███  █     █   █  ███     █ ") + "│") -ForegroundColor Green
   Write-Host ("  │" + (Center-Line "ORGANIC-DRIVEN DEVELOPMENT · ODD") + "│") -ForegroundColor DarkCyan
   Write-Host "  ├──────────────────────────────────────────────────────────────────────┤" -ForegroundColor Cyan
-  Write-Host ("  │" + (Center-Line "✓  INSTALLATION COMPLETE") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "Project: $project") + "│")
+  Write-Host ("  │" + (Center-Line "✓  INSTALACIÓN COMPLETADA") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "Proyecto: $project") + "│")
   Write-Host ("  │" + (" " * $frameWidth) + "│") -ForegroundColor Cyan
-  Write-Host ("  │" + (Center-Line "GETTING STARTED") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "1. Define the goal you want to achieve.") + "│")
-  Write-Host ("  │" + (Center-Line "2. Describe the task and provide relevant context.") + "│")
-  Write-Host ("  │" + (Center-Line "3. Review suggestions and validate the results.") + "│")
+  Write-Host ("  │" + (Center-Line "PARA COMENZAR") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "1. Define el objetivo que quieres alcanzar.") + "│")
+  Write-Host ("  │" + (Center-Line "2. Describe la tarea y aporta el contexto necesario.") + "│")
+  Write-Host ("  │" + (Center-Line "3. Revisa las propuestas y valida los resultados.") + "│")
   Write-Host ("  │" + (" " * $frameWidth) + "│") -ForegroundColor Cyan
   Write-Host ("  │" + (Center-Line "github.com/thewild001/MentorKit") + "│") -ForegroundColor DarkCyan
   Write-Host "  ╰──────────────────────────────────────────────────────────────────────╯" -ForegroundColor Cyan
