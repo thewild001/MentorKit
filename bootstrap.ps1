@@ -25,9 +25,31 @@ try {
   if (Test-Path $make) { Copy-Item $make "." -Force }
   & (Join-Path ".opencode" "install-mentorkit.ps1")
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+  # Branded success splash — shown only after the installer exits successfully.
   Write-Host ""
-  Write-Host "MentorKit instalado correctamente (Windows nativo)."
-  Write-Host "Abre OpenCode en este proyecto y selecciona MentorKit5.0."
+  Write-Host "  ╭──────────────────────────────────────────────────────────────────╮" -ForegroundColor Cyan
+  Write-Host "  │                                                                  │" -ForegroundColor Cyan
+  Write-Host "  │   ███╗   ███╗███████╗███╗   ██╗████████╗ ██████╗ ██████╗          │" -ForegroundColor Green
+  Write-Host "  │   ████╗ ████║██╔════╝████╗  ██║╚══██╔══╝██╔═══██╗██╔══██╗         │" -ForegroundColor Green
+  Write-Host "  │   ██╔████╔██║█████╗  ██╔██╗ ██║   ██║   ██║   ██║██████╔╝         │" -ForegroundColor Green
+  Write-Host "  │   ██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║   ██║   ██║██╔══██╗         │" -ForegroundColor Green
+  Write-Host "  │   ██║ ╚═╝ ██║███████╗██║ ╚████║   ██║   ╚██████╔╝██║  ██║         │" -ForegroundColor Green
+  Write-Host "  │   ╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝         │" -ForegroundColor Green
+  Write-Host "  │                                                                  │" -ForegroundColor Cyan
+  Write-Host "  │                ORGANIC-DRIVEN DEVELOPMENT · ODD                  │" -ForegroundColor DarkGray
+  Write-Host "  ├──────────────────────────────────────────────────────────────────┤" -ForegroundColor Cyan
+  Write-Host "  │  ✓  Instalación completada                                       │" -ForegroundColor Green
+  Write-Host "  │  Proyecto: $((Get-Location).Path)"
+  Write-Host "  │  Rama:     $Branch"
+  Write-Host "  │                                                                  │"
+  Write-Host "  │  PARA COMENZAR                                                   │" -ForegroundColor Green
+  Write-Host "  │  1. Abre OpenCode en este proyecto.                              │"
+  Write-Host "  │  2. Selecciona el agente MentorKit5.0.                           │"
+  Write-Host "  │  3. Describe tu tarea; MentorKit evaluará el alcance del cambio. │"
+  Write-Host "  │                                                                  │"
+  Write-Host "  │  Docs: github.com/thewild001/MentorKit                           │" -ForegroundColor DarkGray
+  Write-Host "  ╰──────────────────────────────────────────────────────────────────╯" -ForegroundColor Cyan
+  Write-Host ""
 }
 finally {
   if (Test-Path $Tmp) { Remove-Item $Tmp -Recurse -Force -ErrorAction SilentlyContinue }
