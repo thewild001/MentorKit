@@ -120,25 +120,24 @@ bash ".opencode/install-mentorkit.sh" ||
 show_success_splash() {
     local project
     project="$(pwd)"
-    # Keep the project line within the frame so long paths cannot break it.
     if (( ${#project} > 48 )); then project="…${project: -47}"; fi
     echo ""
     echo -e "  ${CYAN}╭──────────────────────────────────────────────────────────────────────╮${RESET}"
     echo -e "  ${CYAN}│                                                                      │${RESET}"
-    echo -e "  ${CYAN}│           █   █ █████ █   █ █████ █████ █   █ █   █ █████            │${RESET}"
-    echo -e "  ${CYAN}│           ██ ██ █     ██  █   █     █   ██  █ █   █     █            │${RESET}"
-    echo -e "  ${CYAN}│           █ █ █ ████  █ █ █   █     █   █ █ █ █   █    █             │${RESET}"
-    echo -e "  ${CYAN}│           █   █ █     █  ██   █     █   █  ██ █   █   █              │${RESET}"
-    echo -e "  ${CYAN}│           █   █ █████ █   █ █████ █████ █   █ █████ █████            │${RESET}"
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █               █               █   █   █     █           '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        ██ ██  ███  ████  █████  ███  █ ██  █  █        █████         '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █ █ █ █   █ █   █   █   █   █ ██  █ ███    ██     █           '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █ █████ █   █   █   █   █ █     █  █    █     █           '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █  ████ █   █   ██   ███  █     █   █  ███    ██          '
     echo -e "  ${CYAN}│                   ORGANIC-DRIVEN DEVELOPMENT · ODD                   │${RESET}"
     echo -e "  ${CYAN}├──────────────────────────────────────────────────────────────────────┤${RESET}"
     echo -e "  ${CYAN}│                      ✓  Instalación completada                       │${RESET}"
     echo -e "  ${CYAN}│                         Proyecto: ${project}                         │${RESET}"
     echo -e "  ${CYAN}│                                                                      │${RESET}"
     echo -e "  ${CYAN}│                            PARA COMENZAR                             │${RESET}"
-    echo -e "  ${CYAN}│                  1. Abre OpenCode en este proyecto.                  │${RESET}"
-    echo -e "  ${CYAN}│                2. Selecciona el agente MentorKit5.0.                 │${RESET}"
-    echo -e "  ${CYAN}│   3. Describe tu tarea; MentorKit evaluará el alcance del cambio.    │${RESET}"
+    echo -e "  ${CYAN}│             1. Define el objetivo que quieres alcanzar.              │${RESET}"
+    echo -e "  ${CYAN}│         2. Describe la tarea y aporta el contexto necesario.         │${RESET}"
+    echo -e "  ${CYAN}│          3. Revisa las propuestas y valida los resultados.           │${RESET}"
     echo -e "  ${CYAN}│                                                                      │${RESET}"
     echo -e "  ${CYAN}│                Docs: github.com/thewild001/MentorKit                 │${RESET}"
     echo -e "  ${CYAN}╰──────────────────────────────────────────────────────────────────────╯${RESET}"
