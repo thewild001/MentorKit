@@ -120,29 +120,27 @@ bash ".opencode/install-mentorkit.sh" ||
 show_success_splash() {
     local project project_line left_pad
     project="$(pwd)"
-    if (( ${#project} > 48 )); then project="…${project: -47}"; fi
+    if (( ${#project} > 42 )); then project="…${project: -41}"; fi
     project_line="Proyecto: ${project}"
     echo ""
     echo -e "  ${CYAN}╭──────────────────────────────────────────────────────────────────────╮${RESET}"
-    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █               █               █   █   █     █           '
-    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        ██ ██  ███  ████  █████  ███  █ ██  █  █        █████         '
-    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █ █ █ █   █ █   █   █   █   █ ██  █ █ █    ██     █           '
-    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █ █ █ █████ █   █   █   █   █ █     ██      █     █           '
-    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █ █     █   █   █   █   █ █     █ █     █     █           '
-    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █ █   █ █   █   █ █ █   █ █     █  █    █     █ █         '
-    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '        █   █  ███  █   █    █   ███  █     █   █  ███     █          '
-    echo -e "  ${CYAN}│                   ORGANIC-DRIVEN DEVELOPMENT · ODD                   │${RESET}"
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '            __  __            _             _  ___ _              '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '           |  \/  | ___ _ __ | |_ ___  _ __| |/ (_) |_            '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '           | |\/| |/ _ \ '_ \| __/ _ \| '__| ' /| | __|           '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '           | |  | |  __/ | | | || (_) | |  | . \| | |_            '
+    printf '  \033[36m│\033[32m%s\033[36m│\033[0m\n' '           |_|  |_|\___|_| |_|\__\___/|_|  |_|\_\_|\__|           '
+    echo -e "  ${CYAN}│                 ORGANIC-DRIVEN DEVELOPMENT · ODD                 │${RESET}"
     echo -e "  ${CYAN}├──────────────────────────────────────────────────────────────────────┤${RESET}"
-    echo -e "  ${CYAN}│                       ✓  INSTALACIÓN COMPLETADA                       │${RESET}"
-    left_pad=$(( (70 - ${#project_line}) / 2 ))
-    printf "  ${CYAN}│%*s%s%*s│${RESET}\n" "$left_pad" "" "$project_line" "$((70 - left_pad - ${#project_line}))" ""
-    echo -e "  ${CYAN}│                                                                      │${RESET}"
-    echo -e "  ${CYAN}│                           PARA COMENZAR                            │${RESET}"
-    echo -e "  ${CYAN}│               1. Define el objetivo que quieres alcanzar.                │${RESET}"
-    echo -e "  ${CYAN}│          2. Describe la tarea y aporta el contexto necesario.          │${RESET}"
-    echo -e "  ${CYAN}│           3. Revisa las propuestas y valida los resultados.            │${RESET}"
-    echo -e "  ${CYAN}│                                                                      │${RESET}"
-    echo -e "  ${CYAN}│                   github.com/thewild001/MentorKit                    │${RESET}"
+    echo -e "  ${CYAN}│                    ✓  INSTALACIÓN COMPLETADA                     │${RESET}"
+    left_pad=$(( (66 - ${#project_line}) / 2 ))
+    printf "  ${CYAN}│%*s%s%*s│${RESET}\n" "$left_pad" "" "$project_line" "$((66 - left_pad - ${#project_line}))" ""
+    echo -e "  ${CYAN}│                                                                  │${RESET}"
+    echo -e "  ${CYAN}│                          PARA COMENZAR                           │${RESET}"
+    echo -e "  ${CYAN}│           1. Define el objetivo que quieres alcanzar.            │${RESET}"
+    echo -e "  ${CYAN}│       2. Describe la tarea y aporta el contexto necesario.       │${RESET}"
+    echo -e "  ${CYAN}│        3. Revisa las propuestas y valida los resultados.         │${RESET}"
+    echo -e "  ${CYAN}│                                                                  │${RESET}"
+    echo -e "  ${CYAN}│                 github.com/thewild001/MentorKit                  │${RESET}"
     echo -e "  ${CYAN}╰──────────────────────────────────────────────────────────────────────╯${RESET}"
     echo ""
 }
