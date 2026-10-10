@@ -25,10 +25,10 @@ try {
   if (Test-Path $make) { Copy-Item $make "." -Force }
   & (Join-Path ".opencode" "install-mentorkit.ps1")
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-  # Single premium splash with consistent fixed-width alignment.
+  # Single premium splash; classic outlined ASCII wordmark.
   $project = (Get-Location).Path
-  if ($project.Length -gt 48) { $project = "…" + $project.Substring($project.Length - 47) }
-  $frameWidth = 70
+  if ($project.Length -gt 42) { $project = "…" + $project.Substring($project.Length - 41) }
+  $frameWidth = 66
   function Center-Line([string]$Text) {
     if ($Text.Length -gt $frameWidth) { $Text = $Text.Substring(0, $frameWidth) }
     $left = [int][Math]::Floor(($frameWidth - $Text.Length) / 2)
@@ -36,13 +36,11 @@ try {
   }
   Write-Host ""
   Write-Host "  ╭──────────────────────────────────────────────────────────────────────╮" -ForegroundColor Cyan
-  Write-Host ("  │" + (Center-Line "█   █               █               █   █   █     █  ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "██ ██  ███  ████  █████  ███  █ ██  █  █        █████") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "█ █ █ █   █ █   █   █   █   █ ██  █ █ █    ██     █  ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "█ █ █ █████ █   █   █   █   █ █     ██      █     █  ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "█   █ █     █   █   █   █   █ █     █ █     █     █  ") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "█   █ █   █ █   █   █ █ █   █ █     █  █    █     █ █") + "│") -ForegroundColor Green
-  Write-Host ("  │" + (Center-Line "█   █  ███  █   █    █   ███  █     █   █  ███     █ ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line " __  __            _             _  ___ _   ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "|  \/  | ___ _ __ | |_ ___  _ __| |/ (_) |_ ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "| |\/| |/ _ \ '_ \| __/ _ \| '__| ' /| | __|") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "| |  | |  __/ | | | || (_) | |  | . \| | |_ ") + "│") -ForegroundColor Green
+  Write-Host ("  │" + (Center-Line "|_|  |_|\___|_| |_|\__\___/|_|  |_|\_\_|\__|") + "│") -ForegroundColor Green
   Write-Host ("  │" + (Center-Line "ORGANIC-DRIVEN DEVELOPMENT · ODD") + "│") -ForegroundColor DarkCyan
   Write-Host "  ├──────────────────────────────────────────────────────────────────────┤" -ForegroundColor Cyan
   Write-Host ("  │" + (Center-Line "✓  INSTALACIÓN COMPLETADA") + "│") -ForegroundColor Green
