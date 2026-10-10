@@ -132,8 +132,8 @@ show_success_splash() {
     echo -e "  ${CYAN}│                 ORGANIC-DRIVEN DEVELOPMENT · ODD                 │${RESET}"
     echo -e "  ${CYAN}├──────────────────────────────────────────────────────────────────────┤${RESET}"
     echo -e "  ${CYAN}│                    ✓  INSTALACIÓN COMPLETADA                     │${RESET}"
-    left_pad=$(( (66 - ${#project_line}) / 2 ))
-    printf "  ${CYAN}│%*s%s%*s│${RESET}\n" "$left_pad" "" "$project_line" "$((66 - left_pad - ${#project_line}))" ""
+    left_pad=$(( (70 - ${#project_line}) / 2 ))
+    printf "  ${CYAN}│%*s%s%*s│${RESET}\n" "$left_pad" "" "$project_line" "$((70 - left_pad - ${#project_line}))" ""
     echo -e "  ${CYAN}│                                                                  │${RESET}"
     echo -e "  ${CYAN}│                          PARA COMENZAR                           │${RESET}"
     echo -e "  ${CYAN}│           1. Define el objetivo que quieres alcanzar.            │${RESET}"
