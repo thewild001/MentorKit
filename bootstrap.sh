@@ -53,8 +53,19 @@ ARCHIVE="${TMP}/mentorkit.tar.gz"
 # ---------------------------------------------------------------------------
 
 echo -e "  ${DIM}1/3${RESET}  Descargando release..."
-curl -fsSL --retry 3 --retry-delay 2 --max-time 180 "$TARBALL_URL" -o "$ARCHIVE" ||
-    fail "No se pudo descargar MentorKit desde GitHub."
+if ! curl -fsSL --retry 3 --retry-delay 2 --max-time 180 "$TARBALL_URL" -o "$ARCHIVE"; then
+    hint=""
+    if [[ -n "${MENTORKIT_BRANCH:-}" ]]; then
+        hint="
+            MENTORKIT_BRANCH='${MENTORKIT_BRANCH}' viene de tu entorno. Si es un error de escritura:
+              unset MENTORKIT_BRANCH"
+    fi
+    fail "No se pudo descargar MentorKit desde GitHub.
+            Repositorio: ${REPO}
+            Rama:        ${BRANCH}
+            URL:         ${TARBALL_URL}
+            Comprueba que la rama existe y que el repositorio es accesible.${hint}"
+fi
 
 [[ -s "$ARCHIVE" ]] || fail "GitHub devolvió un archivo vacío."
 
