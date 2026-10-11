@@ -17,27 +17,58 @@ MentorKit no impone una ceremonia uniforme. Determina cuánto proceso necesita c
 
 ## 🚀 Instalación
 
-Desde la raíz del proyecto donde quieres utilizar MentorKit:
+Desde la raíz del proyecto donde quieres utilizar MentorKit.
+
+**Linux y macOS**
 
 ```bash
-bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.sh")
+MENTORKIT_BRANCH=feature/odd-migration bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.sh")
 ```
 
-Para instalar la rama experimental en Linux o macOS. El instalador prepara los componentes de MentorKit, el runtime Python administrado mediante `uv` y las verificaciones disponibles.
-
-### Windows nativo
+**Windows (PowerShell)**
 
 ```powershell
+$env:MENTORKIT_BRANCH = "feature/odd-migration"
+irm "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.ps1" -OutFile bootstrap.ps1
 powershell -ExecutionPolicy Bypass -File .\bootstrap.ps1
 ```
 
-Verificación:
+`MENTORKIT_BRANCH` es obligatoria mientras esta rama no sea `main`: sin ella el bootstrap descarga `main`, detecta que es anterior a este flujo y se detiene con un mensaje explicativo. Windows también puede utilizar Git Bash o WSL2 con el comando de Linux, pero no son requisitos para el flujo nativo.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\.opencode\mentorkit-verify.ps1
+El instalador, en este orden:
+
+1. Descarga el release de la rama indicada y copia `.opencode/`, `odd/`, `.mentor/`, `AGENTS.md`, `CLAUDE.md`, `.cursor/`, `.claude/`, `.agents/` y `Makefile`. No sobrescribe un `.opencode/` existente en Windows.
+2. Instala `uv` si falta y, con él, Python 3.12 y las dependencias de `requirements.lock` en un entorno aislado (`.opencode/.mentorkit/venv`).
+3. Instala `codebase-memory-mcp` y lo configura en los cuatro agentes (ver [Comprensión del codebase](#-comprensión-del-codebase)).
+4. Verifica todo (`VERIFY PASS`) y muestra el resumen final.
+
+Verificación posterior, en cualquier momento:
+
+```bash
+bash .opencode/mentorkit-verify.sh            # Linux / macOS
 ```
 
-Windows también puede utilizar Git Bash o WSL2, pero no son requisitos para el flujo nativo.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\.opencode\mentorkit-verify.ps1   # Windows
+```
+
+### Variables de entorno
+
+| Variable | Efecto |
+|---|---|
+| `MENTORKIT_BRANCH` | Rama o tag a instalar (por defecto `main`). |
+| `MENTORKIT_MCP_CLIENTS` | Agentes a configurar, separados por comas: `claude,codex,opencode,cursor` (por defecto, los cuatro). |
+| `MENTORKIT_SKIP_MCP=1` | Omite la instalación y la verificación de `codebase-memory-mcp`. |
+| `MENTORKIT_CBM_DIR` | Directorio de instalación del binario del MCP (por defecto `~/.local/bin`, o `%LOCALAPPDATA%\Programs\codebase-memory-mcp` en Windows). |
+
+### Solución de problemas
+
+| Síntoma | Causa y solución |
+|---|---|
+| `404` al descargar, o `@ <rama>` con un nombre mal escrito | `MENTORKIT_BRANCH` viene de tu entorno con un valor incorrecto. Ejecuta `unset MENTORKIT_BRANCH` (en PowerShell: `Remove-Item Env:MENTORKIT_BRANCH`) y vuelve a lanzar el comando. |
+| `El release de '<rama>' es anterior a este bootstrap` | Esa rama no incluye `.opencode/mentorkit.py`. Indica una rama con la migración ODD en `MENTORKIT_BRANCH`. |
+| `SHA-256 no coincide` | El binario descargado no es el esperado; no se instala nada. Reintenta y, si persiste, revisa proxies o cachés que alteren la descarga. |
+| Un agente aparece como `x` en la verificación | Su archivo de configuración no es JSON/TOML válido (no se sobrescribe) o apunta a un binario inexistente. Corrige el archivo y ejecuta `uv run --python 3.12 .opencode/mentorkit.py configure-mcp`. |
 
 > **Importante:** esta es una rama experimental. Instálala primero en un repositorio de prueba y valida los flujos relevantes antes de adoptarla en proyectos críticos.
 
@@ -307,16 +338,23 @@ Detalles: `odd/PERSISTENCE.md`.
 
 ## 🖥️ Compatibilidad multiplataforma
 
-La rama experimental incluye rutas de instalación y verificación para:
+La rama incluye rutas de instalación y verificación para:
 
 - **Linux:** scripts POSIX.
 - **macOS:** scripts POSIX.
-- **Windows:** PowerShell nativo, además de Git Bash/WSL2.
-- **Runtime común:** `.opencode/mentorkit.py`.
-- **Python:** entorno gestionado mediante `uv`.
-- **CI:** workflow de smoke tests con matriz Ubuntu, macOS y Windows.
+- **Windows:** PowerShell nativo (`bootstrap.ps1`, `install-mentorkit.ps1`), además de Git Bash/WSL2.
+- **Runtime común:** `.opencode/mentorkit.py`, ejecutado por `uv` con Python 3.12.
+- **Arquitecturas del MCP:** `amd64` y `arm64`.
 
-La compatibilidad está diseñada en torno a un núcleo compartido y launchers específicos por sistema operativo. La matriz de CI y las pruebas locales deben completarse antes de considerar la migración estable.
+El workflow `.github/workflows/platform-smoke.yml` se ejecuta en Ubuntu, macOS y Windows con cada push a esta rama y con cada pull request hacia ella o hacia `main`. Instala **la rama bajo prueba** (no la base del PR) y comprueba:
+
+- bootstrap en un proyecto limpio;
+- runtime nativo y dependencias (`mentorkit-verify`);
+- instalación del MCP, handshake real y configuración de Claude, Codex, OpenCode y Cursor;
+- creación de documentos ODD (`odd-task`);
+- contratos de planificación, PRD multiformato, conocimiento del codebase y compatibilidad entre agentes.
+
+Pendiente de validar manualmente: Windows PowerShell 5.1 (CI usa PowerShell 7) y las pruebas funcionales de la lista de la sección de desarrollo.
 
 ---
 
@@ -373,6 +411,9 @@ Antes de probar la rama en un proyecto real, se recomienda validar al menos:
 
 ```text
 MentorKit/
+├── .github/
+│   └── workflows/
+│       └── platform-smoke.yml
 ├── .mentor/
 ├── .opencode/
 │   ├── agents/
@@ -383,7 +424,10 @@ MentorKit/
 │   │   ├── prd-reader/
 │   │   ├── document-extractor/
 │   │   └── spec-writer/
-│   ├── mentorkit.py
+│   ├── install-mentorkit.{sh,ps1,cmd}
+│   ├── mentorkit-verify.{sh,ps1,cmd}
+│   ├── mentorkit-odd-task.{sh,ps1,cmd}
+│   ├── mentorkit.py                # instalación, MCP, verificación
 │   └── requirements.lock
 ├── odd/
 │   ├── CONTRACT.md
@@ -425,7 +469,7 @@ Objetivos de esta rama:
 - Dar soporte a Linux, macOS y Windows.
 - Retirar OpenSpec progresivamente, no antes de validar la migración.
 
-Esta rama es experimental y no debe considerarse estable solo por estar implementada. La validación funcional y el estado de CI deben comprobarse antes de integrar los cambios en `main`.
+Esta rama es experimental y no debe considerarse estable solo por estar implementada. El smoke test de CI pasa en Linux, macOS y Windows, pero la validación funcional con casos reales sigue pendiente antes de integrar los cambios en `main`. Cuando eso ocurra, `MENTORKIT_BRANCH` dejará de ser necesaria en el comando de instalación.
 
 ---
 
