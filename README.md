@@ -188,6 +188,25 @@ Graphify
 Fingerprinting + inspección directa
 ```
 
+### Instalación y configuración de `codebase-memory-mcp`
+
+El instalador (`install-mentorkit.sh` / `.ps1` / `.cmd`) deja el MCP listo sin pasos manuales:
+
+- **Binario fijado**: `v0.11.0`, con el SHA-256 de cada plataforma embebido en `.opencode/mentorkit.py`. Si el hash no coincide, no se instala nada. Linux usa el build estático `portable`.
+- **Plataformas**: Linux, macOS y Windows, en `amd64` y `arm64`.
+- **Agentes** (solo se escribe la entrada MCP y se conserva el resto del archivo; se guarda una copia `.mentorkit.bak` la primera vez):
+
+| Agente | Archivo |
+| --- | --- |
+| Claude Code | `~/.claude.json` (`mcpServers`; respeta `CLAUDE_CONFIG_DIR`) |
+| Codex | `~/.codex/config.toml` (`[mcp_servers.codebase-memory-mcp]`; respeta `CODEX_HOME`) |
+| OpenCode | `~/.config/opencode/opencode.json` (`mcp`; respeta `XDG_CONFIG_HOME`) |
+| Cursor | `~/.cursor/mcp.json` (`mcpServers`) |
+
+- **Verificación**: `mentorkit-verify` abre una sesión MCP real (`initialize` + `tools/list`) y comprueba que cada agente apunta a un binario existente.
+- **Control**: `MENTORKIT_MCP_CLIENTS=claude,cursor` limita los agentes, `MENTORKIT_SKIP_MCP=1` omite el paso. Un archivo de configuración con JSON/TOML inválido no se sobrescribe y el instalador termina con error.
+- Para actualizar la versión, cambia `CBM_VERSION` y los hashes de `CBM_ASSETS` en `mentorkit.py`.
+
 ### ¿Qué se analiza?
 
 - Arquitectura y límites entre módulos.
