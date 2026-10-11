@@ -56,6 +56,7 @@ S4. Corregir `configure_mcp` (escribía `\n` literal y corrompía `opencode.json
 L1. Decisión: escribir solo las entradas MCP en vez de ejecutar el instalador oficial con `--clients`, porque este añade hooks, skills, agentes y edita `~/.profile`. Upstream no ofrece un modo solo-MCP.
 L2. Limitación: Windows y macOS no se pueden ejecutar en este sandbox; solo los cubre CI.
 L3. Ruta global de OpenCode: `~/.config/opencode/opencode.json` en todos los SO (respeta `XDG_CONFIG_HOME`); se actualiza además la ruta heredada si ya existe.
+L4. `bootstrap.ps1`: guard equivalente al de `bootstrap.sh` y splash recalculado (el borde anterior medía 70 y las filas 66). Probado con pwsh 7.4 en Linux en modo UTF-8 y ASCII: todas las filas miden igual. No probado en Windows PowerShell 5.1.
 
 ## Delivery
 
