@@ -40,6 +40,26 @@ jobs:
           else
             bash ./.opencode/mentorkit-verify.sh
           fi
+      - name: Verify codebase-memory-mcp across agents
+        shell: bash
+        run: |
+          cd "$MENTORKIT_TEST_DIR"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            pwsh -NoProfile -ExecutionPolicy Bypass -File ./.opencode/mentorkit-verify.ps1 -Json > mcp-verify.json
+          else
+            bash ./.opencode/mentorkit-verify.sh --json > mcp-verify.json
+          fi
+          cat mcp-verify.json
+          PY="$(command -v python3 || command -v python)"
+          "$PY" -c '
+          import json
+          m = json.load(open("mcp-verify.json"))["mcp"]
+          assert m["handshake"] and m["tools"] > 0, "handshake MCP fallido"
+          assert m["version"] == m["pinned"], "version distinta de la fijada"
+          assert set(m["clients"]) == {"claude", "codex", "opencode", "cursor"}, "faltan agentes"
+          bad = [c for c, v in m["clients"].items() if not v["ok"]]
+          assert not bad, "agentes sin configurar: %s" % bad
+          '
       - name: Verify ODD task creation
         shell: bash
         run: |
