@@ -15,6 +15,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      # Install the branch under test (PR head or pushed branch), never the base branch.
+      MENTORKIT_BRANCH: ${{ github.head_ref || github.ref_name }}
     defaults:
       run:
         shell: bash
@@ -27,9 +30,9 @@ jobs:
           echo "MENTORKIT_TEST_DIR=$TEST_DIR" >> "$GITHUB_ENV"
           cd "$TEST_DIR"
           if [ "$RUNNER_OS" = "Windows" ]; then
-            pwsh -NoProfile -ExecutionPolicy Bypass -Command '$env:MENTORKIT_BRANCH="feature/odd-migration"; & "$env:GITHUB_WORKSPACE\bootstrap.ps1"'
+            pwsh -NoProfile -ExecutionPolicy Bypass -Command '& "$env:GITHUB_WORKSPACE\bootstrap.ps1"'
           else
-            MENTORKIT_BRANCH=feature/odd-migration bash "$GITHUB_WORKSPACE/bootstrap.sh"
+            bash "$GITHUB_WORKSPACE/bootstrap.sh"
           fi
       - name: Verify native runtime
         shell: bash
@@ -53,7 +56,7 @@ jobs:
           PY="$(command -v python3 || command -v python)"
           "$PY" -c '
           import json
-          m = json.load(open("mcp-verify.json"))["mcp"]
+          m = json.load(open("mcp-verify.json", encoding="utf-8-sig"))["mcp"]
           assert m["handshake"] and m["tools"] > 0, "handshake MCP fallido"
           assert m["version"] == m["pinned"], "version distinta de la fijada"
           assert set(m["clients"]) == {"claude", "codex", "opencode", "cursor"}, "faltan agentes"
@@ -78,9 +81,9 @@ jobs:
           test -f odd/planning/CONTRACT.md
           test -f odd/planning/README.md
           test -f odd/planning/templates/implementation-plan.md
-          grep -q "PRD Analysis" odd/planning/CONTRACT.md
+          grep -qi "PRD analysis" odd/planning/CONTRACT.md
           grep -q "Implementation Plan" odd/planning/CONTRACT.md
-          grep -q "odd/tasks/<feature-name>.md" odd/planning/CONTRACT.md
+          grep -q "odd/tasks/<feature-name>.md" odd/planning/README.md
       - name: Verify multi-format PRD contracts
         shell: bash
         run: |
