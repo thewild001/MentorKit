@@ -75,6 +75,16 @@ done < <(find "$TMP" -mindepth 1 -maxdepth 1 -type d -print)
 
 [[ -n "$REPO_DIR" ]] || fail "El release no contiene un instalador MentorKit válido."
 
+# This bootstrap delegates to .opencode/mentorkit.py. Releases from before the ODD
+# migration (e.g. `main` until it is merged) ship a self-contained installer that
+# prints its own banner and does not follow this flow. Stop here instead of
+# running a mismatched pair, which is what produced a second, older splash.
+if [[ ! -f "$REPO_DIR/.opencode/mentorkit.py" ]]; then
+    fail "El release de '${BRANCH}' es anterior a este bootstrap (no incluye .opencode/mentorkit.py).
+     Indica la rama que corresponde a este bootstrap con MENTORKIT_BRANCH:
+       MENTORKIT_BRANCH=<rama> bash <(curl -fsSL \"https://raw.githubusercontent.com/${REPO}/<rama>/bootstrap.sh\")"
+fi
+
 # ---------------------------------------------------------------------------
 # Install files
 # ---------------------------------------------------------------------------
