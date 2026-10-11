@@ -1,23 +1,53 @@
-<p align="center">
-  <img src="./MentorKit5.0-Banner.png" alt="MentorKit" width="100%" />
-</p>
+<div align="center">
 
 # MentorKit
 
-> **Agentic engineering workflow para desarrolladores**, construido sobre OpenCode y orientado a aplicar **Organic Driven Development (ODD)** de forma proporcional al cambio.
+**Ingeniería de software agéntica, con el proceso justo para cada cambio.**
 
-MentorKit no impone una ceremonia uniforme. Determina cuánto proceso necesita cada trabajo: desde un cambio pequeño y localizado hasta una feature sustancial que requiere contexto persistente, planificación, tareas, verificación y unidades de entrega revisables.
+Workflow para desarrolladores construido sobre OpenCode y orientado a *Organic Driven Development* (ODD).
 
-**Plataformas:** Linux · macOS · Windows  
-**Runtime principal:** OpenCode + skills MentorKit  
-**Agentes objetivo:** OpenCode · Cursor · Codex · Claude Code  
-**Workflow:** ODD — SMALL / SUBSTANTIAL
+[![Platform Smoke Test](https://github.com/thewild001/MentorKit/actions/workflows/platform-smoke.yml/badge.svg?branch=feature%2Fodd-migration)](https://github.com/thewild001/MentorKit/actions/workflows/platform-smoke.yml)
+![Linux · macOS · Windows](https://img.shields.io/badge/plataformas-Linux%20%C2%B7%20macOS%20%C2%B7%20Windows-0b1220?style=flat-square&labelColor=0b1220&color=38bdf8)
+![OpenCode · Cursor · Codex · Claude Code](https://img.shields.io/badge/agentes-OpenCode%20%C2%B7%20Cursor%20%C2%B7%20Codex%20%C2%B7%20Claude%20Code-0b1220?style=flat-square&labelColor=0b1220&color=6366f1)
+![Estado experimental](https://img.shields.io/badge/estado-experimental-0b1220?style=flat-square&labelColor=0b1220&color=f59e0b)
+
+[Instalación](#instalación) &nbsp;·&nbsp; [ODD](#organic-driven-development-odd) &nbsp;·&nbsp; [Codebase](#comprensión-del-codebase) &nbsp;·&nbsp; [Agentes](#compatibilidad-con-agentes) &nbsp;·&nbsp; [Plataformas](#compatibilidad-multiplataforma) &nbsp;·&nbsp; [Contribuir](#contribuir)
+
+</div>
 
 ---
 
-## 🚀 Instalación
+MentorKit no impone una ceremonia uniforme. Decide cuánto proceso necesita cada trabajo: desde un cambio pequeño y localizado hasta una feature sustancial que requiere contexto persistente, planificación, tareas, verificación y unidades de entrega revisables.
 
-Desde la raíz del proyecto donde quieres utilizar MentorKit.
+| | |
+|---|---|
+| **Workflow** | ODD, con dos rutas: `SMALL` y `SUBSTANTIAL` |
+| **Runtime** | OpenCode + skills de MentorKit, con Python 3.12 gestionado por `uv` |
+| **Agentes** | OpenCode · Cursor · Codex · Claude Code, con un contrato común |
+| **Conocimiento del codebase** | `codebase-memory-mcp` → Graphify → fingerprinting |
+| **Plataformas** | Linux · macOS · Windows (`amd64` y `arm64`) |
+
+## Contenido
+
+- [Instalación](#instalación)
+- [Organic Driven Development (ODD)](#organic-driven-development-odd)
+- [PRD opcional y planificación](#prd-opcional-y-planificación)
+- [Comprensión del codebase](#comprensión-del-codebase)
+- [Arquitectura](#arquitectura)
+- [Persistencia y continuidad](#persistencia-y-continuidad)
+- [Compatibilidad con agentes](#compatibilidad-con-agentes)
+- [Compatibilidad multiplataforma](#compatibilidad-multiplataforma)
+- [Verificación y entrega](#verificación-y-entrega)
+- [Desarrollo y validación local](#desarrollo-y-validación-local)
+- [Estructura del repositorio](#estructura-del-repositorio)
+- [Estado y alcance](#estado-y-alcance)
+- [Contribuir](#contribuir)
+
+---
+
+## Instalación
+
+Ejecuta el instalador desde la raíz del proyecto donde quieres usar MentorKit.
 
 **Linux y macOS**
 
@@ -33,19 +63,22 @@ irm "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migratio
 powershell -ExecutionPolicy Bypass -File .\bootstrap.ps1
 ```
 
-`MENTORKIT_BRANCH` es obligatoria mientras esta rama no sea `main`: sin ella el bootstrap descarga `main`, detecta que es anterior a este flujo y se detiene con un mensaje explicativo. Windows también puede utilizar Git Bash o WSL2 con el comando de Linux, pero no son requisitos para el flujo nativo.
+> [!IMPORTANT]
+> `MENTORKIT_BRANCH` es obligatoria mientras esta rama no sea `main`. Sin ella, el bootstrap descarga `main`, detecta que es anterior a este flujo y se detiene con un mensaje explicativo. Windows también puede usar Git Bash o WSL2 con el comando de Linux, pero no son requisitos.
 
-El instalador, en este orden:
+### Qué hace el instalador
 
-1. Descarga el release de la rama indicada y copia `.opencode/`, `odd/`, `.mentor/`, `AGENTS.md`, `CLAUDE.md`, `.cursor/`, `.claude/`, `.agents/` y `Makefile`. No sobrescribe un `.opencode/` existente en Windows.
-2. Instala `uv` si falta y, con él, Python 3.12 y las dependencias de `requirements.lock` en un entorno aislado (`.opencode/.mentorkit/venv`).
-3. Instala `codebase-memory-mcp` y lo configura en los cuatro agentes (ver [Comprensión del codebase](#-comprensión-del-codebase)).
-4. Verifica todo (`VERIFY PASS`) y muestra el resumen final.
+| Paso | Acción |
+|:---:|---|
+| **1** | Descarga el release de la rama indicada y copia `.opencode/`, `odd/`, `.mentor/`, `AGENTS.md`, `CLAUDE.md`, `.cursor/`, `.claude/`, `.agents/` y `Makefile`. |
+| **2** | Instala `uv` si falta y, con él, Python 3.12 y las dependencias de `requirements.lock` en un entorno aislado (`.opencode/.mentorkit/venv`). |
+| **3** | Instala `codebase-memory-mcp` y lo configura en los cuatro agentes ([detalle](#codebase-memory-mcp)). |
+| **4** | Verifica el conjunto (`VERIFY PASS`) y muestra el resumen final. |
 
-Verificación posterior, en cualquier momento:
+Para verificar en cualquier momento:
 
 ```bash
-bash .opencode/mentorkit-verify.sh            # Linux / macOS
+bash .opencode/mentorkit-verify.sh          # Linux · macOS
 ```
 
 ```powershell
@@ -59,22 +92,28 @@ powershell -ExecutionPolicy Bypass -File .\.opencode\mentorkit-verify.ps1   # Wi
 | `MENTORKIT_BRANCH` | Rama o tag a instalar (por defecto `main`). |
 | `MENTORKIT_MCP_CLIENTS` | Agentes a configurar, separados por comas: `claude,codex,opencode,cursor` (por defecto, los cuatro). |
 | `MENTORKIT_SKIP_MCP=1` | Omite la instalación y la verificación de `codebase-memory-mcp`. |
-| `MENTORKIT_CBM_DIR` | Directorio de instalación del binario del MCP (por defecto `~/.local/bin`, o `%LOCALAPPDATA%\Programs\codebase-memory-mcp` en Windows). |
+| `MENTORKIT_CBM_DIR` | Directorio del binario del MCP (por defecto `~/.local/bin`, o `%LOCALAPPDATA%\Programs\codebase-memory-mcp` en Windows). |
 
-### Solución de problemas
+<details>
+<summary><strong>Solución de problemas</strong></summary>
+
+<br>
 
 | Síntoma | Causa y solución |
 |---|---|
-| `404` al descargar, o `@ <rama>` con un nombre mal escrito | `MENTORKIT_BRANCH` viene de tu entorno con un valor incorrecto. Ejecuta `unset MENTORKIT_BRANCH` (en PowerShell: `Remove-Item Env:MENTORKIT_BRANCH`) y vuelve a lanzar el comando. |
+| `404` al descargar, o `@ <rama>` con el nombre mal escrito | `MENTORKIT_BRANCH` viene de tu entorno con un valor incorrecto. Ejecuta `unset MENTORKIT_BRANCH` (PowerShell: `Remove-Item Env:MENTORKIT_BRANCH`) y vuelve a lanzar el comando. |
 | `El release de '<rama>' es anterior a este bootstrap` | Esa rama no incluye `.opencode/mentorkit.py`. Indica una rama con la migración ODD en `MENTORKIT_BRANCH`. |
-| `SHA-256 no coincide` | El binario descargado no es el esperado; no se instala nada. Reintenta y, si persiste, revisa proxies o cachés que alteren la descarga. |
-| Un agente aparece como `x` en la verificación | Su archivo de configuración no es JSON/TOML válido (no se sobrescribe) o apunta a un binario inexistente. Corrige el archivo y ejecuta `uv run --python 3.12 .opencode/mentorkit.py configure-mcp`. |
+| `SHA-256 no coincide` | El binario descargado no es el esperado y no se instala nada. Reintenta y, si persiste, revisa proxies o cachés que alteren la descarga. |
+| Un agente aparece como `x` en la verificación | Su archivo de configuración no es JSON/TOML válido (no se sobrescribe) o apunta a un binario inexistente. Corrígelo y ejecuta `uv run --python 3.12 .opencode/mentorkit.py configure-mcp`. |
 
-> **Importante:** esta es una rama experimental. Instálala primero en un repositorio de prueba y valida los flujos relevantes antes de adoptarla en proyectos críticos.
+</details>
+
+> [!WARNING]
+> Esta es una rama experimental. Instálala primero en un repositorio de prueba y valida los flujos relevantes antes de adoptarla en proyectos críticos.
 
 ---
 
-## 🧠 Organic Driven Development (ODD)
+## Organic Driven Development (ODD)
 
 ODD es el modelo de orquestación de MentorKit. El proceso se adapta a la complejidad y al riesgo, no al revés.
 
@@ -106,35 +145,29 @@ Implement       Durable ODD Task
          Close
 ```
 
-### SMALL
-
-Cambio localizado, de bajo riesgo y suficientemente comprendido. Se implementa y verifica siguiendo los patrones existentes, sin crear documentación persistente por mera formalidad.
-
-### SUBSTANTIAL
-
-Feature, migración, cambio arquitectónico, refactor transversal, lógica no trivial o trabajo que requiere varias unidades, decisiones relevantes o continuidad entre sesiones. Antes de modificar el código se crea:
-
-```text
-odd/tasks/<feature-name>.md
-```
-
-El documento mantiene el objetivo, las especificaciones verificables (S#), las tareas (T#), la estrategia de verificación, el registro de avance y el estado de entrega.
+| Ruta | Cuándo | Qué implica |
+|---|---|---|
+| **SMALL** | Cambio localizado, de bajo riesgo y suficientemente comprendido. | Se implementa y verifica siguiendo los patrones existentes, sin documentación persistente por mera formalidad. |
+| **SUBSTANTIAL** | Feature, migración, cambio arquitectónico, refactor transversal, lógica no trivial o trabajo que abarca varias unidades, decisiones relevantes o sesiones. | Antes de tocar código se crea `odd/tasks/<feature-name>.md`, con el objetivo, las especificaciones verificables (`S#`), las tareas (`T#`), la verificación, el registro de avance y el estado de entrega. |
 
 ### Autorización y control de alcance
 
-- Una solicitud de análisis o explicación no autoriza por sí sola cambios de código.
-- Un hallazgo no equivale a autorización.
-- Los cambios de alcance requieren autorización.
-- Generar un plan no autoriza automáticamente su implementación.
-- Push, pull request, merge y despliegue siguen siendo decisiones de entrega independientes.
+- Pedir un análisis o una explicación no autoriza cambios de código.
+- Un hallazgo no equivale a autorización, y los cambios de alcance la requieren.
+- Generar un plan no autoriza implementarlo.
+- Push, pull request, merge y despliegue son decisiones de entrega independientes.
 
 ---
 
-## 📄 PRD opcional y planificación de implementación
+## PRD opcional y planificación
 
-**Un PRD no es un requisito para utilizar ODD.** Una solicitud directa del usuario es una entrada de primera clase. La existencia de un PRD tampoco determina si el cambio es SMALL o SUBSTANTIAL.
+**Un PRD no es un requisito para usar ODD.** Una solicitud directa es una entrada de primera clase, y la existencia de un PRD no determina si el cambio es `SMALL` o `SUBSTANTIAL`.
 
-### Ruta sin PRD
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**Sin PRD**
 
 ```text
 User Request
@@ -145,12 +178,16 @@ Codebase Knowledge
      ↓
 Plan / Route when justified
      ↓
-ODD Feature Document, if SUBSTANTIAL
+ODD Feature Document
+(si es SUBSTANTIAL)
      ↓
 S# / T# → Implementation
 ```
 
-### Ruta con PRD
+</td>
+<td width="50%" valign="top">
+
+**Con PRD**
 
 ```text
 User Request + optional PRD
@@ -167,26 +204,25 @@ User Request + optional PRD
              ↓
      Implementation Plan
              ↓
-       ODD S# / T#
-             ↓
-        Implementation
+ ODD S# / T# → Implementation
 ```
 
-El PRD aporta requisitos estructurados cuando existe; no sustituye la exploración del repositorio. El plan se genera cuando la complejidad o la solicitud del usuario lo justifican, no simplemente porque se haya adjuntado un documento.
+</td>
+</tr>
+</table>
 
-### Formatos documentales
+El PRD aporta requisitos estructurados cuando existe; no sustituye la exploración del repositorio. El plan se genera cuando la complejidad o la solicitud lo justifican, no porque se haya adjuntado un documento.
 
-La capacidad de extracción contempla:
+**Formatos documentales.** `document-extractor` normaliza el contenido y `prd-reader` analiza los requisitos, de modo que la planificación no depende del formato:
 
-- PDF digital.
-- PDF escaneado (puede requerir OCR; el contenido no extraído no se inventa).
-- DOCX.
-- DOC mediante el backend `anydoc`.
-- ODT.
+| Formato | Notas |
+|---|---|
+| PDF digital | Extracción directa. |
+| PDF escaneado | Puede requerir OCR. El contenido no extraído no se inventa. |
+| DOCX · ODT | Extracción directa. |
+| DOC | Mediante el backend `anydoc`. |
 
-La extracción de documentos está separada del análisis semántico: `document-extractor` normaliza el contenido y `prd-reader` analiza los requisitos. La planificación sigue siendo independiente del formato.
-
-### Artefactos
+**Artefactos.** El *Implementation Plan* describe la ruta técnica y arquitectónica; el *ODD Feature Document* es la fuente de verdad del estado de ejecución. Un plan puede existir sin autorización para implementar.
 
 ```text
 odd/
@@ -194,22 +230,17 @@ odd/
 ├── planning/
 │   ├── CONTRACT.md
 │   ├── README.md
-│   ├── templates/
-│   │   └── implementation-plan.md
+│   ├── templates/implementation-plan.md
 │   └── <feature-name>.md       # si el plan es material o solicitado
 └── tasks/
     └── <feature-name>.md       # trabajo SUBSTANTIAL
 ```
 
-El **Implementation Plan** describe la ruta técnica y arquitectónica. El **ODD Feature Document** es la fuente de verdad del estado de ejecución. Un plan puede existir sin autorización para implementar.
-
 ---
 
-## 🧭 Comprensión del codebase
+## Comprensión del codebase
 
-La comprensión del repositorio es una capacidad central de MentorKit, no un paso que el PRD pueda reemplazar.
-
-Orden de preferencia definido por el contrato de conocimiento:
+Entender el repositorio es una capacidad central de MentorKit, y ningún PRD puede reemplazarla. El contrato de conocimiento define este orden de preferencia:
 
 ```text
 codebase-memory-mcp
@@ -219,54 +250,43 @@ Graphify
 Fingerprinting + inspección directa
 ```
 
-### Instalación y configuración de `codebase-memory-mcp`
-
-El instalador (`install-mentorkit.sh` / `.ps1` / `.cmd`) deja el MCP listo sin pasos manuales:
-
-- **Binario fijado**: `v0.11.0`, con el SHA-256 de cada plataforma embebido en `.opencode/mentorkit.py`. Si el hash no coincide, no se instala nada. Linux usa el build estático `portable`.
-- **Plataformas**: Linux, macOS y Windows, en `amd64` y `arm64`.
-- **Agentes** (solo se escribe la entrada MCP y se conserva el resto del archivo; se guarda una copia `.mentorkit.bak` la primera vez):
-
-| Agente | Archivo |
-| --- | --- |
-| Claude Code | `~/.claude.json` (`mcpServers`; respeta `CLAUDE_CONFIG_DIR`) |
-| Codex | `~/.codex/config.toml` (`[mcp_servers.codebase-memory-mcp]`; respeta `CODEX_HOME`) |
-| OpenCode | `~/.config/opencode/opencode.json` (`mcp`; respeta `XDG_CONFIG_HOME`) |
-| Cursor | `~/.cursor/mcp.json` (`mcpServers`) |
-
-- **Verificación**: `mentorkit-verify` abre una sesión MCP real (`initialize` + `tools/list`) y comprueba que cada agente apunta a un binario existente.
-- **Control**: `MENTORKIT_MCP_CLIENTS=claude,cursor` limita los agentes, `MENTORKIT_SKIP_MCP=1` omite el paso. Un archivo de configuración con JSON/TOML inválido no se sobrescribe y el instalador termina con error.
-- Para actualizar la versión, cambia `CBM_VERSION` y los hashes de `CBM_ASSETS` en `mentorkit.py`.
-
-### ¿Qué se analiza?
-
-- Arquitectura y límites entre módulos.
-- Puntos de entrada y dependencias.
-- Patrones existentes y *golden examples*.
-- Módulos críticos y relaciones de dependencia.
-- Impacto potencial (*blast radius*).
-- Pruebas y mecanismos de verificación.
-- Configuración, CI/CD y restricciones de ejecución.
-- Políticas explícitas y decisiones arquitectónicas relevantes.
+**Qué se analiza:** arquitectura y límites entre módulos · puntos de entrada y dependencias · patrones y *golden examples* · módulos críticos y *blast radius* · pruebas y mecanismos de verificación · configuración, CI/CD y restricciones de ejecución · políticas y decisiones arquitectónicas.
 
 El proveedor de conocimiento acelera la exploración, pero **el repositorio observado sigue siendo la fuente de verdad**. Si el grafo está obsoleto o contradice el código, MentorKit valida el estado real y actualiza o descarta la inferencia.
 
-### Niveles de evidencia
-
-| Nivel | Significado |
+| Nivel de evidencia | Significado |
 |---|---|
 | **Observed** | Evidencia directa en el repositorio o en la solicitud del usuario. |
 | **Inferred** | Conclusión deducida a partir de evidencias. |
 | **Proposed** | Solución o decisión sugerida por MentorKit. |
 | **Confirmed** | Decisión aceptada explícitamente como política o requisito del proyecto. |
 
-Una inferencia no se convierte silenciosamente en una política obligatoria.
+Una inferencia nunca se convierte en silencio en una política obligatoria. Contrato: [`odd/knowledge/CONTRACT.md`](odd/knowledge/CONTRACT.md).
 
-Contrato: `odd/knowledge/CONTRACT.md`.
+### codebase-memory-mcp
+
+El instalador deja el MCP listo sin pasos manuales.
+
+| Aspecto | Comportamiento |
+|---|---|
+| **Versión** | Fijada en `v0.11.0`, con el SHA-256 de cada plataforma embebido en `.opencode/mentorkit.py`. Si el hash no coincide, no se instala nada. |
+| **Binario** | Linux usa el build estático `portable`. Compatible con `amd64` y `arm64` en Linux, macOS y Windows. |
+| **Configuración** | Solo se escribe la entrada MCP y se conserva el resto del archivo. La primera vez se guarda una copia `.mentorkit.bak`. |
+| **Verificación** | `mentorkit-verify` abre una sesión MCP real (`initialize` + `tools/list`) y comprueba que cada agente apunta a un binario existente. |
+| **Seguridad** | Un archivo con JSON o TOML inválido nunca se sobrescribe, y el instalador termina con error. |
+
+| Agente | Archivo de configuración |
+|---|---|
+| Claude Code | `~/.claude.json` (`mcpServers`; respeta `CLAUDE_CONFIG_DIR`) |
+| Codex | `~/.codex/config.toml` (`[mcp_servers.codebase-memory-mcp]`; respeta `CODEX_HOME`) |
+| OpenCode | `~/.config/opencode/opencode.json` (`mcp`; respeta `XDG_CONFIG_HOME`) |
+| Cursor | `~/.cursor/mcp.json` (`mcpServers`) |
+
+Para actualizar la versión, cambia `CBM_VERSION` y los hashes de `CBM_ASSETS` en `mentorkit.py`.
 
 ---
 
-## 🧩 Arquitectura
+## Arquitectura
 
 ```text
 MentorKit
@@ -301,86 +321,78 @@ MentorKit
     └── Claude Code
 ```
 
-La metodología ODD tiene un contrato común. Los archivos específicos de cada agente actúan como adaptadores nativos, no como implementaciones independientes de la metodología.
+La metodología ODD tiene un contrato común. Los archivos de cada agente son adaptadores nativos, no implementaciones independientes.
 
 ---
 
-## 💾 Persistencia y continuidad
+## Persistencia y continuidad
 
-La persistencia de trabajo sustancial se basa en el documento local versionable:
+El trabajo sustancial se persiste en un documento local y versionable: `odd/tasks/<feature-name>.md`.
 
-```text
-odd/tasks/<feature-name>.md
-```
+| Mecanismo | Rol |
+|---|---|
+| **LocalFile** | Obligatorio para el estado durable de trabajo `SUBSTANTIAL`. |
+| **Engram** | Backend de memoria opcional, cuando esté disponible. |
+| **Todo lists y scratchpads** | Estado de ejecución temporal. No reemplazan el documento ODD. |
 
-- **LocalFile:** mecanismo obligatorio para el estado durable de trabajo SUBSTANTIAL.
-- **Engram:** backend de memoria opcional, cuando esté disponible.
-- **Todo lists y scratchpads:** estado de ejecución temporal; no reemplazan el documento ODD.
-
-Al reanudar una tarea, MentorKit lee el documento ODD, inspecciona el estado real del repositorio y el diff, y reconcilia cualquier memoria externa con lo observado. La memoria no autoriza cambios ni prevalece sobre el repositorio.
-
-Detalles: `odd/PERSISTENCE.md`.
+Al reanudar, MentorKit lee el documento ODD, inspecciona el estado real del repositorio y el diff, y reconcilia cualquier memoria externa con lo observado. La memoria no autoriza cambios ni prevalece sobre el repositorio. Detalles: [`odd/PERSISTENCE.md`](odd/PERSISTENCE.md).
 
 ---
 
-## 🤖 Compatibilidad con agentes
+## Compatibilidad con agentes
 
-| Agente | Integración / instrucciones |
+| Agente | Integración |
 |---|---|
 | **OpenCode** | `.opencode/skills/`, `.opencode/agents/`, `AGENTS.md` |
 | **Cursor** | `.cursor/rules/`, `AGENTS.md` |
 | **Codex** | `AGENTS.md`, `.agents/skills/` |
 | **Claude Code** | `CLAUDE.md`, `.claude/skills/` |
 
-`AGENTS.md` y los contratos bajo `odd/` describen la semántica compartida; cada runtime la adapta a sus convenciones. La profundidad de integración puede variar según las capacidades disponibles en cada agente, especialmente en proveedores MCP y conocimiento del codebase.
+`AGENTS.md` y los contratos bajo `odd/` describen la semántica compartida y cada runtime la adapta a sus convenciones. La profundidad de integración puede variar según las capacidades de cada agente, en especial en proveedores MCP y conocimiento del codebase.
 
 ---
 
-## 🖥️ Compatibilidad multiplataforma
+## Compatibilidad multiplataforma
 
-La rama incluye rutas de instalación y verificación para:
+| Sistema | Instalación y verificación |
+|---|---|
+| **Linux** | Scripts POSIX |
+| **macOS** | Scripts POSIX |
+| **Windows** | PowerShell nativo (`bootstrap.ps1`, `install-mentorkit.ps1`), además de Git Bash y WSL2 |
 
-- **Linux:** scripts POSIX.
-- **macOS:** scripts POSIX.
-- **Windows:** PowerShell nativo (`bootstrap.ps1`, `install-mentorkit.ps1`), además de Git Bash/WSL2.
-- **Runtime común:** `.opencode/mentorkit.py`, ejecutado por `uv` con Python 3.12.
-- **Arquitecturas del MCP:** `amd64` y `arm64`.
+El runtime común es `.opencode/mentorkit.py`, ejecutado por `uv` con Python 3.12.
 
-El workflow `.github/workflows/platform-smoke.yml` se ejecuta en Ubuntu, macOS y Windows con cada push a esta rama y con cada pull request hacia ella o hacia `main`. Instala **la rama bajo prueba** (no la base del PR) y comprueba:
+### Integración continua
 
-- bootstrap en un proyecto limpio;
-- runtime nativo y dependencias (`mentorkit-verify`);
-- instalación del MCP, handshake real y configuración de Claude, Codex, OpenCode y Cursor;
-- creación de documentos ODD (`odd-task`);
-- contratos de planificación, PRD multiformato, conocimiento del codebase y compatibilidad entre agentes.
+El workflow [`platform-smoke.yml`](.github/workflows/platform-smoke.yml) se ejecuta en Ubuntu, macOS y Windows con cada push a esta rama y con cada pull request hacia ella o hacia `main`. Instala **la rama bajo prueba**, no la base del PR, y comprueba:
 
-Pendiente de validar manualmente: Windows PowerShell 5.1 (CI usa PowerShell 7) y las pruebas funcionales de la lista de la sección de desarrollo.
+- el bootstrap en un proyecto limpio;
+- el runtime nativo y sus dependencias (`mentorkit-verify`);
+- la instalación del MCP, el handshake real y la configuración de Claude, Codex, OpenCode y Cursor;
+- la creación de documentos ODD (`odd-task`);
+- los contratos de planificación, PRD multiformato, conocimiento del codebase y compatibilidad entre agentes.
+
+Pendiente de validar a mano: Windows PowerShell 5.1 (CI usa PowerShell 7) y los escenarios funcionales de [Desarrollo y validación local](#desarrollo-y-validación-local).
 
 ---
 
-## 🧪 Verificación y entrega
+## Verificación y entrega
 
-Cuando existe un resultado determinista, se prefiere:
-
-```text
-RED → GREEN → REFACTOR
-```
-
-La verificación se ajusta al riesgo y a las prácticas reales del repositorio: pruebas, lint, typecheck, build, análisis estático y comprobaciones funcionales cuando corresponda.
+Cuando hay un resultado determinista, se prefiere el ciclo `RED → GREEN → REFACTOR`. La verificación se ajusta al riesgo y a las prácticas reales del repositorio: pruebas, lint, typecheck, build, análisis estático y comprobaciones funcionales.
 
 Para una unidad sustancial, el flujo habitual es:
 
-1. Implementar el T# autorizado.
+1. Implementar el `T#` autorizado.
 2. Ejecutar las verificaciones aplicables.
-3. Registrar evidencia y actualizar el documento ODD.
+3. Registrar la evidencia y actualizar el documento ODD.
 4. Crear un commit atómico y revisable cuando corresponda.
-5. Registrar el SHA del commit en el T#.
+5. Registrar el SHA del commit en el `T#`.
 
 Nunca se declara completado un trabajo sin evidencia de verificación. Un commit no implica permiso para hacer push, abrir un PR, fusionar o desplegar.
 
 ---
 
-## 🛠️ Desarrollo y validación local
+## Desarrollo y validación local
 
 ```bash
 git clone --branch feature/odd-migration https://github.com/thewild001/MentorKit.git
@@ -390,30 +402,34 @@ make verify
 make odd-check
 ```
 
-Consulta `make help` o el `Makefile` para los targets disponibles en esta versión.
+Consulta `make help` para ver los targets disponibles.
 
-Antes de probar la rama en un proyecto real, se recomienda validar al menos:
+<details>
+<summary><strong>Escenarios recomendados antes de adoptar la rama en un proyecto real</strong></summary>
 
-- cambio SMALL sin PRD;
-- cambio SUBSTANTIAL sin PRD;
-- planificación a partir de un PRD;
-- PRD en PDF/DOCX/DOC/ODT;
-- cambios que cruzan varios módulos;
-- interrupción y reanudación;
-- hallazgos fuera del alcance autorizado;
-- proveedor MCP ausente o desactualizado;
-- instalación y verificación en Linux, macOS y Windows;
-- comportamiento de los adaptadores de los agentes disponibles.
+<br>
+
+- Cambio `SMALL` sin PRD.
+- Cambio `SUBSTANTIAL` sin PRD.
+- Planificación a partir de un PRD.
+- PRD en PDF, DOCX, DOC y ODT.
+- Cambios que cruzan varios módulos.
+- Interrupción y reanudación.
+- Hallazgos fuera del alcance autorizado.
+- Proveedor MCP ausente o desactualizado.
+- Instalación y verificación en Linux, macOS y Windows.
+- Comportamiento de los adaptadores de cada agente disponible.
+
+</details>
 
 ---
 
-## 📂 Estructura relevante
+## Estructura del repositorio
 
 ```text
 MentorKit/
-├── .github/
-│   └── workflows/
-│       └── platform-smoke.yml
+├── .github/workflows/
+│   └── platform-smoke.yml
 ├── .mentor/
 ├── .opencode/
 │   ├── agents/
@@ -427,66 +443,58 @@ MentorKit/
 │   ├── install-mentorkit.{sh,ps1,cmd}
 │   ├── mentorkit-verify.{sh,ps1,cmd}
 │   ├── mentorkit-odd-task.{sh,ps1,cmd}
-│   ├── mentorkit.py                # instalación, MCP, verificación
+│   ├── mentorkit.py                 # instalación, MCP y verificación
 │   └── requirements.lock
 ├── odd/
 │   ├── CONTRACT.md
 │   ├── PERSISTENCE.md
-│   ├── knowledge/
-│   │   └── CONTRACT.md
+│   ├── knowledge/CONTRACT.md
 │   ├── planning/
-│   │   ├── CONTRACT.md
-│   │   ├── README.md
-│   │   └── templates/
 │   └── tasks/
 ├── AGENTS.md
 ├── CLAUDE.md
-├── .cursor/
-├── .agents/
-├── .claude/
+├── .cursor/ · .agents/ · .claude/
 ├── bootstrap.sh
 ├── bootstrap.ps1
 └── Makefile
 ```
 
-OpenSpec se conserva únicamente como compatibilidad legacy durante la migración experimental; el objetivo es retirar gradualmente la dependencia del flujo central una vez validados los casos reales.
+OpenSpec se conserva solo por compatibilidad durante la migración. El objetivo es retirarlo del flujo central una vez validados los casos reales.
 
 ---
 
-## 🌱 Estado experimental
+## Estado y alcance
 
-La evolución ODD se desarrolla en la rama:
+La evolución ODD vive en [`feature/odd-migration`](https://github.com/thewild001/MentorKit/tree/feature/odd-migration).
 
-**[`feature/odd-migration`](https://github.com/thewild001/MentorKit/tree/feature/odd-migration)**
+| Objetivo | Estado |
+|---|---|
+| ODD como capa central de orquestación | Implementado |
+| PRD y planificación como capacidades opcionales | Implementado |
+| Comprensión del codebase con `codebase-memory-mcp` | Implementado, con CI en Linux, macOS y Windows |
+| Persistencia durable y recuperación entre sesiones | Implementado |
+| Contrato común para OpenCode, Cursor, Codex y Claude Code | Implementado |
+| Retirada progresiva de OpenSpec | Pendiente de validar |
+| Validación funcional con casos reales | Pendiente |
 
-Objetivos de esta rama:
-
-- Adoptar ODD como capa central de orquestación.
-- Mantener PRD y planificación como capacidades opcionales.
-- Preservar los mecanismos de comprensión del codebase.
-- Proporcionar persistencia durable y recuperación entre sesiones.
-- Mantener un contrato ODD común para los agentes soportados.
-- Dar soporte a Linux, macOS y Windows.
-- Retirar OpenSpec progresivamente, no antes de validar la migración.
-
-Esta rama es experimental y no debe considerarse estable solo por estar implementada. El smoke test de CI pasa en Linux, macOS y Windows, pero la validación funcional con casos reales sigue pendiente antes de integrar los cambios en `main`. Cuando eso ocurra, `MENTORKIT_BRANCH` dejará de ser necesaria en el comando de instalación.
+La rama es experimental y no debe considerarse estable solo por estar implementada. Cuando se integre en `main`, `MENTORKIT_BRANCH` dejará de ser necesaria en el comando de instalación.
 
 ---
 
-## 🤝 Contribuir
+## Contribuir
 
 1. Comprende el contexto del repositorio antes de modificarlo.
 2. Mantén los cambios dentro del alcance autorizado.
 3. Adapta el proceso a la complejidad real del cambio.
-4. Actualiza los artefactos ODD para trabajo sustancial.
+4. Actualiza los artefactos ODD en trabajo sustancial.
 5. Ejecuta las verificaciones aplicables y documenta su evidencia.
-6. Utiliza commits atómicos y descriptivos.
+6. Usa commits atómicos y descriptivos.
 7. Abre un PR cuando corresponda.
 
 ---
 
-## 📜 Créditos
+<div align="center">
 
-Desarrollado por [thewild001](https://github.com/thewild001).
+Desarrollado por [thewild001](https://github.com/thewild001) · [github.com/thewild001/MentorKit](https://github.com/thewild001/MentorKit)
 
-Repositorio: https://github.com/thewild001/MentorKit
+</div>
