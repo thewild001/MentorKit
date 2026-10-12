@@ -29,6 +29,7 @@ REQUIRED = [
     ".opencode/skills/llm-council/SKILL.md",
     ".opencode/agents/MentorKit5.0.md",
     ".opencode/mentorkit.py",
+    ".opencode/prd_extract.py",
     ".opencode/mentorkit-odd-task.sh",
     ".opencode/mentorkit-verify.sh",
     ".opencode/requirements.in",
@@ -604,6 +605,51 @@ def fail_verify(msg, json_mode):
         print(f"  x VERIFY FAIL: {msg}", file=sys.stderr)
     return 1
 
+def extract_document(file, out=None, from_heading=None):
+    """Normalize a PRD. ODT/DOCX use the structure-preserving native extractor; PDF/DOC
+    fall back to markitdown/anydoc (flat text, no DRP structure)."""
+    src = Path(file)
+    if not src.is_file():
+        die(f"no existe el archivo: {src}")
+    dest = Path(out) if out else RUNTIME / "extract" / src.stem
+    ext = src.suffix.lower()
+    if ext in (".odt", ".docx"):
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import prd_extract
+        kwargs = {"from_heading": from_heading} if from_heading else {}
+        try:
+            result, md, js = prd_extract.extract(src, dest, **kwargs)
+        except Exception as exc:  # untrusted input: report, never crash with a traceback
+            print(f"[MentorKit] ERROR: no se pudo extraer {src.name}: {exc}", file=sys.stderr)
+            return 1
+        print(prd_extract.summarize(result, md, js))
+        return 0
+    if ext in (".pdf", ".doc"):
+        text, method = None, None
+        for name in (("markitdown", "anydoc") if ext == ".pdf" else ("anydoc",)):
+            try:
+                if name == "markitdown":
+                    from markitdown import MarkItDown
+                    text = MarkItDown().convert(str(src)).text_content
+                else:
+                    import anydoc
+                    text = anydoc.to_markdown(str(src))
+                method = name
+                if text and text.strip():
+                    break
+            except Exception:
+                continue
+        if not text or not text.strip():
+            print(f"[MentorKit] ERROR: sin texto extraíble en {src.name}"
+                  + (" (¿PDF escaneado? requiere OCR)" if ext == ".pdf" else ""), file=sys.stderr)
+            return 1
+        dest.mkdir(parents=True, exist_ok=True)
+        md = dest / f"{src.stem}.normalized.md"
+        md.write_text(text.rstrip() + "\n", encoding="utf-8")
+        log(f"Formato:      {ext[1:].upper()}\nMétodo:       {method} (texto plano, sin estructura DRP)\nSalida:       {md}")
+        return 0
+    die(f"formato no soportado: {ext} (admitidos: .odt .docx .pdf .doc)")
+
 def odd_task(feature, request):
     if not feature or not request:
         die('uso: odd-task <feature> "<request>"')
@@ -664,6 +710,7 @@ def main():
     sub.add_parser("verify").add_argument("--json", action="store_true")
     sub.add_parser("fix")
     sub.add_parser("configure-mcp")
+    e=sub.add_parser("extract"); e.add_argument("file"); e.add_argument("--out"); e.add_argument("--from-heading")
     t=sub.add_parser("odd-task"); t.add_argument("feature"); t.add_argument("request")
     raw_args = sys.argv[1:]
     # Backward-compatible alias for older launchers that invoked --fix.
@@ -673,6 +720,7 @@ def main():
     if a.cmd in ("install","fix"):
         ensure_files(); uv=install_uv(); ensure_python(uv); py=ensure_venv(uv); install_deps(uv,py); mcp_rc=configure_mcp(); rc=verify(False); raise SystemExit(rc or mcp_rc)
     if a.cmd=="configure-mcp": raise SystemExit(configure_mcp())
+    if a.cmd=="extract": raise SystemExit(extract_document(a.file, a.out, a.from_heading))
     if a.cmd=="verify": raise SystemExit(verify(a.json))
     if a.cmd=="odd-task": odd_task(a.feature,a.request)
 
