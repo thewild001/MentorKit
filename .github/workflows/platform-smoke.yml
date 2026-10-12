@@ -93,6 +93,19 @@ jobs:
           grep -q "DOC" .opencode/skills/document-extractor/SKILL.md
           grep -q "anydoc.to_markdown(file_path)" .opencode/skills/document-extractor/SKILL.md
           grep -q "odd/planning/<feature-name>.md" .opencode/skills/prd-reader/SKILL.md
+      - name: Verify PRD/DRP extractor (installed copy)
+        shell: bash
+        run: |
+          cd "$MENTORKIT_TEST_DIR"
+          test -f .opencode/prd_extract.py
+          grep -q "mentorkit.py extract" .opencode/skills/document-extractor/SKILL.md
+          grep -q "Descripción textual del requisito" .opencode/skills/prd-reader/SKILL.md
+          PY="$(command -v python3 || command -v python)"
+          OC="$(cd .opencode && (pwd -W 2>/dev/null || pwd))"
+          MENTORKIT_OPENCODE_DIR="$OC" "$PY" -I -m unittest discover -s "$GITHUB_WORKSPACE/tests" -v
+          if "$PY" -I .opencode/mentorkit.py extract does-not-exist.odt; then
+            echo "extract debía fallar con un archivo inexistente"; exit 1
+          fi
       - name: Verify codebase knowledge contracts
         shell: bash
         run: |

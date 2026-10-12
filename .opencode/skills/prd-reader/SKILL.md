@@ -8,7 +8,7 @@ description: >
   Mantiene OpenSpec únicamente como adapter legacy explícito.
 compatibility: opencode
 metadata:
-  version: "3.0"
+  version: "3.1"
   workflow: "odd"
   input-formats: "pdf,docx,doc,odt"
 ---
@@ -109,6 +109,33 @@ Localiza, cuando existan:
 - asuntos pendientes.
 
 El formato del PRD puede variar. Adapta el mapeo al documento real.
+
+## Paso 3b — Documentos DRP
+
+Si el extractor devolvió `<stem>.drp.json`, el documento es un DRP
+("Descripción de Requisitos por Proceso"). Reglas:
+
+- **Solo es contrato lo que está desde «Descripción textual del requisito».**
+  Portada, control de versiones, índice e introducción son contexto; no generan R#.
+- Mapeo:
+
+| DRP | PRD Analysis |
+|-----|--------------|
+| Flujo básico (pasos) | R# funcionales, en orden |
+| Flujos alternativos | Acceptance Criteria (un escenario por id) |
+| Validaciones | Business Rules (conserva mensajes literales) |
+| Conceptos / campos del formulario | Data / State y UI / UX |
+| Precondiciones / pos-condiciones | Constraints y Acceptance Criteria |
+| Requisitos especiales | Constraints |
+| Asuntos pendientes y `diagnostics` | Open Questions |
+| `external_documents` / referencias | Integrations / dependencias |
+
+- Los pasos no vienen numerados: si `numbering.suspected_offset` != 0, deja
+  una Open Question explícita en lugar de elegir una numeración.
+- Abre las imágenes de prototipo y compáralas con `form_fields`; cada
+  diferencia (campo faltante, obligatoriedad, etiquetas) es una Open Question.
+- Un flujo alternativo que salta a un paso inexistente o a otro flujo es
+  inconsistencia del documento, no del plan.
 
 ## Paso 4 — Construir PRD Analysis
 
