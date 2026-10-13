@@ -484,6 +484,8 @@ def parse_requirement(table):
 
     def add_text(target, cells):
         for k, t in _lines(cells):
+            if re.fullmatch(r"\d+\.", t.strip()):  # stray list marker left by the source
+                continue
             target.append(t)
 
     for row in table["rows"]:
@@ -628,8 +630,9 @@ NUMBERING_KEYS = [
 
 def numbering_evidence(req):
     """Compare the step number an alternative flow is anchored to (6.a -> 6) with the
-    row that performs the matching check. A constant difference means the source counts
-    an implicit extra step (e.g. the trigger) that is not a row of the table."""
+    row that performs the matching check. A constant delta of 1 is the DRP convention
+    "the alternative id is the step it REPLACES" (the outcome after the check), seen in
+    several documents of the same family; it is reported as information, not as an error."""
     flows = {"básico": req["basic_flow"]}
     flows.update({f["id"]: f for f in req["alternative_flows"]})
     evidence = []
@@ -649,7 +652,7 @@ def numbering_evidence(req):
                                      "row": rows[0], "delta": anchor - rows[0]})
     deltas = {e["delta"] for e in evidence}
     offset = deltas.pop() if len(deltas) == 1 and evidence else None
-    return {"suspected_offset": offset if offset else None, "evidence": evidence}
+    return {"alt_id_delta": offset if offset else None, "evidence": evidence}
 
 
 def collect_refs(req, offset=None):
@@ -691,13 +694,13 @@ def diagnostics(req, fields, vals, refs, docs, change_log, numbering):
             "El documento no numera los pasos: se numeran por orden de fila (1..N). "
             "Los identificadores de flujos alternativos (p. ej. 4.b, 6.a) se conservan tal como "
             "están escritos y no se reinterpretan.", "flujo básico")
-    if numbering["suspected_offset"]:
+    if numbering["alt_id_delta"]:
         ev = "; ".join(f"{e['flow']}→fila {e['row']}" for e in numbering["evidence"])
-        add("numbering-offset-suspected", "warning",
-            f"Los identificadores de flujos alternativos apuntan {numbering['suspected_offset']} paso(s) "
-            f"por encima de la fila que realiza la comprobación ({ev}). Es probable que la numeración "
-            "original cuente un paso previo implícito. Las referencias «paso N» podrían apuntar a la "
-            f"fila N-{numbering['suspected_offset']}: confirmar con el analista antes de implementar.",
+        add("alt-id-convention", "info",
+            f"Los ids de flujos alternativos van {numbering['alt_id_delta']} paso(s) por encima de la fila "
+            f"que hace la comprobación ({ev}). Es coherente con la convención «el id es el paso que "
+            "la alternativa sustituye» (el resultado posterior a la comprobación). No es un error por "
+            "sí solo; solo preguntar al analista si una referencia «paso N» es ambigua.",
             "flujos alternativos")
     for r in refs:
         if r["resolved"] and r["flow"] != "básico":
@@ -966,7 +969,7 @@ def extract(path, out_dir, from_heading=NORMATIVE_HEADING):
         fields, controls = parse_fields(req)
         vals = parse_validations(req)
         numbering = numbering_evidence(req)
-        refs, docs = collect_refs(req, numbering["suspected_offset"])
+        refs, docs = collect_refs(req, numbering["alt_id_delta"])
         diags = diagnostics(req, fields, vals, refs, docs, change_log, numbering)
         for p in req["prototypes"]:
             p["images"] = [asset_map.get(i, i) for i in p["images"]]

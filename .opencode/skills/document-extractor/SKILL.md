@@ -88,9 +88,12 @@ cambios, índice, introducción) con la parte normativa. **Solo la sección
 Limitaciones que debes respetar:
 
 - los pasos del flujo básico **no están numerados en el archivo**; se numeran
-  por fila. Si `numbering.suspected_offset` != 0, los ids de los flujos
-  alternativos no coinciden con esa numeración: **confírmalo con el analista**,
-  no lo adivines;
+  por fila. Los ids de flujos alternativos siguen la convención «el id es el
+  paso que la alternativa sustituye» (con frecuencia, la fila siguiente a la
+  comprobación): `numbering.alt_id_delta` lo documenta como información, no
+  como error. Los ids se conservan tal como están escritos; no los renumeres;
+- la convención se observó en varios DRP de la misma familia, pero no es un
+  estándar: si una referencia «paso N» es ambigua, pregunta al analista;
 - el extractor no interpreta imágenes. Abre cada imagen de `assets/` con la
   herramienta de lectura y compárala con `form_fields`; las contradicciones
   texto/prototipo son Open Questions.
