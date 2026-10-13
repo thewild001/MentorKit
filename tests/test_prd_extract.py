@@ -149,6 +149,28 @@ class ExtractOdt(unittest.TestCase):
         self.assertIsNotNone(res["requirement"])
 
 
+class NumberingConvention(unittest.TestCase):
+    def _flow(self, fid, title, texts):
+        return {"id": fid, "title": title, "postconditions": [],
+                "steps": [{"n": i + 1, "lines": [{"kind": "p", "text": t}]} for i, t in enumerate(texts)]}
+
+    def test_delta_one_is_info_not_warning(self):
+        basic = self._flow("básico", "", ["a", "b", "c", "d", "e",
+                                           "El sistema verifica que los campos obligatorios estén completos", "g"])
+        alt = self._flow("7.a", "Información incompleta", ["x"])
+        req = {"basic_flow": basic, "alternative_flows": [alt]}
+        num = px.numbering_evidence(req)
+        self.assertEqual(num["alt_id_delta"], 1)
+        self.assertNotIn("suspected_offset", num)
+        diags = px.diagnostics({**req, "preconditions": [], "validations": [], "special_requirements": [],
+                                "pending_issues": [], "prototypes": [], "unclassified": []},
+                               [], [], [], [], [], num)
+        conv = [d for d in diags if d["code"] == "alt-id-convention"]
+        self.assertEqual(len(conv), 1)
+        self.assertEqual(conv[0]["severity"], "info")
+        self.assertFalse(any(d["code"] == "numbering-offset-suspected" for d in diags))
+
+
 class ExtractDocxAndErrors(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())

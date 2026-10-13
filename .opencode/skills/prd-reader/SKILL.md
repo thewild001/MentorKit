@@ -130,8 +130,10 @@ Si el extractor devolvió `<stem>.drp.json`, el documento es un DRP
 | Asuntos pendientes y `diagnostics` | Open Questions |
 | `external_documents` / referencias | Integrations / dependencias |
 
-- Los pasos no vienen numerados: si `numbering.suspected_offset` != 0, deja
-  una Open Question explícita en lugar de elegir una numeración.
+- Los pasos no vienen numerados. Los ids de flujos alternativos denotan el paso
+  que sustituyen (`numbering.alt_id_delta`, diagnóstico informativo): conserva
+  los ids tal cual y solo abre una Open Question si una referencia «paso N» es
+  realmente ambigua.
 - Abre las imágenes de prototipo y compáralas con `form_fields`; cada
   diferencia (campo faltante, obligatoriedad, etiquetas) es una Open Question.
 - Un flujo alternativo que salta a un paso inexistente o a otro flujo es

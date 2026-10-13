@@ -62,7 +62,9 @@ S5. Cobertura en CI.
 L1. Solicitud: usar un PRD de ejemplo (ODT, FORTES «Incluir codificador tipo Vía de ingreso») para optimizar el camino SUBSTANTIAL; lo relevante es lo que sigue a «Descripción textual del requisito».
 L2. Hallazgo: `document-extractor` describía un «parser Python puro existente» que no existía en el repositorio.
 L3. Hallazgo: el contenido normativo vive en una única tabla de maquetación de 12 columnas; un extractor de texto plano pierde la jerarquía de flujos.
-L4. Decisión: los pasos del flujo básico no están numerados en el archivo; se numeran por fila. Los ids de flujos alternativos van sistemáticamente +1 sobre la fila que realiza la validación (posible paso implícito). No se adivina: se reporta como `numbering.suspected_offset` y requiere confirmación del analista.
+L4. Decisión: los pasos del flujo básico no están numerados en el archivo; se numeran por fila. Los ids de flujos alternativos conservan su escritura original.
+L7. Corrección (con 2 DRP más de la misma familia): el «desfase +1» de L4 no es un error del documento. Es la convención «el id es el paso que la alternativa sustituye» (p. ej. 5.a, 6.a, 7.a, 8.a, 3.x tras listar). La heurística lo marcaba como `warning` (falso positivo); ahora es `info` `alt-id-convention` y la clave es `numbering.alt_id_delta`. Lección: una convención inferida de un solo documento no debe elevarse a hallazgo.
+L8. Los PRD de ejemplo sirven solo para afinar el workflow de MentorKit, no para auditar el producto; no se versionan (USO INTERNO).
 L5. Decisión: el documento de ejemplo está marcado «USO INTERNO»; no se versiona. Los tests usan un fixture sintético; `MENTORKIT_SAMPLE_PRD` permite correr el real en local.
 L6. Limitación: la ruta DOCX solo se probó con un fixture sintético, no con DOCX reales. El extractor no interpreta imágenes; el agente debe abrirlas y compararlas con `form_fields`.
 
