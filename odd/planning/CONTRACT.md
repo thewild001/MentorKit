@@ -146,6 +146,16 @@ The plan should use the available engineering capabilities to determine:
 
 Use codebase graph and council/research only when justified by uncertainty or risk.
 
+## Repository fit check
+
+After exploring the repository and before designing a solution, compare the capabilities the request or PRD requires with the ones observed in the repository: persistence/data model, API or service layer, user interface, authentication/authorization, and external integrations.
+
+- If every required capability has an observed counterpart, the fit is `fit` and planning continues.
+- If some are missing but the request explicitly authorizes creating them, the fit is `partial`: list them as **Proposed** and make the creation an explicit, human-confirmed decision.
+- If required capabilities are missing and creating them was not authorized, the fit is `repository-mismatch`. Planning MUST stop at a short report (required vs observed, evidence) and ask the human whether this is the wrong repository, whether creating the missing capability is intended, or whether the scope should shrink. MUST NOT propose a stack or architecture to fill the gap by default.
+
+A `repository-mismatch` is a valid planning outcome, not a failure.
+
 ## Evidence levels
 
 Planning must distinguish:
