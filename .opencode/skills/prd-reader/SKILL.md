@@ -182,6 +182,15 @@ resolver de forma segura.
 
 No conviertas una decisión de implementación en un requisito del PRD.
 
+## Paso 5b — Capacidades requeridas
+
+Cierra el PRD Analysis con una lista de **capacidades requeridas** (persistencia
+o modelo de datos, API o capa de servicio, interfaz de usuario, autenticación y
+autorización, integraciones). Es la entrada del *Repository fit check* de
+`odd/planning/CONTRACT.md`: el plan la compara con lo observado en el
+repositorio y, si faltan capacidades que nadie autorizó crear, el resultado es
+`repository-mismatch` y el proceso se detiene en un informe corto.
+
 ## Paso 6 — Transferir el control al Implementation Plan
 
 El PRD Analysis debe alimentar a `codebase-conformist`.
@@ -233,7 +242,8 @@ Requisitos R#:      [N]
 Criterios:          [N]
 Preguntas abiertas: [N]
 Assets:             [N]
-Plan:               [generado|pendiente]
+Capacidades:        [N requeridas]
+Plan:               [generado|pendiente|repository-mismatch]
 ODD:                [SMALL|SUBSTANTIAL|pendiente]
 ```
 

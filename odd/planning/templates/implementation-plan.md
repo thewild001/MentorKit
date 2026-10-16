@@ -6,6 +6,7 @@
 - PRD: <filename or none>
 - PRD format: <pdf|docx|doc|odt|none>
 - Analysis status: <complete|needs-clarification|not-applicable>
+- Repository fit: <fit|partial|repository-mismatch>
 
 ## Objective
 
@@ -48,6 +49,12 @@
 - Provider: <codebase-memory-mcp|Graphify|fingerprinting|direct-inspection>
 - Freshness: <current|stale|refreshed|not-applicable>
 - Evidence: <summary>
+
+### Fit Check
+
+| Required capability | Observed in repository | Evidence |
+|---|---|---|
+| <persistence / API / UI / authz / integration> | <yes/no/partial> | <path or finding> |
 
 ### Blast Radius
 

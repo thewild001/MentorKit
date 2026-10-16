@@ -84,6 +84,9 @@ jobs:
           grep -qi "PRD analysis" odd/planning/CONTRACT.md
           grep -q "Implementation Plan" odd/planning/CONTRACT.md
           grep -q "odd/tasks/<feature-name>.md" odd/planning/README.md
+          grep -q "repository-mismatch" odd/planning/CONTRACT.md
+          grep -q "Repository fit" odd/planning/templates/implementation-plan.md
+          grep -q "repository-mismatch" .opencode/skills/prd-reader/SKILL.md
       - name: Verify multi-format PRD contracts
         shell: bash
         run: |
