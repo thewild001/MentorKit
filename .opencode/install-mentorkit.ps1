@@ -15,6 +15,6 @@ if (-not $uv) {
   if (Test-Path $candidate) { $uvPath = $candidate }
   else { throw "No se pudo obtener uv. Instálalo desde https://docs.astral.sh/uv/" }
 } else { $uvPath = $uv.Source }
-& $uvPath run --python 3.12 $Helper fix
+& $uvPath run --no-project --python 3.12 $Helper fix
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host "MentorKit instalado/verificado correctamente."

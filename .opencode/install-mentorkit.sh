@@ -17,7 +17,7 @@ fi
 
 # Backward-compatible interface: older bootstraps called this script with --fix.
 if [[ "$#" -eq 1 && "$1" == "--fix" ]]; then
-  exec "$UV" run --python 3.12 "$SCRIPT_DIR/mentorkit.py" fix
+  exec "$UV" run --no-project --python 3.12 "$SCRIPT_DIR/mentorkit.py" fix
 fi
 
-exec "$UV" run --python 3.12 "$SCRIPT_DIR/mentorkit.py" fix "$@"
+exec "$UV" run --no-project --python 3.12 "$SCRIPT_DIR/mentorkit.py" fix "$@"
