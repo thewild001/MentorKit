@@ -29,11 +29,19 @@ jobs:
           TEST_DIR="$(mktemp -d)"
           echo "MENTORKIT_TEST_DIR=$TEST_DIR" >> "$GITHUB_ENV"
           cd "$TEST_DIR"
+          # A project that already has its own pyproject.toml: MentorKit must not touch it.
+          printf '[project]\nname = "host-project"\nversion = "0.0.0"\nrequires-python = ">=3.10"\ndependencies = []\n' > pyproject.toml
           if [ "$RUNNER_OS" = "Windows" ]; then
             pwsh -NoProfile -ExecutionPolicy Bypass -Command '& "$env:GITHUB_WORKSPACE\bootstrap.ps1"'
           else
             bash "$GITHUB_WORKSPACE/bootstrap.sh"
           fi
+      - name: Verify host project is not polluted
+        shell: bash
+        run: |
+          cd "$MENTORKIT_TEST_DIR"
+          test ! -e uv.lock || { echo "MentorKit creó uv.lock en el proyecto"; exit 1; }
+          test ! -d .venv || { echo "MentorKit creó .venv en el proyecto"; exit 1; }
       - name: Verify native runtime
         shell: bash
         run: |
