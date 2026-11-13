@@ -6,30 +6,119 @@ $Tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("mentorkit-" + [guid]::NewGu
 $Zip = Join-Path $Tmp "repo.zip"
 New-Item -ItemType Directory -Path $Tmp -Force | Out-Null
 try {
-  if (Test-Path ".opencode") { throw ".opencode ya existe; se evita sobrescribir configuracion." }
   $url = "https://github.com/$Repo/zipball/refs/heads/$Branch"
   Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $Zip
   Expand-Archive -Path $Zip -DestinationPath $Tmp -Force
-  $root = Get-ChildItem $Tmp -Directory | Where-Object { Test-Path (Join-Path $_.FullName ".opencode/install-mentorkit.ps1") } | Select-Object -First 1
+  $root = Get-ChildItem $Tmp -Directory | Where-Object {
+    Test-Path (Join-Path $_.FullName ".opencode/install-mentorkit.ps1")
+  } | Select-Object -First 1
   if (-not $root) { throw "El release no contiene un bootstrap MentorKit valido." }
   if (-not (Test-Path (Join-Path $root.FullName ".opencode/mentorkit.py"))) {
     throw ("El release de '$Branch' es anterior a este bootstrap (no incluye .opencode/mentorkit.py). " +
-           "Indica la rama que corresponde con MENTORKIT_BRANCH, por ejemplo: " +
-           '$env:MENTORKIT_BRANCH="<rama>"; irm https://raw.githubusercontent.com/' + $Repo + '/<rama>/bootstrap.ps1 | iex')
+           "Indica una rama con la migracion ODD mediante MENTORKIT_BRANCH.")
   }
-  Copy-Item (Join-Path $root.FullName ".opencode") "." -Recurse
-  foreach ($f in @("AGENTS.md","CLAUDE.md")) {
-    $src=Join-Path $root.FullName $f
-    if (Test-Path $src) { Copy-Item $src "." -Force }
+
+  $contexts = @("claude","opencode","codex","cursor","pi","vscode")
+  $labels = @("Claude Code","OpenCode","Codex","Cursor","Pi","VS Code Copilot")
+  $raw = $env:MENTORKIT_CONTEXTS
+  if ([string]::IsNullOrWhiteSpace($raw)) {
+    if ([Environment]::UserInteractive -and [Console]::IsInputRedirected -eq $false) {
+      Write-Host ""
+      Write-Host "Selecciona los contextos donde utilizaras MentorKit:"
+      for ($i=0; $i -lt $contexts.Count; $i++) {
+        Write-Host ("  {0}) {1}" -f ($i+1),$labels[$i])
+      }
+      Write-Host "  a) Todos"
+      $answer = Read-Host "Seleccion [a]"
+      if ([string]::IsNullOrWhiteSpace($answer)) { $raw = "all" } else { $raw = $answer }
+    } else {
+      # Backward compatibility for non-interactive one-liners and CI.
+      $raw = "all"
+    }
   }
-  foreach ($d in @(".cursor",".claude",".agents","odd",".mentor")) {
+  $raw = $raw.Replace(" ","").Replace(";",",")
+  if ($raw -match '^(all|a|\*)$') {
+    $selected = @($contexts)
+  } else {
+    $selected = @()
+    foreach ($token in ($raw -split "," | Where-Object { $_ -ne "" })) {
+      switch ($token.ToLowerInvariant()) {
+        { $_ -in @("1","claude","claude-code") } { $name="claude"; break }
+        { $_ -in @("2","opencode","open-code") } { $name="opencode"; break }
+        { $_ -in @("3","codex") } { $name="codex"; break }
+        { $_ -in @("4","cursor") } { $name="cursor"; break }
+        { $_ -in @("5","pi") } { $name="pi"; break }
+        { $_ -in @("6","vscode","vs-code","copilot") } { $name="vscode"; break }
+        default { throw "Contexto no valido: '$token'. Usa claude, opencode, codex, cursor, pi, vscode o all." }
+      }
+      if ($name -notin $selected) { $selected += $name }
+    }
+  }
+  if ($selected.Count -eq 0) { throw "Debes seleccionar al menos un contexto." }
+  if (($selected -contains "opencode") -and (Test-Path ".opencode")) {
+    throw ".opencode ya existe; se evita sobrescribir configuracion existente."
+  }
+  Write-Host ("Contextos seleccionados: " + ($selected -join ", "))
+
+  # Shared ODD core.
+  foreach ($d in @("odd",".mentor")) {
     $src=Join-Path $root.FullName $d
     if (Test-Path $src) { Copy-Item $src "." -Recurse }
   }
-  $make=Join-Path $root.FullName "Makefile"
-  if (Test-Path $make) { Copy-Item $make "." -Force }
-  & (Join-Path ".opencode" "install-mentorkit.ps1")
-  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+  $agents=Join-Path $root.FullName "AGENTS.md"
+  if (Test-Path $agents) { Copy-Item $agents "." -Force }
+  if ($selected -contains "opencode") {
+    $make=Join-Path $root.FullName "Makefile"
+    if (Test-Path $make) { Copy-Item $make "." -Force }
+  }
+
+  if ($selected -contains "claude") {
+    foreach ($f in @("CLAUDE.md",".claude")) {
+      $src=Join-Path $root.FullName $f
+      if (Test-Path $src) { Copy-Item $src "." -Recurse -Force }
+    }
+  }
+  if ($selected -contains "opencode") {
+    Copy-Item (Join-Path $root.FullName ".opencode") "." -Recurse
+  }
+  if ($selected -contains "cursor") {
+    $src=Join-Path $root.FullName ".cursor"
+    if (Test-Path $src) { Copy-Item $src "." -Recurse }
+  }
+  if (($selected -contains "codex") -or ($selected -contains "pi")) {
+    $src=Join-Path $root.FullName ".agents"
+    if (Test-Path $src) { Copy-Item $src "." -Recurse }
+  }
+  if ($selected -contains "pi") {
+    $src=Join-Path $root.FullName ".pi"
+    if (Test-Path $src) { Copy-Item $src "." -Recurse }
+  }
+  if ($selected -contains "vscode") {
+    $copilotInstructions=Join-Path $root.FullName ".github/copilot-instructions.md"
+    if (Test-Path $copilotInstructions) {
+      New-Item -ItemType Directory -Path ".github" -Force | Out-Null
+      Copy-Item $copilotInstructions ".github/" -Force
+    }
+    foreach ($d in @("agents","skills")) {
+      $src=Join-Path $root.FullName (".github/" + $d)
+      if (Test-Path $src) {
+        New-Item -ItemType Directory -Path (".github/" + $d) -Force | Out-Null
+        Copy-Item (Join-Path $src "*") (".github/" + $d) -Recurse -Force
+      }
+    }
+  }
+
+  New-Item -ItemType Directory -Path ".mentorkit" -Force | Out-Null
+  @{ contexts=$selected; branch=$Branch } | ConvertTo-Json -Depth 3 | Set-Content -Encoding UTF8 ".mentorkit/install.json"
+
+  # Only supported MCP clients selected by the user are configured.
+  $mcpClients = @($selected | Where-Object { $_ -in @("claude","codex","opencode","cursor") })
+  if ($selected -contains "opencode") {
+    $env:MENTORKIT_MCP_CLIENTS = $mcpClients -join ","
+    & (Join-Path ".opencode" "install-mentorkit.ps1")
+    if ($LASTEXITCODE -ne 0) { throw "El runtime OpenCode no pudo completar la instalacion/verificacion." }
+  }
+  Write-Host ("Adaptadores instalados: " + ($selected -join ", "))
   # Single splash. Source stays ASCII (Windows PowerShell 5.1 reads BOM-less files as ANSI):
   # glyphs are built from code points, and plain ASCII is used unless the console is UTF-8.
   # Every row is measured and padded to the same inner width, so the frame always aligns.

@@ -38,10 +38,6 @@ command -v curl >/dev/null 2>&1 || fail "Se requiere curl."
 command -v tar  >/dev/null 2>&1 || fail "Se requiere tar."
 command -v bash >/dev/null 2>&1 || fail "Se requiere bash."
 
-if [[ -e ".opencode" ]]; then
-    fail ".opencode/ ya existe en $(pwd). Para evitar sobreescribir configuración existente, instala en un proyecto limpio o haz backup."
-fi
-
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -97,43 +93,114 @@ if [[ ! -f "$REPO_DIR/.opencode/mentorkit.py" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Install files
+# Select agent contexts
 # ---------------------------------------------------------------------------
 
-echo -e "  ${DIM}3/3${RESET}  Instalando en $(pwd)..."
+CONTEXTS=(claude opencode codex cursor pi vscode)
+CONTEXT_LABELS=("Claude Code" "OpenCode" "Codex" "Cursor" "Pi" "VS Code Copilot")
 
-cp -R "$REPO_DIR/.opencode" "./" || fail "No se pudo copiar .opencode/."
+select_contexts() {
+    local raw="${MENTORKIT_CONTEXTS:-}" answer i token normalized
+    if [[ -z "$raw" && -t 0 ]]; then
+        echo -e "  ${CYAN}Selecciona los contextos donde utilizarás MentorKit:${RESET}"
+        for i in "${!CONTEXTS[@]}"; do
+            printf "    %d) %s\n" "$((i+1))" "${CONTEXT_LABELS[$i]}"
+        done
+        echo "    a) Todos"
+        printf "  Selección [a]: "
+        IFS= read -r answer || answer=""
+        raw="${answer:-all}"
+    elif [[ -z "$raw" ]]; then
+        raw="all"
+    fi
+    raw="${raw// /}"
+    raw="${raw//;/,}"
+    if [[ "$raw" == "all" || "$raw" == "a" || "$raw" == "*" ]]; then
+        SELECTED_CONTEXTS=("${CONTEXTS[@]}")
+        return
+    fi
+    SELECTED_CONTEXTS=()
+    IFS=',' read -ra tokens <<< "$raw"
+    for token in "${tokens[@]}"; do
+        case "${token,,}" in
+            1|claude|claude-code) normalized="claude" ;;
+            2|opencode|open-code) normalized="opencode" ;;
+            3|codex) normalized="codex" ;;
+            4|cursor) normalized="cursor" ;;
+            5|pi) normalized="pi" ;;
+            6|vscode|vs-code|copilot) normalized="vscode" ;;
+            *) fail "Contexto no válido: '$token'. Usa claude, opencode, codex, cursor, pi, vscode o all." ;;
+        esac
+        if [[ ! " ${SELECTED_CONTEXTS[*]} " =~ " $normalized " ]]; then
+            SELECTED_CONTEXTS+=("$normalized")
+        fi
+    done
+    (("${#SELECTED_CONTEXTS[@]}" > 0)) || fail "Debes seleccionar al menos un contexto."
+}
+has_context() { [[ " ${SELECTED_CONTEXTS[*]} " == *" $1 "* ]]; }
 
-[[ -d "$REPO_DIR/odd" ]] &&
-    cp -R "$REPO_DIR/odd" "./"
+select_contexts
+if has_context opencode && [[ -e ".opencode" ]]; then
+    fail ".opencode/ ya existe en $(pwd). Para evitar sobreescribir configuración existente, instala en un proyecto limpio o haz backup."
+fi
+echo -e "\n  ${GREEN}Contextos seleccionados:${RESET} ${SELECTED_CONTEXTS[*]}\n"
+echo -e "  ${DIM}3/3  Instalando componentes compartidos... ${RESET}"
 
-[[ -d "$REPO_DIR/.mentor" ]] &&
-    cp -R "$REPO_DIR/.mentor" "./"
+[[ -d "$REPO_DIR/odd" ]] && cp -R "$REPO_DIR/odd" "./"
+[[ -d "$REPO_DIR/.mentor" ]] && cp -R "$REPO_DIR/.mentor" "./"
+[[ -f "$REPO_DIR/AGENTS.md" ]] && cp "$REPO_DIR/AGENTS.md" "./"
+if has_context opencode && [[ -f "$REPO_DIR/Makefile" ]]; then cp "$REPO_DIR/Makefile" "./"; fi
 
-# Agent-neutral contract and native adapters.
-for file in AGENTS.md CLAUDE.md; do
-    [[ -f "$REPO_DIR/$file" ]] && cp "$REPO_DIR/$file" "./"
+if has_context claude; then
+    [[ -f "$REPO_DIR/CLAUDE.md" ]] && cp "$REPO_DIR/CLAUDE.md" "./"
+    [[ -d "$REPO_DIR/.claude" ]] && cp -R "$REPO_DIR/.claude" "./"
+fi
+if has_context opencode; then
+    cp -R "$REPO_DIR/.opencode" "./" || fail "No se pudo copiar .opencode/."
+fi
+if has_context cursor; then
+    [[ -d "$REPO_DIR/.cursor" ]] && cp -R "$REPO_DIR/.cursor" "./"
+fi
+if has_context codex || has_context pi; then
+    [[ -d "$REPO_DIR/.agents" ]] && cp -R "$REPO_DIR/.agents" "./"
+fi
+if has_context pi; then
+    [[ -d "$REPO_DIR/.pi" ]] && cp -R "$REPO_DIR/.pi" "./"
+fi
+if has_context vscode; then
+    if [[ -f "$REPO_DIR/.github/copilot-instructions.md" ]]; then
+        mkdir -p .github
+        cp "$REPO_DIR/.github/copilot-instructions.md" .github/
+    fi
+    for dir in agents skills; do
+        if [[ -d "$REPO_DIR/.github/$dir" ]]; then
+            mkdir -p ".github/$dir"
+            cp -R "$REPO_DIR/.github/$dir/." ".github/$dir/"
+        fi
+    done
+fi
+
+mkdir -p .mentorkit
+printf '{"contexts":[' > .mentorkit/install.json
+for i in "${!SELECTED_CONTEXTS[@]}"; do
+    [[ "$i" -gt 0 ]] && printf ',' >> .mentorkit/install.json
+    printf '"%s"' "${SELECTED_CONTEXTS[$i]}" >> .mentorkit/install.json
 done
+printf '],"branch":"%s"}\n' "$BRANCH" >> .mentorkit/install.json
 
-for dir in .cursor .claude .agents; do
-    [[ -d "$REPO_DIR/$dir" ]] && cp -R "$REPO_DIR/$dir" "./"
+# MCP configuration is scoped to selected supported clients. Pi and VS Code
+# MCP integration remains unavailable until their native adapters are implemented.
+MCP_CLIENTS=()
+for client in claude codex opencode cursor; do
+    has_context "$client" && MCP_CLIENTS+=("$client")
 done
+if has_context opencode; then
+    export MENTORKIT_MCP_CLIENTS="$(IFS=,; echo "${MCP_CLIENTS[*]}")"
+    bash ".opencode/install-mentorkit.sh" ||
+        fail "El runtime OpenCode no pudo completar la instalación/verificación."
+fi
 
-[[ -f "$REPO_DIR/Makefile" ]] &&
-    cp "$REPO_DIR/Makefile" "./"
-
-# Shared agent contract and native adapters.
-for file in AGENTS.md CLAUDE.md; do
-    [[ -f "$REPO_DIR/$file" ]] && cp "$REPO_DIR/$file" "./"
-done
-
-for dir in .cursor .claude .agents; do
-    [[ -d "$REPO_DIR/$dir" ]] && cp -R "$REPO_DIR/$dir" "./"
-done
-
-bash ".opencode/install-mentorkit.sh" ||
-    fail "El instalador no pudo completar la preparación del entorno."
-
+echo -e "  ${GREEN}Adaptadores instalados:${RESET} ${SELECTED_CONTEXTS[*]}"
 # ---------------------------------------------------------------------------
 # Welcome splash — only reached after every installation step succeeds.
 #
