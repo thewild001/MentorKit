@@ -59,7 +59,7 @@ MENTORKIT_BRANCH=feature/odd-migration bash <(curl -fsSL "https://raw.githubuser
 
 ```powershell
 $env:MENTORKIT_BRANCH = "feature/odd-migration"
-irm "https://raw.githubusercontent.com/thewild001/MentorKit/feature/agent-adapters-pi-vscode/bootstrap.ps1" -OutFile bootstrap.ps1
+irm "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.ps1" -OutFile bootstrap.ps1
 powershell -ExecutionPolicy Bypass -File .\bootstrap.ps1
 ```
 
@@ -75,9 +75,9 @@ También puedes automatizar o preseleccionar la instalación:
 **Windows (PowerShell)**
 
 ```powershell
-$env:MENTORKIT_BRANCH = "feature/agent-adapters-pi-vscode"
+$env:MENTORKIT_BRANCH = "feature/odd-migration"
 $env:MENTORKIT_CONTEXTS = "claude,codex,pi"
-irm "https://raw.githubusercontent.com/thewild001/MentorKit/feature/agent-adapters-pi-vscode/bootstrap.ps1" | iex
+irm "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.ps1" | iex
 ```
 
 ```bash
