@@ -2,9 +2,9 @@ name: Platform Smoke Test
 
 on:
   push:
-    branches: ["feature/odd-migration"]
+    branches: ["feature/odd-migration", "feature/agent-adapters-pi-vscode"]
   pull_request:
-    branches: ["feature/odd-migration", "main"]
+    branches: ["feature/odd-migration", "feature/agent-adapters-pi-vscode", "main"]
   workflow_dispatch:
 
 jobs:
@@ -129,6 +129,73 @@ jobs:
           test -f .cursor/rules/mentorkit-odd.mdc
           test -f .claude/skills/mentorkit/SKILL.md
           test -f .agents/skills/mentorkit/SKILL.md
+          test -f .pi/README.md
+          test -f .github/copilot-instructions.md
+          test -f .github/agents/mentorkit.agent.md
+          test -f .github/skills/mentorkit/SKILL.md
+          grep -q "odd/CONTRACT.md" .pi/README.md
+          grep -q "odd/CONTRACT.md" .github/copilot-instructions.md
+          grep -q "odd/CONTRACT.md" .github/agents/mentorkit.agent.md
+          grep -q "Pi" .agents/skills/mentorkit/SKILL.md
           grep -q "AUTHORIZE" AGENTS.md
           grep -q "SUBSTANTIAL" AGENTS.md
           grep -q "odd/tasks/<feature>.md" AGENTS.md
+
+  context-selection:
+    name: Context selection — ${{ matrix.context }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        context: [claude, opencode, codex, cursor, pi, vscode]
+    env:
+      MENTORKIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+      MENTORKIT_CONTEXTS: ${{ matrix.context }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install selected context only
+        run: |
+          TEST_DIR="$(mktemp -d)"
+          echo "MENTORKIT_TEST_DIR=$TEST_DIR" >> "$GITHUB_ENV"
+          cd "$TEST_DIR"
+          bash "$GITHUB_WORKSPACE/bootstrap.sh"
+      - name: Assert context-specific installation
+        run: |
+          cd "$MENTORKIT_TEST_DIR"
+          test -f odd/CONTRACT.md
+          test -f AGENTS.md
+          test -f .mentorkit/install.json
+          python3 -c 'import json; assert json.load(open(".mentorkit/install.json"))["contexts"] == ["${{ matrix.context }}"]'
+          case "${{ matrix.context }}" in
+            claude) test -f CLAUDE.md; test -f .claude/skills/mentorkit/SKILL.md; test ! -e .opencode; test ! -e .cursor; test ! -e .pi; test ! -e .github/copilot-instructions.md ;;
+            opencode) test -f .opencode/agents/MentorKit5.0.md; test -f Makefile; test ! -e .claude; test ! -e .cursor; test ! -e .pi; test ! -e .github/copilot-instructions.md ;;
+            codex) test -f .agents/skills/mentorkit/SKILL.md; test ! -e .opencode; test ! -e .claude; test ! -e .cursor; test ! -e .pi; test ! -e .github/copilot-instructions.md ;;
+            cursor) test -f .cursor/rules/mentorkit-odd.mdc; test ! -e .opencode; test ! -e .claude; test ! -e .agents; test ! -e .pi; test ! -e .github/copilot-instructions.md ;;
+            pi) test -f .pi/README.md; test -f .agents/skills/mentorkit/SKILL.md; test ! -e .opencode; test ! -e .claude; test ! -e .cursor; test ! -e .github/copilot-instructions.md ;;
+            vscode) test -f .github/copilot-instructions.md; test -f .github/agents/mentorkit.agent.md; test ! -e .opencode; test ! -e .claude; test ! -e .cursor; test ! -e .agents; test ! -e .pi ;;
+          esac
+
+  windows-context-selection:
+    name: Windows selective installation
+    runs-on: windows-latest
+    env:
+      MENTORKIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+      MENTORKIT_CONTEXTS: claude,codex,pi
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install selected contexts with PowerShell
+        shell: pwsh
+        run: |
+          $testDir = Join-Path $env:RUNNER_TEMP ("mentorkit-context-" + [guid]::NewGuid().ToString("N"))
+          New-Item -ItemType Directory -Path $testDir | Out-Null
+          Set-Location $testDir
+          & "$env:GITHUB_WORKSPACE\bootstrap.ps1"
+          if (-not (Test-Path ".mentorkit/install.json")) { throw "Install manifest missing." }
+          $manifest = Get-Content ".mentorkit/install.json" -Raw | ConvertFrom-Json
+          if (($manifest.contexts -join ",") -ne "claude,codex,pi") { throw "Unexpected selected contexts in manifest." }
+          foreach ($path in @("CLAUDE.md",".claude/skills/mentorkit/SKILL.md",".agents/skills/mentorkit/SKILL.md",".pi/README.md","odd/CONTRACT.md")) {
+            if (-not (Test-Path $path)) { throw "Missing selected artifact: $path" }
+          }
+          foreach ($path in @(".opencode",".cursor",".github/copilot-instructions.md","Makefile")) {
+            if (Test-Path $path) { throw "Unselected artifact was installed: $path" }
+          }

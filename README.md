@@ -4,11 +4,11 @@
 
 **Ingeniería de software agéntica, con el proceso justo para cada cambio.**
 
-Workflow para desarrolladores construido sobre OpenCode y orientado a *Organic Driven Development* (ODD).
+Workflow agnóstico del runtime, con adaptadores nativos para agentes de desarrollo y orientado a *Organic Driven Development* (ODD).
 
-[![Platform Smoke Test](https://github.com/thewild001/MentorKit/actions/workflows/platform-smoke.yml/badge.svg?branch=feature%2Fodd-migration)](https://github.com/thewild001/MentorKit/actions/workflows/platform-smoke.yml)
+[![Platform Smoke Test](https://github.com/thewild001/MentorKit/actions/workflows/platform-smoke.yml/badge.svg?branch=feature%2Fagent-adapters-pi-vscode)](https://github.com/thewild001/MentorKit/actions/workflows/platform-smoke.yml)
 ![Linux · macOS · Windows](https://img.shields.io/badge/plataformas-Linux%20%C2%B7%20macOS%20%C2%B7%20Windows-0b1220?style=flat-square&labelColor=0b1220&color=38bdf8)
-![OpenCode · Cursor · Codex · Claude Code](https://img.shields.io/badge/agentes-OpenCode%20%C2%B7%20Cursor%20%C2%B7%20Codex%20%C2%B7%20Claude%20Code-0b1220?style=flat-square&labelColor=0b1220&color=6366f1)
+![OpenCode · Cursor · Codex · Claude Code · Pi · VS Code](https://img.shields.io/badge/agentes-OpenCode%20%C2%B7%20Cursor%20%C2%B7%20Codex%20%C2%B7%20Claude%20Code%20%C2%B7%20Pi%20%C2%B7%20VS%20Code-0b1220?style=flat-square&labelColor=0b1220&color=6366f1)
 ![Estado experimental](https://img.shields.io/badge/estado-experimental-0b1220?style=flat-square&labelColor=0b1220&color=f59e0b)
 
 [Instalación](#instalación) &nbsp;·&nbsp; [ODD](#organic-driven-development-odd) &nbsp;·&nbsp; [Codebase](#comprensión-del-codebase) &nbsp;·&nbsp; [Agentes](#compatibilidad-con-agentes) &nbsp;·&nbsp; [Plataformas](#compatibilidad-multiplataforma) &nbsp;·&nbsp; [Contribuir](#contribuir)
@@ -22,8 +22,8 @@ MentorKit no impone una ceremonia uniforme. Decide cuánto proceso necesita cada
 | | |
 |---|---|
 | **Workflow** | ODD, con dos rutas: `SMALL` y `SUBSTANTIAL` |
-| **Runtime** | OpenCode + skills de MentorKit, con Python 3.12 gestionado por `uv` |
-| **Agentes** | OpenCode · Cursor · Codex · Claude Code, con un contrato común |
+| **Core** | ODD runtime-neutral + adaptadores nativos por agente; Python 3.12 (`uv`) para herramientas compartidas |
+| **Agentes** | OpenCode · Cursor · Codex · Claude Code · Pi · VS Code Copilot, con un contrato común |
 | **Conocimiento del codebase** | `codebase-memory-mcp` → Graphify → fingerprinting |
 | **Plataformas** | Linux · macOS · Windows (`amd64` y `arm64`) |
 
@@ -52,28 +52,51 @@ Ejecuta el instalador desde la raíz del proyecto donde quieres usar MentorKit.
 **Linux y macOS**
 
 ```bash
-MENTORKIT_BRANCH=feature/odd-migration bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.sh")
+MENTORKIT_BRANCH=feature/agent-adapters-pi-vscode bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/agent-adapters-pi-vscode/bootstrap.sh")
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-$env:MENTORKIT_BRANCH = "feature/odd-migration"
-irm "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.ps1" -OutFile bootstrap.ps1
+$env:MENTORKIT_BRANCH = "feature/agent-adapters-pi-vscode"
+irm "https://raw.githubusercontent.com/thewild001/MentorKit/feature/agent-adapters-pi-vscode/bootstrap.ps1" -OutFile bootstrap.ps1
 powershell -ExecutionPolicy Bypass -File .\bootstrap.ps1
 ```
 
 > [!IMPORTANT]
 > `MENTORKIT_BRANCH` es obligatoria mientras esta rama no sea `main`. Sin ella, el bootstrap descarga `main`, detecta que es anterior a este flujo y se detiene con un mensaje explicativo. Windows también puede usar Git Bash o WSL2 con el comando de Linux, pero no son requisitos.
 
+### Selección de contexto
+
+El instalador permite seleccionar uno o varios entornos: **Claude Code, OpenCode, Codex, Cursor, Pi y VS Code Copilot**. En una terminal interactiva muestra un menú; pulsa Enter para instalar todos, o introduce números separados por comas (por ejemplo, `1,3,5`).
+
+También puedes automatizar o preseleccionar la instalación:
+
+**Windows (PowerShell)**
+
+```powershell
+$env:MENTORKIT_BRANCH = "feature/agent-adapters-pi-vscode"
+$env:MENTORKIT_CONTEXTS = "claude,codex,pi"
+irm "https://raw.githubusercontent.com/thewild001/MentorKit/feature/agent-adapters-pi-vscode/bootstrap.ps1" | iex
+```
+
+```bash
+MENTORKIT_CONTEXTS=claude,codex,pi MENTORKIT_BRANCH=feature/agent-adapters-pi-vscode bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/agent-adapters-pi-vscode/bootstrap.sh")
+```
+
+Valores admitidos: `claude`, `opencode`, `codex`, `cursor`, `pi`, `vscode` o `all`. Si no hay terminal interactiva ni se define la variable, se instalan todos los contextos por compatibilidad con automatizaciones existentes.
+
 ### Qué hace el instalador
 
 | Paso | Acción |
 |:---:|---|
-| **1** | Descarga el release de la rama indicada y copia `.opencode/`, `odd/`, `.mentor/`, `AGENTS.md`, `CLAUDE.md`, `.cursor/`, `.claude/`, `.agents/` y `Makefile`. |
-| **2** | Instala `uv` si falta y, con él, Python 3.12 y las dependencias de `requirements.lock` en un entorno aislado (`.opencode/.mentorkit/venv`). |
-| **3** | Instala `codebase-memory-mcp` y lo configura en los cuatro agentes ([detalle](#codebase-memory-mcp)). |
-| **4** | Verifica el conjunto (`VERIFY PASS`) y muestra el resumen final. |
+| **1** | Descarga MentorKit y pregunta qué contextos instalar (o lee `MENTORKIT_CONTEXTS`). |
+| **2** | Instala siempre el núcleo compartido: `odd/`, `.mentor/`, `AGENTS.md` y el manifiesto `.mentorkit/install.json`. |
+| **3** | Copia únicamente los adaptadores seleccionados. `.opencode/`, `Makefile`, Python 3.12 y sus dependencias solo se instalan cuando se selecciona OpenCode. |
+| **4** | Cuando OpenCode está seleccionado, instala `codebase-memory-mcp` y lo configura solo en los clientes compatibles que también fueron seleccionados. |
+| **5** | Muestra los contextos instalados. |
+
+**Nota sobre MCP:** la configuración de codebase-memory para Pi y VS Code todavía no está implementada. En esta iteración, el instalador no instala el runtime MCP si OpenCode no está seleccionado; los adaptadores de los otros clientes funcionan con el contrato y las skills disponibles.
 
 Para verificar en cualquier momento:
 
@@ -90,6 +113,7 @@ powershell -ExecutionPolicy Bypass -File .\.opencode\mentorkit-verify.ps1   # Wi
 | Variable | Efecto |
 |---|---|
 | `MENTORKIT_BRANCH` | Rama o tag a instalar (por defecto `main`). |
+| `MENTORKIT_CONTEXTS` | Contextos separados por comas; admite `claude,opencode,codex,cursor,pi,vscode` o `all`. |
 | `MENTORKIT_MCP_CLIENTS` | Agentes a configurar, separados por comas: `claude,codex,opencode,cursor` (por defecto, los cuatro). |
 | `MENTORKIT_SKIP_MCP=1` | Omite la instalación y la verificación de `codebase-memory-mcp`. |
 | `MENTORKIT_CBM_DIR` | Directorio del binario del MCP (por defecto `~/.local/bin`, o `%LOCALAPPDATA%\Programs\codebase-memory-mcp` en Windows). |
@@ -318,7 +342,9 @@ MentorKit
     ├── OpenCode
     ├── Cursor
     ├── Codex
-    └── Claude Code
+    ├── Claude Code
+    ├── Pi
+    └── VS Code Copilot
 ```
 
 La metodología ODD tiene un contrato común. Los archivos de cada agente son adaptadores nativos, no implementaciones independientes.
@@ -347,6 +373,8 @@ Al reanudar, MentorKit lee el documento ODD, inspecciona el estado real del repo
 | **Cursor** | `.cursor/rules/`, `AGENTS.md` |
 | **Codex** | `AGENTS.md`, `.agents/skills/` |
 | **Claude Code** | `CLAUDE.md`, `.claude/skills/` |
+| **Pi** | `AGENTS.md`, `.agents/skills/` (Agent Skills nativo); MCP específico pendiente |
+| **VS Code Copilot** | `.github/copilot-instructions.md`, `.github/agents/`, `.github/skills/`; MCP específico pendiente |
 
 `AGENTS.md` y los contratos bajo `odd/` describen la semántica compartida y cada runtime la adapta a sus convenciones. La profundidad de integración puede variar según las capacidades de cada agente, en especial en proveedores MCP y conocimiento del codebase.
 
@@ -360,7 +388,7 @@ Al reanudar, MentorKit lee el documento ODD, inspecciona el estado real del repo
 | **macOS** | Scripts POSIX |
 | **Windows** | PowerShell nativo (`bootstrap.ps1`, `install-mentorkit.ps1`), además de Git Bash y WSL2 |
 
-El runtime común es `.opencode/mentorkit.py`, ejecutado por `uv` con Python 3.12.
+El runtime de herramientas compartidas es `.opencode/mentorkit.py`, ejecutado por `uv` con Python 3.12. Pi y VS Code consumen el contrato y las skills mediante sus mecanismos nativos; no requieren ejecutar ese runtime para aplicar ODD.
 
 ### Integración continua
 
@@ -368,7 +396,7 @@ El workflow [`platform-smoke.yml`](.github/workflows/platform-smoke.yml) se ejec
 
 - el bootstrap en un proyecto limpio;
 - el runtime nativo y sus dependencias (`mentorkit-verify`);
-- la instalación del MCP, el handshake real y la configuración de Claude, Codex, OpenCode y Cursor;
+- la instalación del MCP, el handshake real y la configuración de Claude, Codex, OpenCode y Cursor (Pi y VS Code utilizan adaptadores nativos de instrucciones/skills; MCP específico pendiente de validar);
 - la creación de documentos ODD (`odd-task`);
 - los contratos de planificación, PRD multiformato, conocimiento del codebase y compatibilidad entre agentes.
 
@@ -395,7 +423,7 @@ Nunca se declara completado un trabajo sin evidencia de verificación. Un commit
 ## Desarrollo y validación local
 
 ```bash
-git clone --branch feature/odd-migration https://github.com/thewild001/MentorKit.git
+git clone --branch feature/agent-adapters-pi-vscode https://github.com/thewild001/MentorKit.git
 cd MentorKit
 make install
 make verify
@@ -465,15 +493,16 @@ OpenSpec se conserva solo por compatibilidad durante la migración. El objetivo 
 
 ## Estado y alcance
 
-La evolución ODD vive en [`feature/odd-migration`](https://github.com/thewild001/MentorKit/tree/feature/odd-migration).
+La evolución ODD vive en [`feature/odd-migration`](https://github.com/thewild001/MentorKit/tree/feature/odd-migration). La ampliación de adaptadores Pi y VS Code se desarrolla en [`feature/agent-adapters-pi-vscode`](https://github.com/thewild001/MentorKit/tree/feature/agent-adapters-pi-vscode).
 
 | Objetivo | Estado |
 |---|---|
 | ODD como capa central de orquestación | Implementado |
 | PRD y planificación como capacidades opcionales | Implementado |
-| Comprensión del codebase con `codebase-memory-mcp` | Implementado, con CI en Linux, macOS y Windows |
+| Comprensión del codebase con `codebase-memory-mcp` | Implementado para Claude, Codex, OpenCode y Cursor; configuración Pi/VS Code pendiente |
 | Persistencia durable y recuperación entre sesiones | Implementado |
-| Contrato común para OpenCode, Cursor, Codex y Claude Code | Implementado |
+| Contrato común y adaptadores existentes para OpenCode, Cursor, Codex y Claude Code | Implementado |
+| Adaptadores nativos Pi y VS Code Copilot | En implementación; smoke tests añadidos, validación funcional pendiente |
 | Retirada progresiva de OpenSpec | Pendiente de validar |
 | Validación funcional con casos reales | Pendiente |
 

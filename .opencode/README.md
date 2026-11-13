@@ -99,8 +99,10 @@ El Implementation Plan describe la ruta técnica y arquitectónica. El documento
 - **Cursor:** `.cursor/rules/`
 - **Codex:** `AGENTS.md` + `.agents/skills/`
 - **Claude Code:** `CLAUDE.md` + `.claude/skills/`
+- **Pi:** `AGENTS.md` + `.agents/skills/` (Agent Skills nativo)
+- **VS Code Copilot:** `.github/copilot-instructions.md` + `.github/agents/` + `.github/skills/`
 
-Todos consumen un contrato ODD común mediante adaptadores nativos; no son implementaciones independientes de la metodología.
+Pi reutiliza el skill portable existente; VS Code Copilot dispone de instrucciones, agente y skill nativos. Todos consumen un contrato ODD común; no son implementaciones independientes de la metodología. La configuración MCP de Pi y VS Code aún no forma parte del instalador.
 
 ## Runtime
 

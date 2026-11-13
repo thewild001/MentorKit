@@ -1,7 +1,7 @@
 ---
 name: mentorkit
 description: Apply MentorKit's Organic Driven Development workflow proportionally to software engineering changes.
-compatibility: Codex and compatible agent runtimes
+compatibility: Pi, Codex, and compatible Agent Skills runtimes
 ---
 
 # MentorKit ODD
