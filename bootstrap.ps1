@@ -18,18 +18,46 @@ try {
            "Indica una rama con la migracion ODD mediante MENTORKIT_BRANCH.")
   }
 
+  function Show-ContextMenu {
+    $icons = @(
+      [string][char]0x2726, [string][char]0x25C8, [string][char]0x2318,
+      [string][char]0x25C9, [string][char]0x03C0, [string][char]0x25A3
+    )
+    $details = @(
+      "Agente CLI de Anthropic", "IA de codigo open source", "Agente de codigo OpenAI",
+      "Editor de codigo con IA", "Agente extensible de terminal", "GitHub Copilot para IDE"
+    )
+    $utf8 = $false
+    try { $utf8 = ([Console]::OutputEncoding.CodePage -eq 65001) } catch { }
+    $fallbackIcons = @("*",">","#","o","p","+")
+    Write-Host ""
+    Write-Host "  MENTORKIT  / CONTEXTOS / CONFIGURACION" -ForegroundColor Cyan
+    Write-Host "  Selecciona donde integrar MentorKit." -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  +------------------------------------------------------------+" -ForegroundColor DarkGray
+    for ($i=0; $i -lt $contexts.Count; $i++) {
+      $icon = if ($utf8) { $icons[$i] } else { $fallbackIcons[$i] }
+      $content = "{0}  {1}  {2,-18} {3}" -f ($i + 1),$icon,$labels[$i],$details[$i]
+      Write-Host "  | " -NoNewline -ForegroundColor DarkGray
+      Write-Host $content.PadRight(59) -NoNewline -ForegroundColor Gray
+      Write-Host "|" -ForegroundColor DarkGray
+    }
+    Write-Host "  | " -NoNewline -ForegroundColor DarkGray
+    Write-Host ("A  Instalar los seis contextos".PadRight(59)) -NoNewline -ForegroundColor Cyan
+    Write-Host "|" -ForegroundColor DarkGray
+    Write-Host "  +------------------------------------------------------------+" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  SELECCION MULTIPLE " -NoNewline -ForegroundColor White
+    Write-Host "Separa los numeros con comas  |  Enter = todos" -ForegroundColor DarkGray
+  }
+
   $contexts = @("claude","opencode","codex","cursor","pi","vscode")
   $labels = @("Claude Code","OpenCode","Codex","Cursor","Pi","VS Code Copilot")
   $raw = $env:MENTORKIT_CONTEXTS
   if ([string]::IsNullOrWhiteSpace($raw)) {
     if ([Environment]::UserInteractive -and [Console]::IsInputRedirected -eq $false) {
-      Write-Host ""
-      Write-Host "Selecciona los contextos donde utilizaras MentorKit:"
-      for ($i=0; $i -lt $contexts.Count; $i++) {
-        Write-Host ("  {0}) {1}" -f ($i+1),$labels[$i])
-      }
-      Write-Host "  a) Todos"
-      $answer = Read-Host "Seleccion [a]"
+      Show-ContextMenu
+      $answer = Read-Host "Tu seleccion [1,3,5 / a = todos]"
       if ([string]::IsNullOrWhiteSpace($answer)) { $raw = "all" } else { $raw = $answer }
     } else {
       # Backward compatibility for non-interactive one-liners and CI.

@@ -93,8 +93,54 @@ if [[ ! -f "$REPO_DIR/.opencode/mentorkit.py" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Select agent contexts
+# Context selector presentation
 # ---------------------------------------------------------------------------
+render_context_menu() {
+    local i icon label detail accent="" muted="" reset="" bold="" charmap=""
+    local vline='│' top='┌────────────────────────────────────────────────────────────┐'
+    local middle='├────────────────────────────────────────────────────────────┤'
+    local bottom='└────────────────────────────────────────────────────────────┘'
+    charmap="$(locale charmap 2>/dev/null || true)"
+    if [[ "$charmap" != "UTF-8" ]]; then
+        vline='|'
+        top='+------------------------------------------------------------+'
+        middle='+------------------------------------------------------------+'
+        bottom='+------------------------------------------------------------+'
+    fi
+    if [[ -t 1 ]] && ! printenv NO_COLOR >/dev/null 2>&1 && [[ "$(printenv TERM || true)" != "dumb" ]]; then
+        accent="$(printf '\033[38;5;81m')"
+        muted="$(printf '\033[38;5;245m')"
+        bold="$(printf '\033[1m')"
+        reset="$(printf '\033[0m')"
+    fi
+    printf '\n  %sMENTORKIT%s  %s/ SELECCIÓN DE CONTEXTOS%s\n' "$bold$accent" "$reset" "$muted" "$reset"
+    printf '  %sSelecciona dónde integrar MentorKit.%s\n\n' "$muted" "$reset"
+    printf '  %s%s%s\n' "$muted" "$top" "$reset"
+    for ((i=0; i<6; i++)); do
+        case $i in
+            0) icon='✦'; label='Claude Code'; detail='Agente CLI de Anthropic' ;;
+            1) icon='◈'; label='OpenCode'; detail='IA de código open source' ;;
+            2) icon='⌘'; label='Codex'; detail='Agente de código OpenAI' ;;
+            3) icon='◉'; label='Cursor'; detail='Editor de código con IA' ;;
+            4) icon='π'; label='Pi'; detail='Agente extensible de terminal' ;;
+            5) icon='▣'; label='VS Code Copilot'; detail='GitHub Copilot para IDE' ;;
+        esac
+        if [[ "$charmap" != "UTF-8" ]]; then
+            case $i in
+                0) icon='*' ;; 1) icon='>' ;; 2) icon='#' ;;
+                3) icon='o' ;; 4) icon='p' ;; 5) icon='+' ;;
+            esac
+        fi
+        printf '  %s%s%s  %s%d%s  %s%-2s%s %-18s %s%-32s%s %s%s%s\n' \
+            "$muted" "$vline" "$reset" "$accent" "$((i+1))" "$reset" "$accent" "$icon" "$reset" \
+            "$label" "$muted" "$detail" "$reset" "$muted" "$vline" "$reset"
+    done
+    printf '  %s%s%s\n' "$muted" "$middle" "$reset"
+    printf '  %s%s%s  %sA%s  Instalar los seis contextos                              %s%s%s\n' \
+        "$muted" "$vline" "$reset" "$accent" "$reset" "$muted" "$vline" "$reset"
+    printf '  %s%s%s\n\n' "$muted" "$bottom" "$reset"
+    printf '  %sSELECCIÓN MÚLTIPLE%s  Separa los números con comas  %s·%s  Enter = todos\n' "$bold" "$reset" "$muted" "$reset"
+}
 
 CONTEXTS=(claude opencode codex cursor pi vscode)
 CONTEXT_LABELS=("Claude Code" "OpenCode" "Codex" "Cursor" "Pi" "VS Code Copilot")
@@ -102,12 +148,8 @@ CONTEXT_LABELS=("Claude Code" "OpenCode" "Codex" "Cursor" "Pi" "VS Code Copilot"
 select_contexts() {
     local raw="${MENTORKIT_CONTEXTS:-}" answer i token normalized
     if [[ -z "$raw" && -t 0 ]]; then
-        echo -e "  ${CYAN}Selecciona los contextos donde utilizarás MentorKit:${RESET}"
-        for i in "${!CONTEXTS[@]}"; do
-            printf "    %d) %s\n" "$((i+1))" "${CONTEXT_LABELS[$i]}"
-        done
-        echo "    a) Todos"
-        printf "  Selección [a]: "
+        render_context_menu
+        printf "  > Tu selección [1,3,5 / a = todos]: "
         IFS= read -r answer || answer=""
         raw="${answer:-all}"
     elif [[ -z "$raw" ]]; then
@@ -312,13 +354,13 @@ show_success_splash() {
     (( _SP_UTF8 )) || tagline='ORGANIC-DRIVEN DEVELOPMENT  |  ODD'
 
     # --- wordmark ------------------------------------------------------------------
-    while IFS= read -r line; do art+=("$line"); done <<'ART'
- __  __            _             _  ___ _
-|  \/  | ___ _ __ | |_ ___  _ __| |/ (_) |_
-| |\/| |/ _ \ '_ \| __/ _ \| '__| ' /| | __|
-| |  | |  __/ | | | || (_) | |  | . \| | |_
-|_|  |_|\___|_| |_|\__\___/|_|  |_|\_\_|\__|
-ART
+    art=(
+        " __  __            _             _  ___ _"
+        "|  \/  | ___ _ __ | |_ ___  _ __| |/ (_) |_"
+        "| |\/| |/ _ \\ '_ \\| __/ _ \\| '__| ' /| | __|"
+        "| |  | |  __/ | | | || (_) | |  | . \\| | |_"
+        "|_|  |_|\\___|_| |_|\\__\\___/|_|  |_|\\_\\_|\\__|"
+    )
     local art_w=0
     for line in "${art[@]}"; do
         if (( ${#line} > art_w )); then art_w=${#line}; fi
