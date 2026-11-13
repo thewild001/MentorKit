@@ -68,7 +68,7 @@ powershell -ExecutionPolicy Bypass -File .\bootstrap.ps1
 
 ### Selección de contexto
 
-El instalador permite seleccionar uno o varios entornos: **Claude Code, OpenCode, Codex, Cursor, Pi y VS Code Copilot**. En una terminal interactiva muestra un menú; pulsa Enter para instalar todos, o introduce números separados por comas (por ejemplo, `1,3,5`).
+El instalador permite seleccionar uno o varios entornos: **Claude Code, OpenCode, Codex, Cursor, Pi y VS Code Copilot**. En una terminal interactiva muestra un selector visual con iconos por agente, colores adaptativos y una opción para instalar todos; pulsa Enter para aceptar todos, o introduce números separados por comas (por ejemplo, `1,3,5`). El menú conserva una presentación ASCII cuando la terminal no admite UTF-8.
 
 También puedes automatizar o preseleccionar la instalación:
 
