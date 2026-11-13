@@ -81,7 +81,7 @@ irm "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migratio
 ```
 
 ```bash
-MENTORKIT_CONTEXTS=claude,codex,pi MENTORKIT_BRANCH=feature/agent-adapters-pi-vscode bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/agent-adapters-pi-vscode/bootstrap.sh")
+MENTORKIT_CONTEXTS=claude,codex,pi MENTORKIT_BRANCH=feature/odd-migration bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.sh")
 ```
 
 Valores admitidos: `claude`, `opencode`, `codex`, `cursor`, `pi`, `vscode` o `all`. Si no hay terminal interactiva ni se define la variable, se instalan todos los contextos por compatibilidad con automatizaciones existentes.
