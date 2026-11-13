@@ -52,7 +52,7 @@ Ejecuta el instalador desde la raíz del proyecto donde quieres usar MentorKit.
 **Linux y macOS**
 
 ```bash
-MENTORKIT_BRANCH=feature/odd-migration bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/agent-adapters-pi-vscode/bootstrap.sh")
+MENTORKIT_BRANCH=feature/odd-migration bash <(curl -fsSL "https://raw.githubusercontent.com/thewild001/MentorKit/feature/odd-migration/bootstrap.sh")
 ```
 
 **Windows (PowerShell)**
